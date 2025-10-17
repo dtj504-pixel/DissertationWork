@@ -124,78 +124,87 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 pred_risk1_g <- predict(gp_risk,newdata=gridd,type="SK")
 
 
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than (0.05? this was often our target earlier.)
-##### plots
+## Estimate median predicted risk
 med_risk1 <- exp(pred_risk1_g$mean)
 ## plot it
-
 image2D(matrix(med_risk1,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than (0.05? this was often our target earlier.)s
+
+## now lets look at the probability that the risk is less than or equal to 0.05
 prisk1 <- pnorm(log(0.05),pred_risk1_g$mean,pred_risk1_g$sd+1e-12)
+## plot it
 image2D(matrix(prisk1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
 
+## Predicts mean and uncertainty for log(catch) at each parameter combination in gridd
+## SK means simple kriging
 pred_cat1_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max1 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
-#pcat2 <- pnorm(log(max2),pred_cat2_g$mean,pred_cat2_g$sd+1e-3)
+
+## Best catch observed so far where risk is below 0.05
+max1 <- max(runs$C_long[runs$risk3_long < 0.05])
+
+##Convert to max1 log scale as emulator trained on log(catch)
+## pcat1 is the probability that the catch is less than or equal to max1 (the best safe catch observed) at each point in gridd
 pcat1 <- pnorm(log(max1),pred_cat1_g$mean,pred_cat1_g$sd+1e-12)
 
-## only this many left
+## mark which points in gridd are still good candidates
 eps <- 1e-4
 possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 
-
+# getting catch out of log(catch) for each point in gridd
 med_cat1 <- exp(pred_cat1_g$mean)
 
 
-## The below might be producing the images that are in the paper in this case study section, perhaps only for the first round
+## Below produces heat maps for round 1 
 
 image2D(matrix(med_cat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-#max1 <- max(runs$catch_median_long[runs$risk1_full < 0.05])### the max so far
-#pcat1 <- pnorm(log(max1),pred_cat1_g$mean ,pred_cat1_g$sd+1e-12)
 image2D(matrix(1-pcat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
-
+## Visualises region that has risk <0.05 and better catch than best evaluated so far
 image2D(matrix(possible1 * (1-pcat1),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 ####### collect final points - this is so we know what to do in round 2
 pot_points <- gridd[possible1,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
+
+##Removes already evaluated points from those that are still possible so don't evalute again
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 
+## The different rounds are prettty much repeats so going
+## to go through when need to to look at hwo to select points
+## better than randomly
+
 ######### Round 2
 
-## pot_points is the points that are still plasuible as the optimum from the first round
+## pot_points is the points that are still plausible as the optimum from the first round
+## we're selecting 8 of these randomly to evaluate next
+
+##TODO: Improve this selection process!
 nums <- sample(nrow(pot_points),8)
+# ChatGPT suggests there has been rounding here to 2 sig fig
 new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
+## Added to old data set so now the emulator is trained on this larger dataset so is more informed
 round2 <- rbind(round1,new_points)
 
+## Joining with full daatset and rescaling again
 dat_run <- left_join(round2,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-res_cat <- log(runs$C_long)# - predict(qgams_cat)
+res_cat <- log(runs$C_long)
 gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
-res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
+res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk2_g <- predict(gp_risk,newdata=gridd,type="SK")
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than 
-##### plots
+
+## now lets look at the probability that the risk is less than 0.05
 med_risk2 <- exp(pred_risk2_g$mean)
-## plot it
 library(plot3D)
 image2D(matrix(med_risk2,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than 
+## now lets look at the probability that the risk is less than 0.05 
 prisk2 <- pnorm(log(0.05),pred_risk2_g$mean,pred_risk2_g$sd+1e-12)
 image2D(matrix(prisk2,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
@@ -235,30 +244,21 @@ dat_run <- left_join(round3,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-res_cat <- log(runs$C_long)# - predict(qgams_cat)
+res_cat <- log(runs$C_long)
 gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
-res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
+res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk3_g <- predict(gp_risk,newdata=gridd,type="SK")
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than 
-##### plots
 med_risk3 <- exp(pred_risk3_g$mean)
-## plot it
 library(plot3D)
 image2D(matrix(med_risk3,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than 
 prisk3 <- pnorm(log(0.05),pred_risk3_g$mean,pred_risk3_g$sd+1e-12)
 image2D(matrix(prisk3,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
-
 pred_cat3_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max3 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
+max3 <- max(runs$C_long[runs$risk3_long < 0.05])
 pcat3 <- pnorm(log(max3),pred_cat3_g$mean,pred_cat3_g$sd+1e-12)
 
 possible3 <- (apply(cbind((1-pcat3) , prisk3),1,min) >  eps)
@@ -284,30 +284,22 @@ dat_run <- left_join(round4,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-res_cat <- log(runs$C_long)# - predict(qgams_cat)
+res_cat <- log(runs$C_long)
 gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
-res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
+res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk4_g <- predict(gp_risk,newdata=gridd,type="SK")
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than 
-##### plots
 med_risk4 <- exp(pred_risk4_g$mean)
-## plot it
 library(plot3D)
 image2D(matrix(med_risk4,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than 
 prisk4 <- pnorm(log(0.05),pred_risk4_g$mean,pred_risk4_g$sd+1e-12)
 image2D(matrix(prisk4,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
 
 pred_cat4_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max4 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
+max4 <- max(runs$C_long[runs$risk3_long < 0.05])
 pcat4 <- pnorm(log(max4),pred_cat4_g$mean,pred_cat4_g$sd+1e-12)
 
 possible4 <- (apply(cbind((1-pcat4) , prisk4),1,min) >  eps)
@@ -332,30 +324,21 @@ dat_run <- left_join(round5,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-res_cat <- log(runs$C_long)# - predict(qgams_cat)
+res_cat <- log(runs$C_long)
 gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
-res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
+res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk5_g <- predict(gp_risk,newdata=gridd,type="SK")
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than 
-##### plots
 med_risk5 <- exp(pred_risk5_g$mean)
-## plot it
 library(plot3D)
 image2D(matrix(med_risk5,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than 
 prisk5 <- pnorm(log(0.05),pred_risk5_g$mean,pred_risk5_g$sd+1e-12)
 image2D(matrix(prisk5,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
-
 pred_cat5_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max5 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
+max5 <- max(runs$C_long[runs$risk3_long < 0.05])
 pcat5 <- pnorm(log(max5),pred_cat5_g$mean,pred_cat5_g$sd+1e-12)
 
 possible5 <- (apply(cbind((1-pcat5) , prisk5),1,min) >  eps)
@@ -380,30 +363,23 @@ dat_run <- left_join(round6,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-res_cat <- log(runs$C_long)# - predict(qgams_cat)
+res_cat <- log(runs$C_long)
 gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
-res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
+res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk6_g <- predict(gp_risk,newdata=gridd,type="SK")
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than 
-##### plots
 med_risk6 <- exp(pred_risk6_g$mean)
-## plot it
 library(plot3D)
 image2D(matrix(med_risk6,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than 
 prisk6 <- pnorm(log(0.05),pred_risk6_g$mean,pred_risk6_g$sd+1e-12)
 image2D(matrix(prisk6,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 ### now the catch
 
 pred_cat6_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max6 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
+max6 <- max(runs$C_long[runs$risk3_long < 0.05])
 pcat6 <- pnorm(log(max6),pred_cat6_g$mean,pred_cat6_g$sd+1e-12)
 
 possible6 <- (apply(cbind((1-pcat6) , prisk6),1,min) >  eps)
@@ -435,23 +411,15 @@ res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk7_g <- predict(gp_risk,newdata=gridd,type="SK")
-## median risk
-## plot it
-## now lets look at the probability that the risk is more than 
-##### plots
 med_risk7 <- exp(pred_risk7_g$mean)
-## plot it
 library(plot3D)
 image2D(matrix(med_risk7,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is more than 
 prisk7 <- pnorm(log(0.05),pred_risk7_g$mean,pred_risk7_g$sd+1e-12)
 image2D(matrix(prisk7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
 
 pred_cat7_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max7 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
+max7 <- max(runs$C_long[runs$risk3_long < 0.05])
 pcat7 <- pnorm(log(max7),pred_cat7_g$mean,pred_cat7_g$sd+1e-12)
 
 possible7 <- (apply(cbind((1-pcat7) , prisk7),1,min) >  eps)
@@ -470,7 +438,7 @@ pot_points <- gridd[possible7,]
 ans<-unrescale_Her(pot_points[1,],dat1)
 ans
 
-## Prints teh variable round7
+## Prints the variable round7
 round7
 
 round7$Round <- c(rep(1:6,each=8),rep(7,nrow(round7) - nrow(round6)))
