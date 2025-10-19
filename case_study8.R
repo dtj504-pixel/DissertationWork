@@ -202,6 +202,10 @@ pred_risk2_g <- predict(gp_risk,newdata=gridd,type="SK")
 
 ## now lets look at the probability that the risk is less than 0.05
 med_risk2 <- exp(pred_risk2_g$mean)
+
+
+#TODO Remove duplicate imports
+
 library(plot3D)
 image2D(matrix(med_risk2,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 ## now lets look at the probability that the risk is less than 0.05 
