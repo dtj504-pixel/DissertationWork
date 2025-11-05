@@ -55,10 +55,10 @@ library(DiceKriging)
 library(dplyr)
 library(plot3D)
 
-## Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
+# Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
 
 
-##CoPilot suggested this could result in a double transformation in lines 62 and 63, which may not be what is intended.
+#CoPilot suggested this could result in a double transformation in lines 62 and 63, which may not be what is intended.
 plot(dat$Ftrgt,log(dat$catch_median_long),log="y")
 plot(dat$Btrigger,log(dat$catch_median_long),log="y")
 plot(dat$Ftrgt,dat$risk1_full,log="y")
@@ -67,19 +67,19 @@ plot(dat$Btrigger,dat$risk1_full,log="y")
 abline(h=0.05,col="red")
 
 
-## Checks length of Ftrgt and Btrigger sets
+# Checks length of Ftrgt and Btrigger sets
 length(unique(dat$Ftrgt))
 length(unique(dat$Btrigger))
 
-## Set Random Number Generator seed for reproducible random sampling.
+# Set Random Number Generator seed for reproducible random sampling.
 
-## Copilot says I could change this to explore sensitivity of the process to the intial sample
+# Copilot says I could change this to explore sensitivity of the process to the intial sample
 set.seed(18)
 
-#### Round 1
+#Round 1
 
-## A space filling algorithm (seems simply chooses evenly spaced points) is used in the first round below to select points,
-## as detailed in Section 3 Case Study in the paper
+#A space filling algorithm (seems simply chooses evenly spaced points) is used in the first round below to select points,
+# as detailed in Section 3 Case Study in the paper
 round1 <- data.frame(Ftrgt=sample(unique(dat$Ftrgt)[floor(seq(2,40,l=8))]),Btrigger=sample(unique(dat$Btrigger),size = 8))
 plot(round1[,2:1])
 
@@ -98,21 +98,21 @@ dat_run <- left_join(round1,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-### build the emulator for median catch
+# build the emulator for median catch
 
-## res_cat is the log of observed median catch at the design runs. The GP
+# res_cat is the log of observed median catch at the design runs. The GP
 # on line 109 models this response using polynomial terms in the formula.
 res_cat <- log(runs$C_long)
 
-## Looks like it is using maximum likelihood estimation below and mentions this nugget thing which Mike was talking about
-## CoPilot says "nugget: a tiny diagonal noise term for numerical stability."
+# Looks like it is using maximum likelihood estimation below and mentions this nugget thing which Mike was talking about
+# CoPilot says "nugget: a tiny diagonal noise term for numerical stability."
 
-## CoPilot also said "covtype = "exp": exponential correlation function (gives a less smooth prior than squared‑exponential)."
-## which could maybe be something to follow up on
+# CoPilot also said "covtype = "exp": exponential correlation function (gives a less smooth prior than squared‑exponential)."
+# which could maybe be something to follow up on
 
-## Also has covariance type which is important for Gaussian Processes
+# Also has covariance type which is important for Gaussian Processes
 
-## Below carries out the Kriging process for the two separate emulators, as detailed in the paper section 3.1
+# Below carries out the Kriging process for the two separate emulators, as detailed in the paper section 3.1
 gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 res_risk <- log(runs$risk3_long)
 
@@ -124,29 +124,29 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 pred_risk1_g <- predict(gp_risk,newdata=gridd,type="SK")
 
 
-## Estimate median predicted risk
+# Estimate median predicted risk
 med_risk1 <- exp(pred_risk1_g$mean)
-## plot it
+# plot it
 image2D(matrix(med_risk1,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 
-## now lets look at the probability that the risk is less than or equal to 0.05
+# now lets look at the probability that the risk is less than or equal to 0.05
 prisk1 <- pnorm(log(0.05),pred_risk1_g$mean,pred_risk1_g$sd+1e-12)
-## plot it
+# plot it
 image2D(matrix(prisk1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 
-## Predicts mean and uncertainty for log(catch) at each parameter combination in gridd
-## SK means simple kriging
+# Predicts mean and uncertainty for log(catch) at each parameter combination in gridd
+# SK means simple kriging
 pred_cat1_g <- predict(gp_cat,newdata=gridd,type="SK")
 
-## Best catch observed so far where risk is below 0.05
+# Best catch observed so far where risk is below 0.05
 max1 <- max(runs$C_long[runs$risk3_long < 0.05])
 
-##Convert to max1 log scale as emulator trained on log(catch)
-## pcat1 is the probability that the catch is less than or equal to max1 (the best safe catch observed) at each point in gridd
+#Convert to max1 log scale as emulator trained on log(catch)
+# pcat1 is the probability that the catch is less than or equal to max1 (the best safe catch observed) at each point in gridd
 pcat1 <- pnorm(log(max1),pred_cat1_g$mean,pred_cat1_g$sd+1e-12)
 
-## mark which points in gridd are still good candidates
+# mark which points in gridd are still good candidates
 eps <- 1e-4
 possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 
@@ -154,40 +154,40 @@ possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 med_cat1 <- exp(pred_cat1_g$mean)
 
 
-## Below produces heat maps for round 1 
+# Below produces heat maps for round 1 
 
 image2D(matrix(med_cat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 image2D(matrix(1-pcat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
-## Visualises region that has risk <0.05 and better catch than best evaluated so far
+# Visualises region that has risk <0.05 and better catch than best evaluated so far
 image2D(matrix(possible1 * (1-pcat1),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-####### collect final points - this is so we know what to do in round 2
+# collect final points - this is so we know what to do in round 2
 pot_points <- gridd[possible1,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
 
-##Removes already evaluated points from those that are still possible so don't evalute again
+#Removes already evaluated points from those that are still possible so don't evalute again
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 
-## The different rounds are prettty much repeats so going
-## to go through when need to to look at hwo to select points
-## better than randomly
+# The different rounds are prettty much repeats so going
+# to go through when need to to look at hwo to select points
+# better than randomly
 
-######### Round 2
+# Round 2
 
-## pot_points is the points that are still plausible as the optimum from the first round
-## we're selecting 8 of these randomly to evaluate next
+# pot_points is the points that are still plausible as the optimum from the first round
+# we're selecting 8 of these randomly to evaluate next
 
-##TODO: Improve this selection process!
+#TODO: Improve this selection process!
 nums <- sample(nrow(pot_points),8)
 # ChatGPT suggests there has been rounding here to 2 sig fig
 new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
-## Added to old data set so now the emulator is trained on this larger dataset so is more informed
+# Added to old data set so now the emulator is trained on this larger dataset so is more informed
 round2 <- rbind(round1,new_points)
 
-## Joining with full daatset and rescaling again
+# Joining with full daatset and rescaling again
 dat_run <- left_join(round2,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
@@ -200,7 +200,7 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk2_g <- predict(gp_risk,newdata=gridd,type="SK")
 
-## now lets look at the probability that the risk is less than 0.05
+# now lets look at the probability that the risk is less than 0.05
 med_risk2 <- exp(pred_risk2_g$mean)
 
 
@@ -208,22 +208,22 @@ med_risk2 <- exp(pred_risk2_g$mean)
 
 library(plot3D)
 image2D(matrix(med_risk2,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
-## now lets look at the probability that the risk is less than 0.05 
+# now lets look at the probability that the risk is less than 0.05 
 prisk2 <- pnorm(log(0.05),pred_risk2_g$mean,pred_risk2_g$sd+1e-12)
 image2D(matrix(prisk2,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
+# now the catch
 
 pred_cat2_g <- predict(gp_cat,newdata=gridd,type="SK")
-## median catch
-max2 <- max(runs$C_long[runs$risk3_long < 0.05])### the max so far
+# median catch
+max2 <- max(runs$C_long[runs$risk3_long < 0.05])# the max so far
 pcat2 <- pnorm(log(max2),pred_cat2_g$mean,pred_cat2_g$sd+1e-12)
 
 possible2 <- (apply(cbind((1-pcat2) , prisk2),1,min) >  eps)
 
 med_cat2 <- exp(pred_cat2_g$mean)
 
-##These are probably the same images as in the first round for the second round
+#These are probably the same images as in the first round for the second round
 
 image2D(matrix(med_cat2,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 image2D(matrix(1-pcat2,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -234,9 +234,9 @@ best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_lon
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
-##### Round 3 - where is the condition to stop if there is only one point left in each round
+# Round 3 - where is the condition to stop if there is only one point left in each round
 
-##Is this a carbon copy of round 2?
+#Is this a carbon copy of round 2?
 
 
 nums <- sample(nrow(pot_points),8)
@@ -278,7 +278,7 @@ best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_lon
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
-######### Round 4
+# Round 4
 nums <- sample(nrow(pot_points),8)
 new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
@@ -318,7 +318,7 @@ best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_lon
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
-######### Round 5
+# Round 5
 nums <- sample(nrow(pot_points),8)
 new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
@@ -357,7 +357,7 @@ best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_lon
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
-######### Round 6
+# Round 6
 nums <- sample(nrow(pot_points),min(8,nrow(pot_points)))
 new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
@@ -380,7 +380,7 @@ image2D(matrix(med_risk6,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort
 prisk6 <- pnorm(log(0.05),pred_risk6_g$mean,pred_risk6_g$sd+1e-12)
 image2D(matrix(prisk6,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-### now the catch
+# now the catch
 
 pred_cat6_g <- predict(gp_cat,newdata=gridd,type="SK")
 max6 <- max(runs$C_long[runs$risk3_long < 0.05])
@@ -398,7 +398,7 @@ best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_lon
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
-###### Round 7
+# Round 7
 nums <- sample(nrow(pot_points),min(8,nrow(pot_points)))
 new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
@@ -435,21 +435,21 @@ image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 
 pot_points <- gridd[possible7,]
 
-### only one left
+# only one left
 
-## We assume it ends in seven rounds every time in this case study, which wouldn't be great for general application
-## Maybe there are other files that are more general than this one that I haven't looked at yet?
+# We assume it ends in seven rounds every time in this case study, which wouldn't be great for general application
+# Maybe there are other files that are more general than this one that I haven't looked at yet?
 ans<-unrescale_Her(pot_points[1,],dat1)
 ans
 
-## Prints the variable round7
+# Prints the variable round7
 round7
 
 round7$Round <- c(rep(1:6,each=8),rep(7,nrow(round7) - nrow(round6)))
 
-## Makes a data set such that we can plot which points were in which round
+# Makes a data set such that we can plot which points were in which round
 dat_round<-left_join(dat,round7) 
 
 
-##Helps us colour code points by the round which they were sampled in
+#Helps us colour code points by the round which they were sampled in
 col_round<-c("white",hcl.colors(7, "viridis", rev = TRUE))
