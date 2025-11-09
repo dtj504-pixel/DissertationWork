@@ -1,6 +1,3 @@
-# Install from CRAN
-install.packages("hetGP")
-
 # Load the library
 library(hetGP)
 
@@ -27,5 +24,3 @@ plot(x, y, pch = 19, cex = 0.6)
 lines(xstar, pred_hom$mean, col = "blue", lwd = 2)
 lines(xstar, pred_hom$mean + 2 * sqrt(pred_hom$sd2), col = "red", lty = 2)
 lines(xstar, pred_hom$mean - 2 * sqrt(pred_hom$sd2), col = "red", lty = 2)
-
-
