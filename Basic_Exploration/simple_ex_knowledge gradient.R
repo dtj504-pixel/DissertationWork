@@ -1,3 +1,5 @@
+# # Copied from https://anhosu.com/post/acquisition-functions-r/ so needs citation - just copied steup at the start
+
 #' Upper and Lower Confidence Bound Acquisition Function
 #' 
 #' @mu vector of length m. Mean of a Gaussian process at m points.

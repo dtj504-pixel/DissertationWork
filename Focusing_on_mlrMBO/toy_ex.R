@@ -1,4 +1,4 @@
-# Currently deterministic and so always giving the same answer, which turns out to be a not very good answer. 
+# Currently deterministic and so always giving the same answer, which turns out to be not very close to the optimum. 
 
 library(mlrMBO)
 library(DiceKriging)

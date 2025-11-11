@@ -1,3 +1,5 @@
+# Copied from https://anhosu.com/post/acquisition-functions-r/ so needs citation
+
 library(ggplot2)
 library(magrittr)
 set.seed(4444)
