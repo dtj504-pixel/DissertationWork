@@ -38,6 +38,7 @@ equal_tol <- function(x,y,tol=1e-12){
 library(DiceKriging)
 library(dplyr)
 library(plot3D)
+library(stats)  
 
 # Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
 
@@ -139,7 +140,6 @@ med_cat1 <- exp(pred_cat1_g$mean)
 
 
 # Below produces heat maps for round 1 
-
 image2D(matrix(med_cat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 image2D(matrix(1-pcat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 # Visualises region that has risk <0.05 and better catch than best evaluated so far
@@ -154,11 +154,10 @@ tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 
-
 # Defining a deterministic objective function for later acquisition function calculation
 objective <- function (Fval, Bval, dat) {
   row <- subset(data, Ftarget == Fval & Btrigger == Bval)
-# Syas if number of rows in row is 0, i.e. row wasn't found, then stop with the warning
+# Says if number of rows in row is 0, i.e. row wasn't found, then stop with the warning
   if (nrow(row) == 0) stop("Combination not found in lookup table.")
   catch <- row$catch
   risk <- row$risk
@@ -166,11 +165,11 @@ objective <- function (Fval, Bval, dat) {
   return(catch)
 }
 
-
-
 # The different rounds are pretty much repeats so going
 # to go through when need to look at how to select points
 # better than randomly
+
+
 
 # Round 2
 
@@ -187,10 +186,10 @@ round2 <- rbind(round1,new_points)
 
 #NEW SELECTION PROCESS USING ACQUISITION FUNCTION
 
-#TODO: need to extract mu and sigma form the GP for catch here and y_best
+#TODO: Could define this fucntion eafrlier on near teh rescale ones?
 
 #' @param xi is a scalar for exploration/exploitation trade off
-expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred_risk1_g) {
+expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred_risk) {
   if (task == "min") imp <- y_best - mu - xi
   if (task == "max") imp <- mu - y_best - xi
   if (is.null(imp)) stop('task must be "min" or "max"')
@@ -201,9 +200,52 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred
   ei <- ifelse(pred_risk1_g > 0.05, 0, ei)
 }
 
-ei1 <- expected_improvement(mu, sigma, y_min, xi = 0.05)
-# Zero out EI for non-plausible points - TODo: Can I move this into the above somehow?
+mu1 <- pred_cat1_g$mean
+sigma1 <- pred_cat1_g$sd
+
+
+ei1 <- expected_improvement(mu1, sigma1, max1, xi = 0.05, pred_risk = pred_risk1_g$mean)
+# Zero out EI for non-plausible points - TODO: Can I move this into the above somehow?
 ei1[!pot_points] <- 0
+
+# Now, putting distance between points I am going to sample
+
+# Combine the grid with EI
+gridd$ei1 <- ei1
+gridd$pot_points <- pot_points
+
+# Filter to plausible points with non-zero EI
+cand <- subset(gridd, pot_points == TRUE & ei1 > 0)
+
+# If there are fewer than 8, take them all
+if (nrow(cand) <= 8) {
+  next_points <- cand[order(-cand$ei1), c("Ftarget", "Btrigger")]
+} else {
+  # Rank by EI
+  top_candidates <- cand[order(-cand$ei1), ][1:nrow(cand), ]
+  
+  # Use k-means to enforce spatial diversity among high-EI points
+  set.seed(123)
+  km <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
+  
+  # Pick the point with the highest EI within each cluster
+  top_candidates$cluster <- km$cluster
+  next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
+    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
+  }))
+  
+  # Sort final points by EI (optional)
+  next_points <- next_points[order(-next_points$ei1), ]
+}
+
+#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
+next_points
+
+coords <- next_points[, c("Ftarget", "Btrigger")]
+new_points <- signif(unrescale_Her(coords, dat1), 2)
+names(new_points) <- c("Ftrgt", "Btrigger")
+round2 <- rbind(round1, new_points)
+
 
 #REAL START OF ROUND 2
 # Joining with full dataset and rescaling again
@@ -275,7 +317,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk3_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk3 <- exp(pred_risk3_g$mean)
-library(plot3D)
 image2D(matrix(med_risk3,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk3 <- pnorm(log(0.05),pred_risk3_g$mean,pred_risk3_g$sd+1e-12)
 image2D(matrix(prisk3,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -315,7 +356,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk4_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk4 <- exp(pred_risk4_g$mean)
-library(plot3D)
 image2D(matrix(med_risk4,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk4 <- pnorm(log(0.05),pred_risk4_g$mean,pred_risk4_g$sd+1e-12)
 image2D(matrix(prisk4,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -355,7 +395,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk5_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk5 <- exp(pred_risk5_g$mean)
-library(plot3D)
 image2D(matrix(med_risk5,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk5 <- pnorm(log(0.05),pred_risk5_g$mean,pred_risk5_g$sd+1e-12)
 image2D(matrix(prisk5,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -394,7 +433,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk6_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk6 <- exp(pred_risk6_g$mean)
-library(plot3D)
 image2D(matrix(med_risk6,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk6 <- pnorm(log(0.05),pred_risk6_g$mean,pred_risk6_g$sd+1e-12)
 image2D(matrix(prisk6,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -435,7 +473,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk7_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk7 <- exp(pred_risk7_g$mean)
-library(plot3D)
 image2D(matrix(med_risk7,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk7 <- pnorm(log(0.05),pred_risk7_g$mean,pred_risk7_g$sd+1e-12)
 image2D(matrix(prisk7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
