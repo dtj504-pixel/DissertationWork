@@ -146,12 +146,12 @@ image2D(matrix(1-pcat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btri
 image2D(matrix(possible1 * (1-pcat1),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 # collect final points - this is so we know what to do in round 2
-pot_points <- gridd[possible1,]
+pot_points1 <- gridd[possible1,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
 
 #Removes already evaluated points from those that are still possible so don't evalute again
-tmp <-setdiff(pot_points,runs[,1:2])
-pot_points <- tmp
+tmp <-setdiff(pot_points1,runs[,1:2])
+pot_points1 <- tmp
 
 
 # Defining a deterministic objective function for later acquisition function calculation
@@ -165,28 +165,15 @@ objective <- function (Fval, Bval, dat) {
   return(catch)
 }
 
-# The different rounds are pretty much repeats so going
-# to go through when need to look at how to select points
-# better than randomly
-
-
-
 # Round 2
 
-# pot_points is the points that are still plausible as the optimum from the first round
-# we're selecting 8 of these randomly to evaluate next
+# pot_points1 is the points that are still plausible as the optimum from the first round
+# we're selecting 8 of these to evaluate next
 
-# === TODO: Improve this selection process! ===
-nums <- sample(nrow(pot_points),8)
-# ChatGPT suggests there has been rounding here to 2 sig fig
-new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
-names(new_points) <- c("Ftrgt", "Btrigger")
-# Added to old data set so now the emulator is trained on this larger dataset so is more informed
-round2 <- rbind(round1,new_points)
 
 #NEW SELECTION PROCESS USING ACQUISITION FUNCTION
 
-#TODO: Could define this fucntion eafrlier on near teh rescale ones?
+#TODO: Could define this function earlier on near the rescale ones?
 
 #' @param xi is a scalar for exploration/exploitation trade off
 expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred_risk) {
@@ -196,23 +183,23 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred
   Z <- imp / sigma
   ei <- imp * pnorm(Z) + sigma * dnorm(Z)
   ei[sigma == 0.0] <- 0.0
-# Giving points with predicted risk > 0.05 an expected improvemeent of zero so we avoid them
-  ei <- ifelse(pred_risk1_g > 0.05, 0, ei)
+# Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
+# So, it already sets any values in gridd with prisk<eps to 0
+# Keeping in even though not needed anymore as not calulating EI for non-plausible points as probably low compute time to add
+  ei <- ifelse(pred_risk < eps, 0, ei)
 }
 
 mu1 <- pred_cat1_g$mean
 sigma1 <- pred_cat1_g$sd
 
+# Computing only for pot_pointd to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei1 <- expected_improvement(mu1, sigma1, max1, xi = 0.05, pred_risk = prisk1)
+pot_points1_with_ei <- pot_points1
+pot_points1_with_ei$ei1<- ei1
 
-ei1 <- expected_improvement(mu1, sigma1, max1, xi = 0.05, pred_risk = pred_risk1_g$mean)
-# Zero out EI for non-plausible points - TODO: Can I move this into the above somehow?
-ei1[!pot_points] <- 0
 
 # Now, putting distance between points I am going to sample
-
-# Combine the grid with EI
-gridd$ei1 <- ei1
-gridd$pot_points <- pot_points
 
 # Filter to plausible points with non-zero EI
 cand <- subset(gridd, pot_points == TRUE & ei1 > 0)
