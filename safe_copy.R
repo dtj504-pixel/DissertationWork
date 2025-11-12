@@ -157,7 +157,7 @@ pot_points1 <- tmp
 # Defining a deterministic objective function for later acquisition function calculation
 objective <- function (Fval, Bval, dat) {
   row <- subset(data, Ftarget == Fval & Btrigger == Bval)
-# Says if number of rows in row is 0, i.e. row wasn't found, then stop with the warning
+  # Says if number of rows in row is 0, i.e. row wasn't found, then stop with the warning
   if (nrow(row) == 0) stop("Combination not found in lookup table.")
   catch <- row$catch
   risk <- row$risk
@@ -183,8 +183,8 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred
   Z <- imp / sigma
   ei <- imp * pnorm(Z) + sigma * dnorm(Z)
   ei[sigma == 0.0] <- 0.0
-# Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
-# TODO: Add whatever other conditions pot_points is filtering on? Then can remove pot_points?
+  # Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
+  # TODO: Add whatever other conditions pot_points is filtering on? Then can remove pot_points?
   ei <- ifelse(pred_risk < eps, 0, ei)
 }
 
@@ -273,54 +273,20 @@ image2D(matrix(med_cat2,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btr
 image2D(matrix(1-pcat2,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible2 * (1-pcat2),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-pot_points2 <- gridd[possible2,]
+pot_points <- gridd[possible2,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
-tmp <-setdiff(pot_points2,runs[,1:2])
-pot_points2 <- tmp
-
+tmp <-setdiff(pot_points,runs[,1:2])
+pot_points <- tmp
 
 # Round 3 - where is the condition to stop if there is only one point left in each round
 
-mu2 <- pred_cat2_g$mean
-sigma2 <- pred_cat2_g$sd
-
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
-# for the next points - TODO: Double check by thinking on some mroe and running
-ei2 <- expected_improvement(mu2, sigma2, max2, xi = 0.05, pred_risk = prisk2)
-gridd2_with_ei <- gridd
-gridd2_with_ei$ei2<- ei2
+#Is this a carbon copy of round 2?
 
 
-# Now, putting distance between points I am going to sample
-
-# Filter to plausible points with non-zero EI
-cand <- subset(gridd2_with_ei, pot_points2 == TRUE & ei2 > 0)
-
-# If there are fewer than 8, take them all
-if (nrow(cand) <= 8) {
-  next_points <- cand[order(-cand$ei2), c("Ftarget", "Btrigger")]
-} else {
-  # Rank by EI
-  top_candidates <- cand[order(-cand$ei2), ][1:nrow(cand), ]
-  
-  # Use k-means to enforce spatial diversity among high-EI points
-  set.seed(123)
-  km <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
-  
-  # Pick the point with the highest EI within each cluster
-  top_candidates$cluster <- km$cluster
-  next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
-  }))
-}
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
-
-coords <- next_points[, c("Ftarget", "Btrigger")]
-new_points <- signif(unrescale_Her(coords, dat1), 2)
+nums <- sample(nrow(pot_points),8)
+new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
-round3 <- rbind(round2, new_points)
+round3 <- rbind(round2,new_points)
 
 dat_run <- left_join(round3,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
@@ -356,47 +322,10 @@ tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 # Round 4
-
-mu3 <- pred_cat3_g$mean
-sigma3 <- pred_cat3_g$sd
-
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
-# for the next points - TODO: Double check by thinking on some mroe and running
-ei3 <- expected_improvement(mu3, sigma3, max3, xi = 0.05, pred_risk = prisk3)
-gridd3_with_ei <- gridd
-gridd3_with_ei$ei3<- ei3
-
-
-# Now, putting distance between points I am going to sample
-
-# Filter to plausible points with non-zero EI
-cand <- subset(gridd3_with_ei, pot_points3 == TRUE & ei3 > 0)
-
-# If there are fewer than 8, take them all
-if (nrow(cand) <= 8) {
-  next_points <- cand[order(-cand$ei3), c("Ftarget", "Btrigger")]
-} else {
-  # Rank by EI
-  top_candidates <- cand[order(-cand$ei3), ][1:nrow(cand), ]
-  
-  # Use k-means to enforce spatial diversity among high-EI points
-  set.seed(123)
-  km <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
-  
-  # Pick the point with the highest EI within each cluster
-  top_candidates$cluster <- km$cluster
-  next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
-  }))
-}
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
-
-coords <- next_points[, c("Ftarget", "Btrigger")]
-new_points <- signif(unrescale_Her(coords, dat1), 2)
+nums <- sample(nrow(pot_points),8)
+new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
-round4 <- rbind(round3, new_points)
+round4 <- rbind(round3,new_points)
 
 dat_run <- left_join(round4,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
@@ -432,47 +361,10 @@ tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 # Round 5
-
-mu4 <- pred_cat4_g$mean
-sigma4 <- pred_cat4_g$sd
-
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
-# for the next points - TODO: Double check by thinking on some mroe and running
-ei4 <- expected_improvement(mu4, sigma4, max4, xi = 0.05, pred_risk = prisk4)
-gridd4_with_ei <- gridd
-gridd4_with_ei$ei4<- ei4
-
-
-# Now, putting distance between points I am going to sample
-
-# Filter to plausible points with non-zero EI
-cand <- subset(gridd4_with_ei, pot_points4 == TRUE & ei4 > 0)
-
-# If there are fewer than 8, take them all
-if (nrow(cand) <= 8) {
-  next_points <- cand[order(-cand$ei4), c("Ftarget", "Btrigger")]
-} else {
-  # Rank by EI
-  top_candidates <- cand[order(-cand$ei4), ][1:nrow(cand), ]
-  
-  # Use k-means to enforce spatial diversity among high-EI points
-  set.seed(123)
-  km <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
-  
-  # Pick the point with the highest EI within each cluster
-  top_candidates$cluster <- km$cluster
-  next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
-  }))
-}
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
-
-coords <- next_points[, c("Ftarget", "Btrigger")]
-new_points <- signif(unrescale_Her(coords, dat1), 2)
+nums <- sample(nrow(pot_points),8)
+new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
-round5 <- rbind(round4, new_points)
+round5 <- rbind(round4,new_points)
 
 dat_run <- left_join(round5,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
@@ -507,47 +399,10 @@ tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 # Round 6
-
-mu5 <- pred_cat5_g$mean
-sigma5 <- pred_cat5_g$sd
-
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
-# for the next points - TODO: Double check by thinking on some mroe and running
-ei5 <- expected_improvement(mu5, sigma5, max5, xi = 0.05, pred_risk = prisk5)
-gridd5_with_ei <- gridd
-gridd5_with_ei$ei5<- ei5
-
-
-# Now, putting distance between points I am going to sample
-
-# Filter to plausible points with non-zero EI
-cand <- subset(gridd5_with_ei, pot_points5 == TRUE & ei5 > 0)
-
-# If there are fewer than 8, take them all
-if (nrow(cand) <= 8) {
-  next_points <- cand[order(-cand$ei5), c("Ftarget", "Btrigger")]
-} else {
-  # Rank by EI
-  top_candidates <- cand[order(-cand$ei5), ][1:nrow(cand), ]
-  
-  # Use k-means to enforce spatial diversity among high-EI points
-  set.seed(123)
-  km <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
-  
-  # Pick the point with the highest EI within each cluster
-  top_candidates$cluster <- km$cluster
-  next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
-  }))
-}
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
-
-coords <- next_points[, c("Ftarget", "Btrigger")]
-new_points <- signif(unrescale_Her(coords, dat1), 2)
+nums <- sample(nrow(pot_points),min(8,nrow(pot_points)))
+new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
-round6 <- rbind(round5, new_points)
+round6 <- rbind(round5,new_points)
 
 dat_run <- left_join(round6,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
@@ -584,47 +439,10 @@ tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
 # Round 7
-
-mu6 <- pred_cat6_g$mean
-sigma6 <- pred_cat6_g$sd
-
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
-# for the next points - TODO: Double check by thinking on some mroe and running
-ei6 <- expected_improvement(mu6, sigma6, max6, xi = 0.05, pred_risk = prisk6)
-gridd6_with_ei <- gridd
-gridd6_with_ei$ei6<- ei6
-
-
-# Now, putting distance between points I am going to sample
-
-# Filter to plausible points with non-zero EI
-cand <- subset(gridd6_with_ei, pot_points6 == TRUE & ei6 > 0)
-
-# If there are fewer than 8, take them all
-if (nrow(cand) <= 8) {
-  next_points <- cand[order(-cand$ei6), c("Ftarget", "Btrigger")]
-} else {
-  # Rank by EI
-  top_candidates <- cand[order(-cand$ei6), ][1:nrow(cand), ]
-  
-  # Use k-means to enforce spatial diversity among high-EI points
-  set.seed(123)
-  km <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
-  
-  # Pick the point with the highest EI within each cluster
-  top_candidates$cluster <- km$cluster
-  next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
-  }))
-}
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
-
-coords <- next_points[, c("Ftarget", "Btrigger")]
-new_points <- signif(unrescale_Her(coords, dat1), 2)
+nums <- sample(nrow(pot_points),min(8,nrow(pot_points)))
+new_points <- signif(unrescale_Her(pot_points[nums,],dat1),2)
 names(new_points) <- c("Ftrgt", "Btrigger")
-round7 <- rbind(round6, new_points)
+round7 <- rbind(round6,new_points)
 
 dat_run <- left_join(round7,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
