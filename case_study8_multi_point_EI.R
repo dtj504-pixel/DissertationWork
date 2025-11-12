@@ -184,25 +184,24 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred
   ei <- imp * pnorm(Z) + sigma * dnorm(Z)
   ei[sigma == 0.0] <- 0.0
 # Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
-# So, it already sets any values in gridd with prisk<eps to 0
-# Keeping in even though not needed anymore as not calulating EI for non-plausible points as probably low compute time to add
+# TODO: Add whatever other conditions pot_points is filtering on? Then can remove pot_points?
   ei <- ifelse(pred_risk < eps, 0, ei)
 }
 
 mu1 <- pred_cat1_g$mean
 sigma1 <- pred_cat1_g$sd
 
-# Computing only for pot_pointd to save compute time as only pot_points are looked at in our selection process
+# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
 ei1 <- expected_improvement(mu1, sigma1, max1, xi = 0.05, pred_risk = prisk1)
-pot_points1_with_ei <- pot_points1
-pot_points1_with_ei$ei1<- ei1
+gridd1_with_ei <- gridd
+gridd1_with_ei$ei1<- ei1
 
 
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd, pot_points == TRUE & ei1 > 0)
+cand <- subset(gridd1_with_ei, pot_points == TRUE & ei1 > 0)
 
 # If there are fewer than 8, take them all
 if (nrow(cand) <= 8) {
@@ -219,10 +218,7 @@ if (nrow(cand) <= 8) {
   top_candidates$cluster <- km$cluster
   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
     df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
-  }))
-  
-  # Sort final points by EI (optional)
-  next_points <- next_points[order(-next_points$ei1), ]
+  })) 
 }
 
 #this is a data frame with Ftarget and Btrigger in - I likely need to extract these
