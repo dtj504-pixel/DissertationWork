@@ -175,7 +175,7 @@ objective <- function (Fval, Bval, dat) {
 #TODO: Could define this function earlier on near the rescale ones?
 
 #' @param xi is a scalar for exploration/exploitation trade off
-expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred_risk) {
+expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max",pred_risk) {
   if (task == "min") imp <- y_best - mu - xi
   if (task == "max") imp <- mu - y_best - xi
   if (is.null(imp)) stop('task must be "min" or "max"')
@@ -323,12 +323,9 @@ if (nrow(cand) <= 8) {
   # Pick the point with the highest EI within each cluster
   top_candidates$cluster <- km$cluster
   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
+    df[which.max(df$ei2), c("Ftarget", "Btrigger", "ei2")]
   }))
 }
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
 
 coords <- next_points[, c("Ftarget", "Btrigger")]
 new_points <- signif(unrescale_Her(coords, dat1), 2)
@@ -409,12 +406,9 @@ if (nrow(cand) <= 8) {
   # Pick the point with the highest EI within each cluster
   top_candidates$cluster <- km$cluster
   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
+    df[which.max(df$ei3), c("Ftarget", "Btrigger", "ei3")]
   }))
 }
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
 
 coords <- next_points[, c("Ftarget", "Btrigger")]
 new_points <- signif(unrescale_Her(coords, dat1), 2)
@@ -495,12 +489,9 @@ if (nrow(cand) <= 8) {
   # Pick the point with the highest EI within each cluster
   top_candidates$cluster <- km$cluster
   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
+    df[which.max(df$ei4), c("Ftarget", "Btrigger", "ei4")]
   }))
 }
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
 
 coords <- next_points[, c("Ftarget", "Btrigger")]
 new_points <- signif(unrescale_Her(coords, dat1), 2)
@@ -580,7 +571,7 @@ if (nrow(cand) <= 8) {
   # Pick the point with the highest EI within each cluster
   top_candidates$cluster <- km$cluster
   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
+    df[which.max(df$ei5), c("Ftarget", "Btrigger", "ei5")]
   }))
 }
 
@@ -664,7 +655,7 @@ if (nrow(cand) <= 8) {
   # Pick the point with the highest EI within each cluster
   top_candidates$cluster <- km$cluster
   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-    df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
+    df[which.max(df$ei6), c("Ftarget", "Btrigger", "ei6")]
   }))
 }
 
@@ -709,7 +700,7 @@ pot_points7
 
 # We assume it ends in seven rounds every time in this case study, which wouldn't be great for general application
 # Maybe there are other files that are more general than this one that I haven't looked at yet?
-ans<-unrescale_Her(pot_points[1,],dat1)
+ans<-unrescale_Her(pot_points7[1,],dat1)
 ans
 
 # Prints the variable round7
