@@ -41,8 +41,6 @@ library(plot3D)
 library(stats)  
 
 # Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
-
-
 #CoPilot suggested this could result in a double transformation in lines 62 and 63, which may not be what is intended.
 plot(dat$Ftrgt,log(dat$catch_median_long),log="y")
 plot(dat$Btrigger,log(dat$catch_median_long),log="y")
@@ -57,7 +55,6 @@ length(unique(dat$Ftrgt))
 length(unique(dat$Btrigger))
 
 # Set Random Number Generator seed for reproducible random sampling.
-
 # Copilot says I could change this to explore sensitivity of the process to the intial sample
 set.seed(18)
 
@@ -78,7 +75,6 @@ names(dat1) <- c("Ftarget","Btrigger")
 gridd <- dat1[,c("Ftarget","Btrigger")]
 gridd<- rescale_Her(gridd[order(gridd$Ftarget,gridd$Btrigger),],dat=dat1)
 
-#CoPilpt says that runs only contains the data for the points evaluated in round 1
 dat_run <- left_join(round1,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
@@ -149,11 +145,14 @@ image2D(matrix(possible1 * (1-pcat1),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 pot_points1 <- gridd[possible1,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
 
-#Removes already evaluated points from those that are still possible so don't evalute again
+#Removes already evaluated points from those that are still possible so don't evalute again - mIGHT DO LATER< SO REMOVE
 tmp <-setdiff(pot_points1,runs[,1:2])
 pot_points1 <- tmp
 
+pot_points1
 
+# TODOD: Do I use this anywhere? - I might have a different way of evaluating points
+# but I should change it to this for general applicability
 # Defining a deterministic objective function for later acquisition function calculation
 objective <- function (Fval, Bval, dat) {
   row <- subset(data, Ftarget == Fval & Btrigger == Bval)
@@ -186,29 +185,40 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.01, task = "max",pred
 # Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
 # TODO: Add whatever other conditions pot_points is filtering on? Then can remove pot_points?
   ei <- ifelse(pred_risk < eps, 0, ei)
+  return(ei)
 }
 
 mu1 <- pred_cat1_g$mean
 sigma1 <- pred_cat1_g$sd
 
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
+# Computing only for pot_points1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
-ei1 <- expected_improvement(mu1, sigma1, max1, xi = 0.05, pred_risk = prisk1)
+ei1 <- expected_improvement(mu1, sigma1, log(max1), xi = 0.05, pred_risk = prisk1)
 gridd1_with_ei <- gridd
 gridd1_with_ei$ei1<- ei1
+gridd1_with_ei$possible1 <- possible1
 
 
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd1_with_ei, pot_points1 == TRUE & ei1 > 0)
+# WANT TO replace pot_points1 with possible1 but then may have an issue as won't remove the points I have alraedy evaluated
+cand1 <- subset(gridd1_with_ei, possible1 == TRUE & ei1 > 0)
+
+# Create composite keys to avoid floating point errors
+cand1$key <- paste(cand1$Ftarget, cand1$Btrigger, sep = "_")
+runs$key <- paste(runs$Ftarget, runs$Btrigger, sep = "_")
+
+# Remove already evaluated points
+cand1 <- cand1[!(cand1$key %in% runs$key), ]
+
 
 # If there are fewer than 8, take them all
-if (nrow(cand) <= 8) {
-  next_points <- cand[order(-cand$ei1), c("Ftarget", "Btrigger")]
+if (nrow(cand1) <= 8) {
+  next_points <- cand1[order(-cand1$ei1), c("Ftarget", "Btrigger")]
 } else {
   # Rank by EI
-  top_candidates <- cand[order(-cand$ei1), ][1:nrow(cand), ]
+  top_candidates <- cand1[order(-cand1$ei1), ][1:nrow(cand1), ]
   
   # Use k-means to enforce spatial diversity among high-EI points
   set.seed(123)
@@ -220,9 +230,6 @@ if (nrow(cand) <= 8) {
     df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
   }))
 }
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
 
 coords <- next_points[, c("Ftarget", "Btrigger")]
 new_points <- signif(unrescale_Her(coords, dat1), 2)
@@ -246,10 +253,6 @@ pred_risk2_g <- predict(gp_risk,newdata=gridd,type="SK")
 
 # now lets look at the probability that the risk is less than 0.05
 med_risk2 <- exp(pred_risk2_g$mean)
-
-
-#TODO: Remove duplicate imports
-
 
 image2D(matrix(med_risk2,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 # now lets look at the probability that the risk is less than 0.05 
@@ -277,16 +280,17 @@ pot_points2 <- gridd[possible2,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
 tmp <-setdiff(pot_points2,runs[,1:2])
 pot_points2 <- tmp
+pot_points2
 
 
-# Round 3 - where is the condition to stop if there is only one point left in each round
+# Round 3 - where is the condition to stop if there is only one point left in each round? - issue for round 7 really
 
 mu2 <- pred_cat2_g$mean
 sigma2 <- pred_cat2_g$sd
 
-# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
+# Computing only for pot_points1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
-ei2 <- expected_improvement(mu2, sigma2, max2, xi = 0.05, pred_risk = prisk2)
+ei2 <- expected_improvement(mu2, sigma2, log(max2), xi = 0.05, pred_risk = prisk2)
 gridd2_with_ei <- gridd
 gridd2_with_ei$ei2<- ei2
 
@@ -294,7 +298,16 @@ gridd2_with_ei$ei2<- ei2
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd2_with_ei, pot_points2 == TRUE & ei2 > 0)
+# WANT TO replace pot_points1 with possible1 but then may have an issue as won't remove the points I have alraedy evaluated
+cand <- subset(gridd2_with_ei, possible2 == TRUE & ei2 > 0)
+
+# Create composite keys to avoid floating point errors
+cand$key <- paste(cand$Ftarget, cand$Btrigger, sep = "_")
+runs$key <- paste(runs$Ftarget, runs$Btrigger, sep = "_")
+
+# Remove already evaluated points
+cand <- cand[!(cand$key %in% runs$key), ]
+
 
 # If there are fewer than 8, take them all
 if (nrow(cand) <= 8) {
@@ -350,10 +363,12 @@ image2D(matrix(1-pcat3,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btri
 image2D(matrix(possible3 * (1-pcat3),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 #renaming as possiblen for round n so that the variables are clearer
-pot_points <- gridd[possible3,]
+pot_points3 <- gridd[possible3,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
-tmp <-setdiff(pot_points,runs[,1:2])
-pot_points <- tmp
+tmp <-setdiff(pot_points3,runs[,1:2])
+pot_points3 <- tmp
+
+pot_points3
 
 # Round 4
 
@@ -362,7 +377,7 @@ sigma3 <- pred_cat3_g$sd
 
 # Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
-ei3 <- expected_improvement(mu3, sigma3, max3, xi = 0.05, pred_risk = prisk3)
+ei3 <- expected_improvement(mu3, sigma3, log(max3), xi = 0.05, pred_risk = prisk3)
 gridd3_with_ei <- gridd
 gridd3_with_ei$ei3<- ei3
 
@@ -370,7 +385,15 @@ gridd3_with_ei$ei3<- ei3
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd3_with_ei, pot_points3 == TRUE & ei3 > 0)
+# WANT TO replace pot_points1 with possible1 but then may have an issue as won't remove the points I have alraedy evaluated
+cand <- subset(gridd3_with_ei, possible3 == TRUE & ei3 > 0)
+
+# Create composite keys to avoid floating point errors
+cand$key <- paste(cand$Ftarget, cand$Btrigger, sep = "_")
+runs$key <- paste(runs$Ftarget, runs$Btrigger, sep = "_")
+
+# Remove already evaluated points
+cand <- cand[!(cand$key %in% runs$key), ]
 
 # If there are fewer than 8, take them all
 if (nrow(cand) <= 8) {
@@ -426,10 +449,12 @@ image2D(matrix(med_cat4,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btr
 image2D(matrix(1-pcat4,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible4 * (1-pcat4),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-pot_points <- gridd[possible4,]
+pot_points4 <- gridd[possible4,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
-tmp <-setdiff(pot_points,runs[,1:2])
-pot_points <- tmp
+tmp <-setdiff(pot_points4,runs[,1:2])
+pot_points4 <- tmp
+
+pot_points4
 
 # Round 5
 
@@ -438,7 +463,7 @@ sigma4 <- pred_cat4_g$sd
 
 # Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
-ei4 <- expected_improvement(mu4, sigma4, max4, xi = 0.05, pred_risk = prisk4)
+ei4 <- expected_improvement(mu4, sigma4, log(max4), xi = 0.05, pred_risk = prisk4)
 gridd4_with_ei <- gridd
 gridd4_with_ei$ei4<- ei4
 
@@ -446,7 +471,15 @@ gridd4_with_ei$ei4<- ei4
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd4_with_ei, pot_points4 == TRUE & ei4 > 0)
+# WANT TO replace pot_points1 with possible1 but then may have an issue as won't remove the points I have alraedy evaluated
+cand <- subset(gridd4_with_ei, possible4 == TRUE & ei4 > 0)
+
+# Create composite keys to avoid floating point errors
+cand$key <- paste(cand$Ftarget, cand$Btrigger, sep = "_")
+runs$key <- paste(runs$Ftarget, runs$Btrigger, sep = "_")
+
+# Remove already evaluated points
+cand <- cand[!(cand$key %in% runs$key), ]
 
 # If there are fewer than 8, take them all
 if (nrow(cand) <= 8) {
@@ -501,10 +534,12 @@ image2D(matrix(med_cat5,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btr
 image2D(matrix(1-pcat5,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible5 * (1-pcat5),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-pot_points <- gridd[possible5,]
+pot_points5 <- gridd[possible5,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
-tmp <-setdiff(pot_points,runs[,1:2])
-pot_points <- tmp
+tmp <-setdiff(pot_points5,runs[,1:2])
+pot_points5 <- tmp
+
+pot_points5
 
 # Round 6
 
@@ -513,7 +548,7 @@ sigma5 <- pred_cat5_g$sd
 
 # Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
-ei5 <- expected_improvement(mu5, sigma5, max5, xi = 0.05, pred_risk = prisk5)
+ei5 <- expected_improvement(mu5, sigma5, log(max5), xi = 0.05, pred_risk = prisk5)
 gridd5_with_ei <- gridd
 gridd5_with_ei$ei5<- ei5
 
@@ -521,7 +556,15 @@ gridd5_with_ei$ei5<- ei5
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd5_with_ei, pot_points5 == TRUE & ei5 > 0)
+# WANT TO replace pot_points1 with possible1 but then may have an issue as won't remove the points I have alraedy evaluated
+cand <- subset(gridd5_with_ei, possible5 == TRUE & ei5 > 0)
+
+# Create composite keys to avoid floating point errors
+cand$key <- paste(cand$Ftarget, cand$Btrigger, sep = "_")
+runs$key <- paste(runs$Ftarget, runs$Btrigger, sep = "_")
+
+# Remove already evaluated points
+cand <- cand[!(cand$key %in% runs$key), ]
 
 # If there are fewer than 8, take them all
 if (nrow(cand) <= 8) {
@@ -540,9 +583,6 @@ if (nrow(cand) <= 8) {
     df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
   }))
 }
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
 
 coords <- next_points[, c("Ftarget", "Btrigger")]
 new_points <- signif(unrescale_Her(coords, dat1), 2)
@@ -578,10 +618,12 @@ image2D(matrix(med_cat6,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btr
 image2D(matrix(1-pcat6,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible6 * (1-pcat6),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-pot_points <- gridd[possible6,]
+pot_points6 <- gridd[possible6,]
 best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_long < 0.05]),c("Ftarget","Btrigger")]
-tmp <-setdiff(pot_points,runs[,1:2])
-pot_points <- tmp
+tmp <-setdiff(pot_points6,runs[,1:2])
+pot_points6 <- tmp
+
+pot_points6
 
 # Round 7
 
@@ -590,7 +632,7 @@ sigma6 <- pred_cat6_g$sd
 
 # Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
 # for the next points - TODO: Double check by thinking on some mroe and running
-ei6 <- expected_improvement(mu6, sigma6, max6, xi = 0.05, pred_risk = prisk6)
+ei6 <- expected_improvement(mu6, sigma6, log(max6), xi = 0.05, pred_risk = prisk6)
 gridd6_with_ei <- gridd
 gridd6_with_ei$ei6<- ei6
 
@@ -598,7 +640,15 @@ gridd6_with_ei$ei6<- ei6
 # Now, putting distance between points I am going to sample
 
 # Filter to plausible points with non-zero EI
-cand <- subset(gridd6_with_ei, pot_points6 == TRUE & ei6 > 0)
+# WANT TO replace pot_points1 with possible1 but then may have an issue as won't remove the points I have alraedy evaluated
+cand <- subset(gridd6_with_ei, possible6 == TRUE & ei6 > 0)
+
+# Create composite keys to avoid floating point errors
+cand$key <- paste(cand$Ftarget, cand$Btrigger, sep = "_")
+runs$key <- paste(runs$Ftarget, runs$Btrigger, sep = "_")
+
+# Remove already evaluated points
+cand <- cand[!(cand$key %in% runs$key), ]
 
 # If there are fewer than 8, take them all
 if (nrow(cand) <= 8) {
@@ -617,9 +667,6 @@ if (nrow(cand) <= 8) {
     df[which.max(df$ei1), c("Ftarget", "Btrigger", "ei1")]
   }))
 }
-
-#this is a data frame with Ftarget and Btrigger in - I likely need to extract these
-next_points
 
 coords <- next_points[, c("Ftarget", "Btrigger")]
 new_points <- signif(unrescale_Her(coords, dat1), 2)
@@ -654,9 +701,11 @@ image2D(matrix(med_cat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btr
 image2D(matrix(1-pcat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
-pot_points <- gridd[possible7,]
+pot_points7 <- gridd[possible7,]
 
-# only one left
+pot_points7
+
+#only one left
 
 # We assume it ends in seven rounds every time in this case study, which wouldn't be great for general application
 # Maybe there are other files that are more general than this one that I haven't looked at yet?
