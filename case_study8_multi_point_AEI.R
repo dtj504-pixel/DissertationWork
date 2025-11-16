@@ -37,17 +37,25 @@ equal_tol <- function(x,y,tol=1e-12){
 
 
 #' @param xi is a scalar for exploration/exploitation trade off
-expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pred_risk, eps = 1e-4) 
+augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pred_risk, eps = 1e-4, noise_var = 0) 
 {
+  # Standard EI calculation
   if (task == "min") imp <- y_best - mu - xi
   if (task == "max") imp <- mu - y_best - xi
-  if (is.null(imp)) stop('task must be "min" or "max"')
+  if (is.null(imp)) stop('task must be "min" or "max"') 
   Z <- imp / sigma
   ei <- imp * pnorm(Z) + sigma * dnorm(Z)
   ei[sigma == 0.0] <- 0.0
-# Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
-  ei <- ifelse(pred_risk < eps, 0, ei)
-  return(ei)
+  
+  # Augmentation factor to handle noise
+  # When noise_var = 0, augmentation_factor = 1 (reduces to standard EI)
+  augmentation_factor <- 1 - sqrt(noise_var / (noise_var + sigma^2))
+  aei <- ei * augmentation_factor
+  
+  # Apply constraint (zero EI where risk constraint violated)
+  aei <- ifelse(pred_risk < eps, 0, aei)
+  
+  return(aei)
 }
 
 library(DiceKriging)
@@ -179,9 +187,9 @@ objective <- function (Fval, Bval, dat) {
 mu1 <- pred_cat1_g$mean
 sigma1 <- pred_cat1_g$sd
 
-# Would like to compute only for pot_points1 to save time as only pot_points1 are looked at in our selection process
-# for the next points, but seems to cause vector issues - TODO: Double check by thinking on some more and running
-ei1 <- expected_improvement(mu1, sigma1, log(max1), xi = 0.05, pred_risk = prisk1, eps = 1e-4)
+# Computing only for pot_points1 to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei1 <- augmented_expected_improvement(mu1, sigma1, log(max1), xi = 0.05, pred_risk = prisk1, eps = 1e-4, noise_var = 0)
 gridd1_with_ei <- gridd
 gridd1_with_ei$ei1<- ei1
 gridd1_with_ei$possible1 <- possible1
@@ -269,7 +277,9 @@ image2D(matrix(possible2 * (1-pcat2),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 mu2 <- pred_cat2_g$mean
 sigma2 <- pred_cat2_g$sd
 
-ei2 <- expected_improvement(mu2, sigma2, log(max2), xi = 0.05, pred_risk = prisk2, eps = 1e-4)
+# Computing only for pot_points1 to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei2 <- augmented_expected_improvement(mu2, sigma2, log(max2), xi = 0.05, pred_risk = prisk2, eps = 1e-4, noise_var = 0)
 gridd2_with_ei <- gridd
 gridd2_with_ei$ei2<- ei2
 
@@ -343,7 +353,9 @@ image2D(matrix(possible3 * (1-pcat3),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 mu3 <- pred_cat3_g$mean
 sigma3 <- pred_cat3_g$sd
 
-ei3 <- expected_improvement(mu3, sigma3, log(max3), xi = 0.05, pred_risk = prisk3, eps = 1e-4)
+# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei3 <- augmented_expected_improvement(mu3, sigma3, log(max3), xi = 0.05, pred_risk = prisk3, eps = 1e-4, noise_var = 0)
 gridd3_with_ei <- gridd
 gridd3_with_ei$ei3<- ei3
 
@@ -416,7 +428,9 @@ image2D(matrix(possible4 * (1-pcat4),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 mu4 <- pred_cat4_g$mean
 sigma4 <- pred_cat4_g$sd
 
-ei4 <- expected_improvement(mu4, sigma4, log(max4), xi = 0.05, pred_risk = prisk4, eps = 1e-4)
+# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei4 <- augmented_expected_improvement(mu4, sigma4, log(max4), xi = 0.05, pred_risk = prisk4, eps = 1e-4, noise_var = 0)
 gridd4_with_ei <- gridd
 gridd4_with_ei$ei4<- ei4
 
@@ -489,7 +503,9 @@ image2D(matrix(possible5 * (1-pcat5),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 mu5 <- pred_cat5_g$mean
 sigma5 <- pred_cat5_g$sd
 
-ei5 <- expected_improvement(mu5, sigma5, log(max5), xi = 0.05, pred_risk = prisk5, eps = 1e-4)
+# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei5 <- augmented_expected_improvement(mu5, sigma5, log(max5), xi = 0.05, pred_risk = prisk5, eps = 1e-4, noise_var = 0)
 gridd5_with_ei <- gridd
 gridd5_with_ei$ei5<- ei5
 
@@ -565,7 +581,9 @@ image2D(matrix(possible6 * (1-pcat6),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 mu6 <- pred_cat6_g$mean
 sigma6 <- pred_cat6_g$sd
 
-ei6 <- expected_improvement(mu6, sigma6, log(max6), xi = 0.05, pred_risk = prisk6, eps = 1e-4)
+# Computing only for pot_point1 to save compute time as only pot_points are looked at in our selection process
+# for the next points - TODO: Double check by thinking on some mroe and running
+ei6 <- augmented_expected_improvement(mu6, sigma6, log(max6), xi = 0.05, pred_risk = prisk6, eps = 1e-4, noise_var = 0)
 gridd6_with_ei <- gridd
 gridd6_with_ei$ei6<- ei6
 
@@ -632,6 +650,7 @@ med_cat7 <- exp(pred_cat7_g$mean)
 image2D(matrix(med_cat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 image2D(matrix(1-pcat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+
 
 #TODO: Make number of rounds more flexible
 
