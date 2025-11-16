@@ -36,24 +36,72 @@ equal_tol <- function(x,y,tol=1e-12){
 }
 
 
-#' @param xi is a scalar for exploration/exploitation trade off
-expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pred_risk, eps = 1e-4) 
-{
-  if (task == "min") imp <- y_best - mu - xi
-  if (task == "max") imp <- mu - y_best - xi
-  if (is.null(imp)) stop('task must be "min" or "max"')
-  Z <- imp / sigma
-  ei <- imp * pnorm(Z) + sigma * dnorm(Z)
-  ei[sigma == 0.0] <- 0.0
-# Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
-  ei <- ifelse(pred_risk < eps, 0, ei)
-  return(ei)
-}
-
 library(DiceKriging)
 library(dplyr)
 library(plot3D)
-library(stats)  
+library(stats)
+  
+
+cov_exp <- function(X1, X2, theta, sigma2) {
+  n1 <- nrow(X1)
+  n2 <- nrow(X2)
+  
+  # pairwise |difference| weighted by theta
+  D <- array(0, dim = c(n1, n2))
+  
+  for (j in seq_along(theta)) {
+    D <- D + theta[j] * abs(outer(X1[, j], X2[, j], "-"))
+  }
+  
+  sigma2 * exp(-D)
+}
+
+
+
+knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 100, pred_risk, eps = 1e-4) 
+{ 
+    X_pred <- dat[, c("Ftrgt", "Btrigger")]
+    cov_grid <- cov_exp(X_pred, X_pred, theta = model@covariance@range.val, sigma2 = model@covariance@sd2)
+
+    m <- length(mu)
+    var <- sigma^2
+    # Current best mean catch
+    mu_best <- max(mu)
+    
+     kg <- numeric(m)
+
+        # Loop over candidate points
+        for (i in seq_len(m)) {
+
+            # skip unsafe points early
+            if (pred_risk[i] < eps) {
+                kg[i] <- 0
+                next
+            }
+
+            mu_i <- mu[i]
+            sigma_i <- sqrt(var[i] + obs_noise_var)
+
+            # nsim simulated observations
+            y_sim <- rnorm(nsim, mu_i, sigma_i)
+
+            # analytic GP update components
+            cov_xp_xi <- cov_grid[, i]
+            denom <- var[i] + obs_noise_var
+
+            # For each simulated y, compute updated max(mu)
+            max_after <- numeric(nsim)
+            for (s in seq_len(nsim)) {
+                mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
+                max_after[s] <- max(mu_new)
+            }
+
+            # Monte-Carlo KG estimate
+            kg[i] <- mean(max_after - mu_best)
+        }
+
+    kg
+}
 
 # Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
 #CoPilot suggested this could result in a double transformation in lines 62 and 63, which may not be what is intended.
@@ -194,7 +242,8 @@ for (iteration in 2:max_rounds) {
   # Calculate EI
   mu <- pred_cat_g$mean
   sigma <- pred_cat_g$sd
-  ei <- expected_improvement(mu, sigma, log(current_max), xi = 0.05, pred_risk = prisk, eps = eps)
+  #TDOD: Put in correct X_pred
+  ei <- knowledge_gradient_sim(mu, sigma, gp_cat, obs_noise_var = 0, nsim = 100, pred_risk = prisk, eps = 1e-4)
   
   # Create candidate set
   gridd_with_ei <- gridd

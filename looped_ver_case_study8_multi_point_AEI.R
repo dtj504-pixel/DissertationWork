@@ -52,7 +52,7 @@ augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = 
   augmentation_factor <- 1 - sqrt(noise_var / (noise_var + sigma^2))
   aei <- ei * augmentation_factor
   
-  # Apply constraint (zero EI where risk constraint violated)
+  # Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
   aei <- ifelse(pred_risk < eps, 0, aei)
   
   return(aei)
@@ -176,15 +176,15 @@ cat("Current maximum", current_max)
 all_rounds <- round1
 all_rounds$Round <- 1
 
-# ==================== ITERATIVE ROUNDS ====================
+# ITERATIVE ROUNDS
 max_rounds <- 20
 round_num <- 1
 
 for (iteration in 2:max_rounds) {
   
-  cat("\n========== Round", iteration, "==========\n")
+  cat("\n  Round", iteration, "\n")
   
-  # Calculate EI
+  # Calculate AEI
   mu <- pred_cat_g$mean
   sigma <- pred_cat_g$sd
   ei <- augmented_expected_improvement(mu, sigma, log(current_max), xi = 0.05, pred_risk = prisk, eps = eps, noise_var = 0)
@@ -211,7 +211,7 @@ for (iteration in 2:max_rounds) {
   
   cat("Unevaluated candidates with EI > 0:", nrow(cand), "\n")
   
-  # ===== Select next points =====
+  # Select next points
   if (nrow(cand) <= 8) {
     next_points <- cand[order(-cand$ei), c("Ftarget", "Btrigger")]
   } else {
@@ -229,11 +229,9 @@ for (iteration in 2:max_rounds) {
   new_points <- signif(unrescale_Her(coords, dat1), 2)
   names(new_points) <- c("Ftrgt", "Btrigger")
   new_points$Round <- iteration
-  
-  # Store in all_rounds
+
   all_rounds <- rbind(all_rounds, new_points[, c("Ftrgt", "Btrigger", "Round")])
-  
-  # ===== Evaluate new points =====
+
   new_round <- rbind(
     all_rounds[all_rounds$Round < iteration, c("Ftrgt", "Btrigger")],
     new_points[, c("Ftrgt", "Btrigger")]
@@ -242,35 +240,23 @@ for (iteration in 2:max_rounds) {
   dat_run <- left_join(new_round, dat)
   names(dat_run) <- c("Ftarget", "Btrigger", "C_long", "risk3_long")
   runs <- rescale_Her(dat_run, dat = dat1)
-  
-  # ===== Refit emulators (with complex formula from Round 2 onwards) =====
+
   res_cat <- log(runs$C_long)
-  gp_cat <- km(~I(log(Ftarget+0.1)^2) + I(log(Ftarget+0.1)) + 
-               I(log(Ftarget+0.1)^3) + I(Btrigger) + 
-               I(Btrigger * log(Ftarget+0.1)),
-               design = runs[, c("Ftarget", "Btrigger")], 
-               estim.method = "MLE", response = res_cat, 
-               nugget = 1e-12 * var(res_cat), covtype = "exp")
+  gp_cat <- km(~I(log(Ftarget+0.1)^2) + I(log(Ftarget+0.1)) + I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)), design = runs[, c("Ftarget", "Btrigger")], estim.method = "MLE", response = res_cat, nugget = 1e-12 * var(res_cat), covtype = "exp")
   
   res_risk <- log(runs$risk3_long)
-  gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], 
-                estim.method = "MLE", response = res_risk, 
-                nugget = 1e-12 * var(res_risk), covtype = "exp")
+  gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], estim.method = "MLE", response = res_risk, nugget = 1e-12 * var(res_risk), covtype = "exp")
   
-  # ===== Predict on grid =====
+  # Predict on grid 
   pred_risk_g <- predict(gp_risk, newdata = gridd, type = "SK")
   pred_cat_g <- predict(gp_cat, newdata = gridd, type = "SK")
   
-  # ===== Plotting =====
+  # Plotting
   med_risk <- exp(pred_risk_g$mean)
-  image2D(matrix(med_risk, nrow=11), breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),
-          y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)),
-          xlab="Btrigger", ylab="Ftrgt")
+  image2D(matrix(med_risk, nrow=11), breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt")
   
   prisk <- pnorm(log(0.05), pred_risk_g$mean, pred_risk_g$sd + 1e-12)
-  image2D(matrix(prisk, nrow=11), y=sort(unique(dat$Ftrgt)), 
-          x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt",
-          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  image2D(matrix(prisk, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
   current_max <- max(runs$C_long[runs$risk3_long < 0.05])
   pcat <- pnorm(log(current_max), pred_cat_g$mean, pred_cat_g$sd + 1e-12)
@@ -282,7 +268,7 @@ for (iteration in 2:max_rounds) {
   image2D(matrix(1-pcat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   image2D(matrix(possible * (1-pcat), nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
-  # ===== STOPPING CRITERION =====
+  # STOPPING CRITERION 
   if (sum(possible) == 0) {
     cat("No plausible points remaining. Stopping at round", iteration, "\n")
     break
@@ -294,8 +280,8 @@ for (iteration in 2:max_rounds) {
   round_num <- iteration
 }
 
-# ==================== FINAL RESULTS ====================
-cat("\n========== OPTIMIZATION COMPLETE ==========\n")
+# FINAL RESULTS
+cat("\n OPTIMIZATION COMPLETE \n")
 cat("Completed", round_num, "rounds\n")
 cat("Total evaluations:", nrow(runs), "\n")
 
