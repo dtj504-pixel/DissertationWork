@@ -105,19 +105,8 @@ dat_run <- left_join(round1,dat)
 names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
-# build the emulator for median catch
-
-# res_cat is the log of observed median catch at the design runs. The GP
-# on line 109 models this response using polynomial terms in the formula.
+# res_cat is the log of observed median catch at the design runs
 res_cat <- log(runs$C_long)
-
-# Looks like it is using maximum likelihood estimation below and mentions this nugget thing which Mike was talking about
-# CoPilot says "nugget: a tiny diagonal noise term for numerical stability."
-
-# CoPilot also said "covtype = "exp": exponential correlation function (gives a less smooth prior than squared‑exponential)."
-# which could maybe be something to follow up on
-
-# Also has covariance type which is important for Gaussian Processes
 
 # Below carries out the Kriging process for the two separate emulators, as detailed in the paper section 3.1
 gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
@@ -126,39 +115,35 @@ res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 # Gets the Gaussian Process to produce a prediciton for risk at every point in gridd 
-# gridd is the rescaled grid of Ftrgt and Btrigger
 #This has a mean and standard deviation as we are unsure of the exact risk
 pred_risk1_g <- predict(gp_risk,newdata=gridd,type="SK")
 
 
 # Estimate median predicted risk
 med_risk1 <- exp(pred_risk1_g$mean)
-# plot it
 image2D(matrix(med_risk1,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 
 # now lets look at the probability that the risk is less than or equal to 0.05
 prisk <- pnorm(log(0.05),pred_risk1_g$mean,pred_risk1_g$sd+1e-12)
-# plot it
-image2D(matrix(prisk1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+image2D(matrix(prisk,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 
-# Predicts mean and uncertainty for log(catch) at each parameter combination in gridd
-# SK means simple kriging
+# Predicts mean and uncertainty for log(catch) at each parameter combination in gridd - SK means simple kriging
 pred_cat_g <- predict(gp_cat,newdata=gridd,type="SK")
 
 # Best catch observed so far where risk is below 0.05
 current_max <- max(runs$C_long[runs$risk3_long < 0.05])
 
-#Convert to max1 log scale as emulator trained on log(catch)
-# pcat1 is the probability that the catch is less than or equal to max1 (the best safe catch observed) at each point in gridd
-pcat1 <- pnorm(log(max1),pred_cat1_g$mean,pred_cat1_g$sd+1e-12)
+#Convert to current_max log scale as emulator trained on log(catch)
+# pcat1 is the probability that the catch is less than or equal to current_max (the best safe catch observed) at each point in gridd
+pcat1 <- pnorm(log(current_max),pred_cat_g$mean,pred_cat_g$sd+1e-12)
 
 # mark which points in gridd are still good candidates
 eps <- 1e-4
-possible <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
+possible <- (apply(cbind((1-pcat1) , prisk),1,min) >  eps)
 
 # collect final points - this is so we know what to do in round 2
-pot_points1 <- gridd[possible1,]
+pot_points1 <- gridd[possible,]
 
 #Removes already evaluated points from those that are still possible so don't evalute again
 tmp <-setdiff(pot_points1,runs[,1:2])
@@ -166,7 +151,7 @@ pot_points1 <- tmp
 
 
 # getting catch out of log(catch) for each point in gridd
-med_cat1 <- exp(pred_cat1_g$mean)
+med_cat1 <- exp(pred_cat_g$mean)
 
 
 # Below produces heat maps for round 1 
@@ -202,8 +187,7 @@ for (iteration in 2:max_rounds) {
   # Calculate EI
   mu <- pred_cat_g$mean
   sigma <- pred_cat_g$sd
-  ei <- augmented_expected_improvement(mu, sigma, log(current_max), 
-                            xi = 0.05, pred_risk = prisk, eps = eps)
+  ei <- augmented_expected_improvement(mu, sigma, log(current_max), xi = 0.05, pred_risk = prisk, eps = eps, noise_var = 0)
   
   # Create candidate set
   gridd_with_ei <- gridd
@@ -294,14 +278,9 @@ for (iteration in 2:max_rounds) {
   possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
   
   med_cat <- exp(pred_cat_g$mean)
-  image2D(matrix(med_cat, nrow=11), y=sort(unique(dat$Ftrgt)), 
-          x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt")
-  image2D(matrix(1-pcat, nrow=11), y=sort(unique(dat$Ftrgt)), 
-          x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt",
-          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
-  image2D(matrix(possible * (1-pcat), nrow=11), y=sort(unique(dat$Ftrgt)), 
-          x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt",
-          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  image2D(matrix(med_cat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt")
+  image2D(matrix(1-pcat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  image2D(matrix(possible * (1-pcat), nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
   # ===== STOPPING CRITERION =====
   if (sum(possible) == 0) {

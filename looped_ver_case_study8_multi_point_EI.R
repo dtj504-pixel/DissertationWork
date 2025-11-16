@@ -131,7 +131,7 @@ image2D(matrix(med_risk1,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort
 # now lets look at the probability that the risk is less than or equal to 0.05
 prisk <- pnorm(log(0.05),pred_risk1_g$mean,pred_risk1_g$sd+1e-12)
 # plot it
-image2D(matrix(prisk1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+image2D(matrix(prisk,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 
 # Predicts mean and uncertainty for log(catch) at each parameter combination in gridd
@@ -143,14 +143,14 @@ current_max <- max(runs$C_long[runs$risk3_long < 0.05])
 
 #Convert to max1 log scale as emulator trained on log(catch)
 # pcat1 is the probability that the catch is less than or equal to max1 (the best safe catch observed) at each point in gridd
-pcat1 <- pnorm(log(max1),pred_cat1_g$mean,pred_cat1_g$sd+1e-12)
+pcat1 <- pnorm(log(current_max),pred_cat_g$mean,pred_cat_g$sd+1e-12)
 
 # mark which points in gridd are still good candidates
 eps <- 1e-4
-possible <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
+possible <- (apply(cbind((1-pcat1) , prisk),1,min) >  eps)
 
 # collect final points - this is so we know what to do in round 2
-pot_points1 <- gridd[possible1,]
+pot_points1 <- gridd[possible,]
 
 #Removes already evaluated points from those that are still possible so don't evalute again
 tmp <-setdiff(pot_points1,runs[,1:2])
@@ -158,7 +158,7 @@ pot_points1 <- tmp
 
 
 # getting catch out of log(catch) for each point in gridd
-med_cat1 <- exp(pred_cat1_g$mean)
+med_cat1 <- exp(pred_cat_g$mean)
 
 
 # Below produces heat maps for round 1 
