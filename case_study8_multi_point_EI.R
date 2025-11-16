@@ -73,6 +73,9 @@ length(unique(dat$Btrigger))
 # Copilot says I could change this to explore sensitivity of the process to the intial sample
 set.seed(18)
 
+
+
+
 #Round 1
 
 # A space filling algorithm (seems simply chooses evenly spaced points) is used in the first round below to select points,
@@ -146,6 +149,21 @@ pcat1 <- pnorm(log(max1),pred_cat1_g$mean,pred_cat1_g$sd+1e-12)
 eps <- 1e-4
 possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 
+# collect final points - this is so we know what to do in round 2
+pot_points1 <- gridd[possible1,]
+
+#Removes already evaluated points from those that are still possible so don't evalute again
+tmp <-setdiff(pot_points1,runs[,1:2])
+pot_points1 <- tmp
+
+# If no plausible points remain, stop the process
+iteration <- 1
+if (sum(possible1) == 0) {
+  stop("No plausible points remaining at round", iteration, "\n")
+  ans<-unrescale_Her(pot_points1[1,],dat1)
+  ans
+}
+
 # getting catch out of log(catch) for each point in gridd
 med_cat1 <- exp(pred_cat1_g$mean)
 
@@ -158,16 +176,18 @@ image2D(matrix(possible1 * (1-pcat1),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 
 
 # TODO: I might have a different way of evaluating points but I should change it to this for general applicability????
+# Last time I tried, it turned out terribly and broke lots of things whilst also seeming to break the convergence to one point
 # Defining a deterministic objective function for later acquisition function calculation
-objective <- function (Fval, Bval, dat) {
-  row <- subset(data, Ftarget == Fval & Btrigger == Bval)
-# Says if number of rows in row is 0, i.e. row wasn't found, then stop with the warning
-  if (nrow(row) == 0) stop("Combination not found in lookup table.")
-  catch <- row$catch
-  risk <- row$risk
-  if (risk>0.05) return(-1e6)
-  return(catch)
-}
+ #       objective <- function (Fval, Bval, dat) {
+  #        row <- subset(data, Ftarget == Fval & Btrigger == Bval)
+  #      # Says if number of rows in row is 0, i.e. row wasn't found, then stop with the warning
+   #       if (nrow(row) == 0) stop("Combination not found in lookup table.")
+    #      catch <- row$catch
+     #     risk <- row$risk
+      #    if (risk>0.05) return(-1e6)
+       #   return(catch)
+      #  }
+
 
 # Round 2
 
@@ -179,7 +199,7 @@ objective <- function (Fval, Bval, dat) {
 mu1 <- pred_cat1_g$mean
 sigma1 <- pred_cat1_g$sd
 
-# Would like to compute only for pot_points1 to save time as only pot_points1 are looked at in our selection process
+# Would like to compute only for possible1 to save time as only possible1 are looked at in our selection process
 # for the next points, but seems to cause vector issues - TODO: Double check by thinking on some more and running
 ei1 <- expected_improvement(mu1, sigma1, log(max1), xi = 0.05, pred_risk = prisk1, eps = 1e-4)
 gridd1_with_ei <- gridd
@@ -254,6 +274,12 @@ max2 <- max(runs$C_long[runs$risk3_long < 0.05])# the max so far
 pcat2 <- pnorm(log(max2),pred_cat2_g$mean,pred_cat2_g$sd+1e-12)
 
 possible2 <- (apply(cbind((1-pcat2) , prisk2),1,min) >  eps)
+# If no plausible points remain, stop the process
+iteration <- 2
+if (sum(possible2) == 0) {
+    cat("No plausible points remaining. Stopping at round", iteration, "\n")
+    break
+  }
 
 med_cat2 <- exp(pred_cat2_g$mean)
 
