@@ -52,8 +52,7 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pre
 
 library(DiceKriging)
 library(dplyr)
-library(plot3D)
-library(stats)  
+library(plot3D)  
 
 # Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
 #CoPilot suggested this could result in a double transformation in lines 62 and 63, which may not be what is intended.
@@ -653,6 +652,7 @@ max7 <- max(runs$C_long[runs$risk3_long < 0.05])
 pcat7 <- pnorm(log(max7),pred_cat7_g$mean,pred_cat7_g$sd+1e-12)
 
 possible7 <- (apply(cbind((1-pcat7) , prisk7),1,min) >  eps)
+pot_points7 <- gridd[possible7,]
 
 med_cat7 <- exp(pred_cat7_g$mean)
 image2D(matrix(med_cat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")

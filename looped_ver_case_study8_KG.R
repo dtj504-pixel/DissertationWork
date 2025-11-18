@@ -30,50 +30,36 @@ unrescale_Her <- function(runs,dat){
   return(ret)
 }
 
-equal_tol <- function(x,y,tol=1e-12){
-  # Numeric equality check with a tiny tolerance to avoid floating point issues.
-  abs(x-y) < tol
-}
-
-
 library(DiceKriging)
 library(dplyr)
 library(plot3D)
-library(stats)
-  
+
 
 cov_exp <- function(X1, X2, theta, sigma2) {
   n1 <- nrow(X1)
-  n2 <- nrow(X2)
-  
-  # pairwise |difference| weighted by theta
-  D <- array(0, dim = c(n1, n2))
-  
+  n2 <- nrow(X2)  
+  # pairwise difference weighted by theta
+  D <- array(0, dim = c(n1, n2)) 
   for (j in seq_along(theta)) {
     D <- D + theta[j] * abs(outer(X1[, j], X2[, j], "-"))
-  }
-  
+  } 
   sigma2 * exp(-D)
 }
-
 
 
 knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 100, pred_risk, eps = 1e-4) 
 { 
     X_pred <- dat[, c("Ftrgt", "Btrigger")]
     cov_grid <- cov_exp(X_pred, X_pred, theta = model@covariance@range.val, sigma2 = model@covariance@sd2)
-
     m <- length(mu)
     var <- sigma^2
     # Current best mean catch
-    mu_best <- max(mu)
+    mu_best <- max(mu)   
+    kg <- numeric(m)
     
-     kg <- numeric(m)
-
         # Loop over candidate points
         for (i in seq_len(m)) {
-
-            # skip unsafe points early
+            # set knowledge gradient to 0 for any points with a predicted risk that is too high
             if (pred_risk[i] < eps) {
                 kg[i] <- 0
                 next
@@ -81,25 +67,29 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
 
             mu_i <- mu[i]
             sigma_i <- sqrt(var[i] + obs_noise_var)
-
-            # nsim simulated observations
+            # nsim simulated observations - using rnorm to sample from a normal distribution is ok here as we are running a GP
+            # to model the catch, which is assumed to be normally distributed
             y_sim <- rnorm(nsim, mu_i, sigma_i)
-
-            # analytic GP update components
+            # the covariance between every point in the grid and the point x_i
             cov_xp_xi <- cov_grid[, i]
+            # denominator term in the KG update formula
             denom <- var[i] + obs_noise_var
-
             # For each simulated y, compute updated max(mu)
             max_after <- numeric(nsim)
             for (s in seq_len(nsim)) {
+                # says what would the new maximum mu be if we observed this simulated value at the point x_i 
+                # by implementing the standard formula for this in GP posterior updating
+                # This evaluates the posterior mean for every point in the space, updating other points based on closeness 
+                # to the evaluated point by using the cov matrix
                 mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
+                # takes this new maximum mu inot a vector for later averaging
                 max_after[s] <- max(mu_new)
             }
-
-            # Monte-Carlo KG estimate
+            # Computes expected increase in the maximum posterior mean, mu
+            # higher values mean we're getting better knowledge as to where and what the maximum catch could be
             kg[i] <- mean(max_after - mu_best)
         }
-
+    # Returns the vector of knowledge gradient values for each point in the design space
     kg
 }
 
@@ -234,6 +224,8 @@ all_rounds$Round <- 1
 # ITERATIVE ROUNDS
 max_rounds <- 20
 round_num <- 1
+
+#TODO: Can I rename the variables ion each round so I can clearly see the progression?
 
 for (iteration in 2:max_rounds) {
   

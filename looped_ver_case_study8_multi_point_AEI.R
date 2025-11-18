@@ -30,11 +30,6 @@ unrescale_Her <- function(runs,dat){
   return(ret)
 }
 
-equal_tol <- function(x,y,tol=1e-12){
-  # Numeric equality check with a tiny tolerance to avoid floating point issues.
-  abs(x-y) < tol
-}
-
 
 #' @param xi is a scalar for exploration/exploitation trade off
 augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pred_risk, eps = 1e-4, noise_var = 0) 
@@ -60,8 +55,7 @@ augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = 
 
 library(DiceKriging)
 library(dplyr)
-library(plot3D)
-library(stats)  
+library(plot3D)  
 
 # Use a logarithmic y-axis for the plot, i.e. log="y" tells the plot to display the y-axis on a log scale.
 #CoPilot suggested this could result in a double transformation in lines 62 and 63, which may not be what is intended.
@@ -180,6 +174,8 @@ all_rounds$Round <- 1
 max_rounds <- 20
 round_num <- 1
 
+#TODO: Can I rename the variables ion each round so I can clearly see the progression?
+
 for (iteration in 2:max_rounds) {
   
   cat("\n  Round", iteration, "\n")
@@ -187,6 +183,8 @@ for (iteration in 2:max_rounds) {
   # Calculate AEI
   mu <- pred_cat_g$mean
   sigma <- pred_cat_g$sd
+  # TODO: Can I calculate this for only the remaining possible points
+  # Could change EI function to first assign anything with pred_risk to 0 before calculating
   ei <- augmented_expected_improvement(mu, sigma, log(current_max), xi = 0.05, pred_risk = prisk, eps = eps, noise_var = 0)
   
   # Create candidate set
