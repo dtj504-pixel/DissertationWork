@@ -39,14 +39,23 @@ equal_tol <- function(x,y,tol=1e-12){
 #' @param xi is a scalar for exploration/exploitation trade off
 expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pred_risk, eps = 1e-4) 
 {
-  if (task == "min") imp <- y_best - mu - xi
-  if (task == "max") imp <- mu - y_best - xi
-  if (is.null(imp)) stop('task must be "min" or "max"')
-  Z <- imp / sigma
-  ei <- imp * pnorm(Z) + sigma * dnorm(Z)
-  ei[sigma == 0.0] <- 0.0
-# Giving points with prob(risk <= 0.05) < 0.01 an expected improvement of zero so we avoid them
-  ei <- ifelse(pred_risk < eps, 0, ei)
+  ei <- numeric(length(mu))
+  safe_points <- pred_risk >= eps
+
+  # Only calculate EI for safe points
+  if (any(safe_points)) {
+    if (task == "min") 
+        imp <- y_best - mu[safe_points] - xi
+    if (task == "max") 
+        imp <- mu[safe_points] - y_best - xi 
+    else 
+        stop('task must be "min" or "max"')
+    
+    Z <- imp / sigma[safe_points]
+    ei[safe_points] <- imp * pnorm(Z) + sigma[safe_points] * dnorm(Z)
+    ei[safe_points][sigma[safe_points] == 0.0] <- 0.0
+  }
+
   return(ei)
 }
 
