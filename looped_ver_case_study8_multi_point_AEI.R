@@ -53,6 +53,26 @@ augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = 
   return(aei)
 }
 
+# Objective function - takes candidate points and returns their evaluated metrics
+objective_func <- function(cand_points, lookup_data = dat) {
+  # cand_points should have columns: Ftrgt, Btrigger
+  # Returns: data frame with Ftrgt, Btrigger, catch_median_long, risk1_full
+  
+  evaluated <- left_join(cand_points, lookup_data, by = c("Ftrgt", "Btrigger"))
+  
+  # Select and rename to standard output format
+  result <- data.frame(
+    Ftarget = evaluated$Ftrgt,
+    Btrigger = evaluated$Btrigger,
+    C_long = evaluated$catch_median_long,
+    risk3_long = evaluated$risk1_full
+  )
+
+  names(result) <- c("Ftarget", "Btrigger", "C_long", "risk3_long")
+  
+  return(result)
+}
+
 library(DiceKriging)
 library(dplyr)
 library(plot3D)  
@@ -235,8 +255,7 @@ for (iteration in 2:max_rounds) {
     new_points[, c("Ftrgt", "Btrigger")]
   )
   
-  dat_run <- left_join(new_round, dat)
-  names(dat_run) <- c("Ftarget", "Btrigger", "C_long", "risk3_long")
+  dat_run <- objective_func(new_round, lookup_data = dat)
   runs <- rescale_Her(dat_run, dat = dat1)
 
   res_cat <- log(runs$C_long)
