@@ -62,7 +62,7 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", pre
 # Objective function - takes candidate points and returns their evaluated metrics
 objective_func <- function(cand_points, lookup_data = dat) {
   # cand_points should have columns: Ftrgt, Btrigger
-  # Returns: data frame with Ftrgt, Btrigger, catch_median_long, risk1_full
+  # Returns: data frame with Ftrgt, Btrigger, C_long, risk3_long
   
   evaluated <- left_join(cand_points, lookup_data, by = c("Ftrgt", "Btrigger"))
   
@@ -295,10 +295,9 @@ for (iteration in 2:max_rounds) {
   
   current_max <- max(runs$C_long[runs$risk3_long < 0.05])
   pcat <- pnorm(log(current_max), pred_cat_g$mean, pred_cat_g$sd + 1e-12)
-  
   possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
-  
   med_cat <- exp(pred_cat_g$mean)
+
   image2D(matrix(med_cat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt")
   image2D(matrix(1-pcat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   image2D(matrix(possible * (1-pcat), nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
