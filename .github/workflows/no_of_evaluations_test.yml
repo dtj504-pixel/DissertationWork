@@ -32,6 +32,8 @@ jobs:
                 done
 
                 - name: Show results for all scripts
+        
+      - name: Print output
         run: |
             echo "run1 = ${{ steps.evals.outputs.run1 }}"
             echo "run2 = ${{ steps.evals.outputs.run2 }}"
