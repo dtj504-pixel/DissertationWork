@@ -5,6 +5,8 @@ on: workflow_dispatch
 jobs:
   run-r:
     runs-on: ubuntu-latest
+    env:
+      DISPLAY: ':99'
 
     steps:
       - name: Checkout code
@@ -17,12 +19,12 @@ jobs:
         run: |
           Rscript -e 'install.packages(c("DiceKriging","dplyr","plot3D","stats"))'
       
-      - name: Setup virtual display
+      - name: Start Xvfb
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb
-          export DISPLAY=:99
-          Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 &
+          Xvfb :99 -screen 0 1024x768x24 &
+          sleep 5
 
       - name: Run all R scripts and extract evaluation counts
         id: evals
@@ -44,7 +46,7 @@ jobs:
         
       - name: Print output
         run: |
-            echo "run1 = ${{ steps.evals.outputs.run1 }}"
-            echo "run2 = ${{ steps.evals.outputs.run2 }}"
-            echo "run3 = ${{ steps.evals.outputs.run3 }}"
-            echo "run4 = ${{ steps.evals.outputs.run4 }}"
+            echo "case_study8 = ${{ steps.evals.outputs.run1 }}"
+            echo "looped_ver_case_study8_multi_point_EI = ${{ steps.evals.outputs.run2 }}"
+            echo "looped_ver_case_study8_multi_point_AEI = ${{ steps.evals.outputs.run3 }}"
+            echo "looped_ver_case_study8_KG = ${{ steps.evals.outputs.run4 }}"
