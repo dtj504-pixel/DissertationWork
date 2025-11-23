@@ -54,13 +54,14 @@ jobs:
             NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
 
             KEY=$(basename "$S" .R)
+            echo "Setting $KEY=$NUMBER" 
 
             echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
             done
 
       - name: Print output
         run: |
-            echo "case_study8 = ${{ steps.evals.outputs.run1 }}"
-            echo "looped_ver_case_study8_multi_point_EI = ${{ steps.evals.outputs.run2 }}"
-            echo "looped_ver_case_study8_multi_point_AEI = ${{ steps.evals.outputs.run3 }}"
-            echo "looped_ver_case_study8_KG = ${{ steps.evals.outputs.run4 }}"
+            echo "case_study8 = ${{ steps.evals.outputs.case_study8 }}"
+            echo "looped_ver_case_study8_multi_point_EI = ${{ steps.evals.outputs.looped_ver_case_study8_multi_point_EI }}"
+            echo "looped_ver_case_study8_multi_point_AEI = ${{ steps.evals.outputs.looped_ver_case_study8_multi_point_AEI }}"
+            echo "looped_ver_case_study8_KG = ${{ steps.evals.outputs.looped_ver_case_study8_KG }}"
