@@ -29,20 +29,24 @@ jobs:
       - name: Run all R scripts and extract evaluation counts
         id: evals
         run: |
-                SCRIPTS=("case_study8.R" "looped_ver_case_study8_multi_point_EI.R" "looped_ver_case_study8_multi_point_AEI.R" "looped_ver_case_study8_KG.R")
+            SCRIPTS=("case_study8.R" "looped_ver_case_study8_multi_point_EI.R" "looped_ver_case_study8_multi_point_AEI.R" "looped_ver_case_study8_KG.R")
 
-                for S in "${SCRIPTS[@]}"; do
-                echo "Running $S..."
+            for S in "${SCRIPTS[@]}"; do
+            echo "Running $S..."
 
-                OUT=$(Rscript "$S")
+            OUT=$(Rscript "$S" 2>&1) || {
+                echo "Error running $S"
+                echo "$OUT"
+                exit 1
+            }
 
-                LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
-                NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
+            LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
+            NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
 
-                KEY=$(basename "$S" .R)
+            KEY=$(basename "$S" .R)
 
-                echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
-                done
+            echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
+            done
         
       - name: Print output
         run: |
