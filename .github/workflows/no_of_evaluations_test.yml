@@ -15,8 +15,7 @@ jobs:
       - name: Run all R scripts and extract evaluation counts
         id: evals
         run: |
-                SCRIPTS=("dtj504-pixel/DissertationWork/case_study8.R" "dtj504-pixel/DissertationWork/looped_ver_case_study8_multi_point_EI.R"
-                "dtj504-pixel/DissertationWork/looped_ver_case_study8_multi_point_AEI.R" "dtj504-pixel/DissertationWork/looped_ver_case_study8_KG.R")
+                SCRIPTS=("case_study8.R" "looped_ver_case_study8_multi_point_EI.R" "looped_ver_case_study8_multi_point_AEI.R" "looped_ver_case_study8_KG.R")
 
                 for S in "${SCRIPTS[@]}"; do
                 echo "Running $S..."
