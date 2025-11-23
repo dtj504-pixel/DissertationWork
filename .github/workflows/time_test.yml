@@ -30,6 +30,7 @@ jobs:
 
       - name: Time File 0
         run: |
+            export DISPLAY=:99
             echo "Timing case_study8..."
             start=$(date +%s.%N)
             Rscript dtj504-pixel/DissertationWork/case_study8.R
@@ -39,6 +40,7 @@ jobs:
       
       - name: Time File 1
         run: |
+            export DISPLAY=:99
             echo "Timing looped_ver_case_study8_multi_point_EI ..."
             start=$(date +%s.%N)
             Rscript dtj504-pixel/DissertationWork/looped_ver_case_study8_multi_point_EI.R
@@ -48,6 +50,7 @@ jobs:
       
       - name: Time File 2
         run: |
+            export DISPLAY=:99
             echo "Timing looped_ver_case_study8_multi_point_AEI..."
             start=$(date +%s.%N)
             Rscript dtj504-pixel/DissertationWork/looped_ver_case_study8_multi_point_AEI.R
@@ -57,6 +60,7 @@ jobs:
       
       - name: Time File 3
         run: |
+            export DISPLAY=:99
             echo "Timing looped_ver_case_study8_KG..."
             start=$(date +%s.%N)
             Rscript dtj504-pixel/DissertationWork/looped_ver_case_study8_KG.R
