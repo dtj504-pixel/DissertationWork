@@ -31,3 +31,10 @@ jobs:
 
                 echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
                 done
+
+                - name: Show results for all scripts
+        run: |
+            echo "run1 = ${{ steps.evals.outputs.run1 }}"
+            echo "run2 = ${{ steps.evals.outputs.run2 }}"
+            echo "run3 = ${{ steps.evals.outputs.run3 }}"
+            echo "run4 = ${{ steps.evals.outputs.run4 }}"
