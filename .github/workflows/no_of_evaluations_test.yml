@@ -41,8 +41,6 @@ jobs:
 
                 echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
                 done
-
-                - name: Show results for all scripts
         
       - name: Print output
         run: |
