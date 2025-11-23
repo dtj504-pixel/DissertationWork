@@ -36,18 +36,15 @@ jobs:
             for S in "${SCRIPTS[@]}"; do
             echo "Running $S..."
             
-            # Run script and capture all output
             set +e
             OUT=$(Rscript "$S" 2>&1)
             EXIT_CODE=$?
             set -e
             
-            # Always print the output
             echo "=== Output from $S ==="
             echo "$OUT"
             echo "=== End output ==="
             
-            # Check if it failed
             if [ $EXIT_CODE -ne 0 ]; then
                 echo "ERROR: Script $S failed with exit code $EXIT_CODE"
                 exit 1
