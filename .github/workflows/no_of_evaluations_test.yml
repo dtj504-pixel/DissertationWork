@@ -35,12 +35,23 @@ jobs:
 
             for S in "${SCRIPTS[@]}"; do
             echo "Running $S..."
-
-            OUT=$(Rscript "$S" 2>&1) || {
-                echo "Error running $S"
-                echo "$OUT"
+            
+            # Run script and capture all output
+            set +e
+            OUT=$(Rscript "$S" 2>&1)
+            EXIT_CODE=$?
+            set -e
+            
+            # Always print the output
+            echo "=== Output from $S ==="
+            echo "$OUT"
+            echo "=== End output ==="
+            
+            # Check if it failed
+            if [ $EXIT_CODE -ne 0 ]; then
+                echo "ERROR: Script $S failed with exit code $EXIT_CODE"
                 exit 1
-            }
+            fi
 
             LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
             NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
@@ -49,6 +60,7 @@ jobs:
 
             echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
             done
+
       - name: Print output
         run: |
             echo "case_study8 = ${{ steps.evals.outputs.run1 }}"
