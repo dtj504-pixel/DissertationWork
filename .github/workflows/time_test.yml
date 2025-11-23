@@ -35,7 +35,7 @@ jobs:
             export DISPLAY=:99
             echo "Timing case_study8..."
             start=$(date +%s.%N)
-            Rscript dtj504-pixel/DissertationWork/case_study8.R
+            Rscript case_study8.R
             end=$(date +%s.%N)
             runtime=$(echo "$end - $start" | bc)
             echo "FILE0_TIME=${runtime}" >> $GITHUB_ENV
@@ -45,7 +45,7 @@ jobs:
             export DISPLAY=:99
             echo "Timing looped_ver_case_study8_multi_point_EI ..."
             start=$(date +%s.%N)
-            Rscript dtj504-pixel/DissertationWork/looped_ver_case_study8_multi_point_EI.R
+            Rscript looped_ver_case_study8_multi_point_EI.R
             end=$(date +%s.%N)
             runtime=$(echo "$end - $start" | bc)
             echo "FILE1_TIME=${runtime}" >> $GITHUB_ENV
@@ -55,7 +55,7 @@ jobs:
             export DISPLAY=:99
             echo "Timing looped_ver_case_study8_multi_point_AEI..."
             start=$(date +%s.%N)
-            Rscript dtj504-pixel/DissertationWork/looped_ver_case_study8_multi_point_AEI.R
+            Rscript looped_ver_case_study8_multi_point_AEI.R
             end=$(date +%s.%N)
             runtime=$(echo "$end - $start" | bc)
             echo "FILE2_TIME=${runtime}" >> $GITHUB_ENV
@@ -65,7 +65,7 @@ jobs:
             export DISPLAY=:99
             echo "Timing looped_ver_case_study8_KG..."
             start=$(date +%s.%N)
-            Rscript dtj504-pixel/DissertationWork/looped_ver_case_study8_KG.R
+            Rscript looped_ver_case_study8_KG.R
             end=$(date +%s.%N)
             runtime=$(echo "$end - $start" | bc)
             echo "FILE3_TIME=${runtime}" >> $GITHUB_ENV
