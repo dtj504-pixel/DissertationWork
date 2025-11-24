@@ -47,7 +47,7 @@ jobs:
           echo "${runtime}" > timing_result.txt
       
       - name: Upload timing result
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: timing-${{ matrix.script.name }}
           path: timing_result.txt
@@ -57,7 +57,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all timing results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       
       - name: Display summary
         run: |
