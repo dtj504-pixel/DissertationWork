@@ -50,6 +50,7 @@ jobs:
                 exit 1
             fi
 
+            # This selection is pretty sensitive
             LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
             NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
 
