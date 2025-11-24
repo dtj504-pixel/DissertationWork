@@ -1,0 +1,136 @@
+name: Convergence Test (100 runs per script)
+
+on: workflow_dispatch
+
+jobs:
+  run-convergence-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        script:
+          - name: "case_study8"
+            file: "case_study8.R"
+        run_number: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100]
+    
+    env:
+      DISPLAY: ':99'
+      # Define the correct answer
+      CORRECT_FTARGET: "0.38"
+      CORRECT_BTRIGGER: "170000"
+      # Tolerance for floating point comparison
+      FTARGET_TOLERANCE: "0.01"
+      BTRIGGER_TOLERANCE: "1000"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c("DiceKriging","dplyr","plot3D","stats"))'
+      
+      - name: Start Xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          Xvfb :99 -screen 0 1024x768x24 &
+          sleep 5
+
+      - name: Run ${{ matrix.script.name }} - Iteration ${{ matrix.run_number }}
+        id: run_script
+        run: |
+          export DISPLAY=:99
+          
+          echo "Running ${{ matrix.script.file }} (Run ${{ matrix.run_number }}/100)..."
+          
+          set +e
+          OUT=$(Rscript "${{ matrix.script.file }}" 2>&1)
+          EXIT_CODE=$?
+          set -e
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "ERROR: Script failed with exit code $EXIT_CODE"
+            echo "converged=0" > result.txt
+            exit 0  # Don't fail the job, just mark as non-convergent
+          fi
+          
+          # Extract the "Optimal parameters:" section
+          # Look for lines after "Optimal parameters:" and extract Ftarget and Btrigger
+          PARAMS=$(echo "$OUT" | awk '/Optimal parameters:/,/^[0-9]+ +[0-9.]+/' | tail -1)
+          
+          echo "Extracted line: $PARAMS"
+          
+          # Parse Ftarget and Btrigger from the line
+          # Expected format: "275    0.38   170000" (line number, Ftarget, Btrigger)
+          FTARGET=$(echo "$PARAMS" | awk '{print $2}')
+          BTRIGGER=$(echo "$PARAMS" | awk '{print $3}')
+          
+          echo "Extracted Ftarget: $FTARGET"
+          echo "Extracted Btrigger: $BTRIGGER"
+          
+          # Check if extraction was successful
+          if [ -z "$FTARGET" ] || [ -z "$BTRIGGER" ]; then
+            echo "Failed to extract parameters"
+            echo "converged=0" > result.txt
+            exit 0
+          fi
+          
+          # Check convergence using bc for floating point arithmetic
+          FTARGET_DIFF=$(echo "$FTARGET - $CORRECT_FTARGET" | bc | awk '{print ($1<0)?-$1:$1}')
+          BTRIGGER_DIFF=$(echo "$BTRIGGER - $CORRECT_BTRIGGER" | bc | awk '{print ($1<0)?-$1:$1}')
+          
+          FTARGET_OK=$(echo "$FTARGET_DIFF <= $FTARGET_TOLERANCE" | bc)
+          BTRIGGER_OK=$(echo "$BTRIGGER_DIFF <= $BTRIGGER_TOLERANCE" | bc)
+          
+          if [ "$FTARGET_OK" -eq 1 ] && [ "$BTRIGGER_OK" -eq 1 ]; then
+            echo "✓ CONVERGED to correct answer!"
+            echo "converged=1" > result.txt
+          else
+            echo "✗ Did NOT converge (Ftarget=$FTARGET, Btrigger=$BTRIGGER)"
+            echo "converged=0" > result.txt
+          fi
+
+      - name: Upload result
+        uses: actions/upload-artifact@v4
+        with:
+          name: result-${{ matrix.script.name }}-run${{ matrix.run_number }}
+          path: result.txt
+
+  calculate-convergence-rates:
+    needs: run-convergence-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+      
+      - name: Calculate convergence rates
+        run: |
+          echo "=== Convergence Rate Summary ==="
+          echo ""
+          
+          SCRIPTS=("case_study8" "looped_ver_case_study8_multi_point_EI" "looped_ver_case_study8_multi_point_AEI" "looped_ver_case_study8_KG")
+          
+          for SCRIPT in "${SCRIPTS[@]}"; do
+            TOTAL=0
+            CONVERGED=0
+            
+            for dir in result-${SCRIPT}-run*; do
+              if [ -f "$dir/result.txt" ]; then
+                RESULT=$(grep "converged=" "$dir/result.txt" | cut -d'=' -f2)
+                TOTAL=$((TOTAL + 1))
+                CONVERGED=$((CONVERGED + RESULT))
+              fi
+            done
+            
+            if [ $TOTAL -gt 0 ]; then
+              RATE=$(echo "scale=2; $CONVERGED * 100 / $TOTAL" | bc)
+              echo "$SCRIPT:"
+              echo "  Converged: $CONVERGED / $TOTAL ($RATE%)"
+              echo ""
+            fi
+          done
