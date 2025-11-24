@@ -5,6 +5,17 @@ on: workflow_dispatch
 jobs:
   run-r:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        script:
+          - name: "case_study8"
+            file: "case_study8.R"
+          - name: "looped_ver_case_study8_multi_point_EI"
+            file: "looped_ver_case_study8_multi_point_EI.R"
+          - name: "looped_ver_case_study8_multi_point_AEI"
+            file: "looped_ver_case_study8_multi_point_AEI.R"
+          - name: "looped_ver_case_study8_KG"
+            file: "looped_ver_case_study8_KG.R"
     env:
       DISPLAY: ':99'
 
@@ -26,43 +37,53 @@ jobs:
           Xvfb :99 -screen 0 1024x768x24 &
           sleep 5
 
-      - name: Run all R scripts and extract evaluation counts
-        id: evals
+      - name: Run ${{ matrix.script.name }} and extract evaluation count
         run: |
-            export DISPLAY=:99
-            
-            SCRIPTS=("case_study8.R" "looped_ver_case_study8_multi_point_EI.R" "looped_ver_case_study8_multi_point_AEI.R" "looped_ver_case_study8_KG.R")
+          export DISPLAY=:99
+          
+          echo "Running ${{ matrix.script.file }}..."
+          
+          set +e
+          OUT=$(Rscript "${{ matrix.script.file }}" 2>&1)
+          EXIT_CODE=$?
+          set -e
+          
+          echo "=== Output from ${{ matrix.script.file }} ==="
+          echo "$OUT"
+          echo "=== End output ==="
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            echo "ERROR: Script ${{ matrix.script.file }} failed with exit code $EXIT_CODE"
+            exit 1
+          fi
 
-            for S in "${SCRIPTS[@]}"; do
-            echo "Running $S..."
-            
-            set +e
-            OUT=$(Rscript "$S" 2>&1)
-            EXIT_CODE=$?
-            set -e
-            
-            echo "=== Output from $S ==="
-            echo "$OUT"
-            echo "=== End output ==="
-            
-            if [ $EXIT_CODE -ne 0 ]; then
-                echo "ERROR: Script $S failed with exit code $EXIT_CODE"
-                exit 1
-            fi
+          # Extract the evaluation count
+          LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
+          NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
 
-            # This selection is pretty sensitive
-            LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
-            NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
+          echo "Evaluations for ${{ matrix.script.name }}: $NUMBER"
+          echo "$NUMBER" > eval_count.txt
 
-            KEY=$(basename "$S" .R)
-            echo "Setting $KEY=$NUMBER" 
+      - name: Upload evaluation count
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-${{ matrix.script.name }}
+          path: eval_count.txt
 
-            echo "$KEY=$NUMBER" >> $GITHUB_OUTPUT
-            done
-
-      - name: Print output
+  summary:
+    needs: run-r
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all evaluation results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: eval-*
+      
+      - name: Print summary
         run: |
-            echo "case_study8 = ${{ steps.evals.outputs.case_study8 }}"
-            echo "looped_ver_case_study8_multi_point_EI = ${{ steps.evals.outputs.looped_ver_case_study8_multi_point_EI }}"
-            echo "looped_ver_case_study8_multi_point_AEI = ${{ steps.evals.outputs.looped_ver_case_study8_multi_point_AEI }}"
-            echo "looped_ver_case_study8_KG = ${{ steps.evals.outputs.looped_ver_case_study8_KG }}"
+          echo "=== Total Evaluations Summary ==="
+          for dir in eval-*; do
+            name=${dir#eval-}
+            count=$(cat "$dir/eval_count.txt")
+            echo "$name = $count"
+          done
