@@ -99,25 +99,38 @@ jobs:
           name: result-${{ matrix.script.name }}-run${{ matrix.run_number }}
           path: result.txt
 
+  calculate-convergence-rates:
+    needs: run-convergence-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: result-*
+      
       - name: Calculate convergence rates
         run: |
-            echo "=== Convergence Rate Summary ==="
-            echo ""
-            
-            SCRIPT="case_study8"
-
-            TOTAL=0
-            CONVERGED=0
-
-            # Count results
-            for dir in result-${SCRIPT}-run*; do
+          echo "=== Convergence Rate Summary ==="
+          echo ""
+          
+          SCRIPT="case_study8"
+          TOTAL=0
+          CONVERGED=0
+          
+          # Count results from all downloaded artifacts
+          for dir in result-${SCRIPT}-run*; do
+            if [ -f "$dir/result.txt" ]; then
               RESULT=$(grep "converged=" "$dir/result.txt" | cut -d'=' -f2)
               TOTAL=$((TOTAL + 1))
               CONVERGED=$((CONVERGED + RESULT))
-            done
-
+            fi
+          done
+          
+          if [ $TOTAL -gt 0 ]; then
             RATE=$(echo "scale=2; $CONVERGED * 100 / $TOTAL" | bc)
-
             echo "$SCRIPT:"
             echo "  Converged: $CONVERGED / $TOTAL ($RATE%)"
             echo ""
+          else
+            echo "ERROR: No results found!"
+          fi
