@@ -1,5 +1,4 @@
-name: Convergence Test (100 runs per script)
-
+name: Convergence Test looped_ver_case_study8_multi_point_EI
 on: workflow_dispatch
 
 jobs:
@@ -110,27 +109,23 @@ jobs:
       
       - name: Calculate convergence rates
         run: |
-          echo "=== Convergence Rate Summary ==="
-          echo ""
-          
-          SCRIPTS=("case_study8" "looped_ver_case_study8_multi_point_EI" "looped_ver_case_study8_multi_point_AEI" "looped_ver_case_study8_KG")
-          
-          for SCRIPT in "${SCRIPTS[@]}"; do
+            echo "=== Convergence Rate Summary ==="
+            echo ""
+            
+            SCRIPT="looped_ver_case_study8_multi_point_EI"
+
             TOTAL=0
             CONVERGED=0
-            
+
+            # Count results
             for dir in result-${SCRIPT}-run*; do
-              if [ -f "$dir/result.txt" ]; then
-                RESULT=$(grep "converged=" "$dir/result.txt" | cut -d'=' -f2)
-                TOTAL=$((TOTAL + 1))
-                CONVERGED=$((CONVERGED + RESULT))
-              fi
+            RESULT=$(grep "converged=" "$dir/result.txt" | cut -d'=' -f2)
+            TOTAL=$((TOTAL + 1))
+            CONVERGED=$((CONVERGED + RESULT))
             done
-            
-            if [ $TOTAL -gt 0 ]; then
-              RATE=$(echo "scale=2; $CONVERGED * 100 / $TOTAL" | bc)
-              echo "$SCRIPT:"
-              echo "  Converged: $CONVERGED / $TOTAL ($RATE%)"
-              echo ""
-            fi
-          done
+
+            RATE=$(echo "scale=2; $CONVERGED * 100 / $TOTAL" | bc)
+
+            echo "$SCRIPT:"
+            echo "  Converged: $CONVERGED / $TOTAL ($RATE%)"
+            echo ""

@@ -1,11 +1,13 @@
 name: Extract total evaluations from R
 
+# Runs only when manually triggered
 on: workflow_dispatch
 
 jobs:
   run-r:
     runs-on: ubuntu-latest
     strategy:
+    # Makes a matrix of jobs so that all of them can run in parallel
       matrix:
         script:
           - name: "case_study8"
@@ -16,20 +18,27 @@ jobs:
             file: "looped_ver_case_study8_multi_point_AEI.R"
           - name: "looped_ver_case_study8_KG"
             file: "looped_ver_case_study8_KG.R"
+    # Setting up a place to display visual output in the environment
+    # Not currently working, as in time_test.yml but means will run only with warnings
     env:
       DISPLAY: ':99'
 
     steps:
+        # Gets repo's code into the runner
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Installs R onto the runner
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
 
+      # Gets the packages I need to run the R code
       - name: Install R packages
         run: |
           Rscript -e 'install.packages(c("DiceKriging","dplyr","plot3D","stats"))'
       
+      # Trying to setup somewhere for the graphs to display
+      # Currently fails, but only with warnings so that it will still run as I don't think it was running without this     
       - name: Start Xvfb
         run: |
           sudo apt-get update
@@ -39,31 +48,41 @@ jobs:
 
       - name: Run ${{ matrix.script.name }} and extract evaluation count
         run: |
+          # Visualisation things that are failing
           export DISPLAY=:99
           
+          # Prints what script is running
           echo "Running ${{ matrix.script.file }}..."
           
+          # Run the script without immmediately exiting upon errors
+          # Helps us get an exit code for debugging
           set +e
           OUT=$(Rscript "${{ matrix.script.file }}" 2>&1)
           EXIT_CODE=$?
           set -e
           
+          # Prints the output from the script
           echo "=== Output from ${{ matrix.script.file }} ==="
           echo "$OUT"
           echo "=== End output ==="
           
+          # If the script failed, we stop the job
           if [ $EXIT_CODE -ne 0 ]; then
             echo "ERROR: Script ${{ matrix.script.file }} failed with exit code $EXIT_CODE"
             exit 1
           fi
 
           # Extract the evaluation count
+          # SENSITIVE TO FORMATTING so needs to be changed if the ouptut is changed
           LINE=$(echo "$OUT" | grep -m1 "Total evaluations")
           NUMBER=$(echo "$LINE" | awk -F': ' '{print $2}')
 
+          # Prinst the results and saves it as an artifact
           echo "Evaluations for ${{ matrix.script.name }}: $NUMBER"
           echo "$NUMBER" > eval_count.txt
 
+      # Uploads the file with the evaluations as an artifact so other jobs can 
+      # use it such as summary below
       - name: Upload evaluation count
         uses: actions/upload-artifact@v4
         with:
@@ -71,19 +90,26 @@ jobs:
           path: eval_count.txt
 
   summary:
+    # Waits until run-r job has finished, as o/w would run in parallel
     needs: run-r
     runs-on: ubuntu-latest
     steps:
+        # Downloads every artifact that was made
       - name: Download all evaluation results
         uses: actions/download-artifact@v4
         with:
           pattern: eval-*
       
+        # Displays the evaluations for each test in a sumamry
       - name: Print summary
         run: |
           echo "=== Total Evaluations Summary ==="
+          # loops over any file with name beginning with eval-
           for dir in eval-*; do
+            # removes prefix to get only file name for printing
             name=${dir#eval-}
+            # Reads the artifact file that has the number of evaluations
             count=$(cat "$dir/eval_count.txt")
+            # Prints the file name and number of evaluations next to each other
             echo "$name = $count"
           done
