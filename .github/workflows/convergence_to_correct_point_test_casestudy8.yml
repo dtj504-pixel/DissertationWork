@@ -40,7 +40,6 @@ jobs:
           sleep 5
 
       - name: Run ${{ matrix.script.name }} - Iteration ${{ matrix.run_number }}
-        id: run_script
         run: |
           export DISPLAY=:99
           
@@ -54,17 +53,16 @@ jobs:
           if [ $EXIT_CODE -ne 0 ]; then
             echo "ERROR: Script failed with exit code $EXIT_CODE"
             echo "converged=0" > result.txt
-            exit 0  # Don't fail the job, just mark as non-convergent
+            exit 0
           fi
           
-          # Extract the "Optimal parameters:" section
-          # Look for lines after "Optimal parameters:" and extract Ftarget and Btrigger
-          PARAMS=$(echo "$OUT" | awk '/Optimal parameters:/,/^[0-9]+ +[0-9.]+/' | tail -1)
+          # Look for the line that starts with "> ans" and get the next line
+          PARAMS=$(echo "$OUT" | grep -A 2 "^> ans$" | tail -1)
           
           echo "Extracted line: $PARAMS"
           
           # Parse Ftarget and Btrigger from the line
-          # Expected format: "275    0.38   170000" (line number, Ftarget, Btrigger)
+          # Format is: "275    0.38   170000" (row number, Ftarget, Btrigger)
           FTARGET=$(echo "$PARAMS" | awk '{print $2}')
           BTRIGGER=$(echo "$PARAMS" | awk '{print $3}')
           
