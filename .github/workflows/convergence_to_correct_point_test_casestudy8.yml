@@ -56,18 +56,23 @@ jobs:
             exit 0
           fi
           
-          # Look for the line that starts with "> ans" and get the next line
-          PARAMS=$(echo "$OUT" | grep -A 2 "^> ans$" | tail -1)
+          # Debug: show the full output
+          echo "=== FULL OUTPUT START ==="
+          echo "$OUT"
+          echo "=== FULL OUTPUT END ==="
           
-          echo "Extracted line: $PARAMS"
+          # Look for a line with "Ftarget" header, then get the next line with actual data
+          PARAMS=$(echo "$OUT" | grep -A 1 "Ftarget.*Btrigger" | tail -1)
+          
+          echo "Extracted line: '$PARAMS'"
           
           # Parse Ftarget and Btrigger from the line
           # Format is: "275    0.38   170000" (row number, Ftarget, Btrigger)
           FTARGET=$(echo "$PARAMS" | awk '{print $2}')
           BTRIGGER=$(echo "$PARAMS" | awk '{print $3}')
           
-          echo "Extracted Ftarget: $FTARGET"
-          echo "Extracted Btrigger: $BTRIGGER"
+          echo "Extracted Ftarget: '$FTARGET'"
+          echo "Extracted Btrigger: '$BTRIGGER'"
           
           # Check if extraction was successful
           if [ -z "$FTARGET" ] || [ -z "$BTRIGGER" ]; then
