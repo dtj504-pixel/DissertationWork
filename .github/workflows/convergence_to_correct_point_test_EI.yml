@@ -1,4 +1,5 @@
 name: Convergence Test looped_ver_case_study8_multi_point_EI
+
 on: workflow_dispatch
 
 jobs:
@@ -6,6 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
+        # Setting up matrix to run looped_ver_case_study8_multi_point_EI.R 100 times
         script:
           - name: "looped_ver_case_study8_multi_point_EI"
             file: "looped_ver_case_study8_multi_point_EI.R"
@@ -21,16 +23,20 @@ jobs:
       BTRIGGER_TOLERANCE: "1000"
 
     steps:
+      # Get the code form the repsitory
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # Install and setup R
       - name: Setup R
         uses: r-lib/actions/setup-r@v2
 
+      # Install required R packages
       - name: Install R packages
         run: |
           Rscript -e 'install.packages(c("DiceKriging","dplyr","plot3D","stats"))'
       
+      # Start Xvfb for graphical output - currently doesn't work but means only have warnings not errors
       - name: Start Xvfb
         run: |
           sudo apt-get update
@@ -38,37 +44,46 @@ jobs:
           Xvfb :99 -screen 0 1024x768x24 &
           sleep 5
 
+      # Runnning case_study8 100 times as given in matrix
       - name: Run ${{ matrix.script.name }} - Iteration ${{ matrix.run_number }}
-        id: run_script
         run: |
+          # Set DISPLAY for graphical output - again, doesn't currently work but avoids errors
           export DISPLAY=:99
           
+          # Making clear which file and iteratuon I'm running
           echo "Running ${{ matrix.script.file }} (Run ${{ matrix.run_number }}/100)..."
           
+          # Run the R script and capture output and exit code
           set +e
           OUT=$(Rscript "${{ matrix.script.file }}" 2>&1)
           EXIT_CODE=$?
           set -e
           
+          # Check if R script ran successfully and throw error if not
           if [ $EXIT_CODE -ne 0 ]; then
             echo "ERROR: Script failed with exit code $EXIT_CODE"
             echo "converged=0" > result.txt
-            exit 0  # Don't fail the job, just mark as non-convergent
+            exit 0
           fi
           
-          # Extract the "Optimal parameters:" section
-          # Look for lines after "Optimal parameters:" and extract Ftarget and Btrigger
-          PARAMS=$(echo "$OUT" | awk '/Optimal parameters:/,/^[0-9]+ +[0-9.]+/' | tail -1)
+          # Debug: show the full output
+          echo "=== FULL OUTPUT START ==="
+          echo "$OUT"
+          echo "=== FULL OUTPUT END ==="
           
-          echo "Extracted line: $PARAMS"
+          # Look for a line with "Ftarget" and "Btrigger" in the header, then get the next line with actual data
+          PARAMS=$(echo "$OUT" | grep -A 1 "Ftarget.*Btrigger" | tail -1)
           
-          # Parse Ftarget and Btrigger from the line
-          # Expected format: "275    0.38   170000" (line number, Ftarget, Btrigger)
+          # Shows the full extracted line for debugging
+          echo "Extracted line: '$PARAMS'"
+          
+          # Parse Ftarget and Btrigger from the line as they are the second and third values
           FTARGET=$(echo "$PARAMS" | awk '{print $2}')
           BTRIGGER=$(echo "$PARAMS" | awk '{print $3}')
           
-          echo "Extracted Ftarget: $FTARGET"
-          echo "Extracted Btrigger: $BTRIGGER"
+          # Print Ftarget and Btrigger for debuggging
+          echo "Extracted Ftarget: '$FTARGET'"
+          echo "Extracted Btrigger: '$BTRIGGER'"
           
           # Check if extraction was successful
           if [ -z "$FTARGET" ] || [ -z "$BTRIGGER" ]; then
@@ -77,55 +92,81 @@ jobs:
             exit 0
           fi
           
-          # Check convergence using bc for floating point arithmetic
+          # Check convergence using bc for floating point arithmetic to allow small errors
+
+          # Gets absolute difference in the values
           FTARGET_DIFF=$(echo "$FTARGET - $CORRECT_FTARGET" | bc | awk '{print ($1<0)?-$1:$1}')
           BTRIGGER_DIFF=$(echo "$BTRIGGER - $CORRECT_BTRIGGER" | bc | awk '{print ($1<0)?-$1:$1}')
           
+          # Check if differences are within tolerance 
+          # by creating an expression such as 0.005 <= 0.01 and bc checks if this is true or false
+          # Gives 1 for true and 0 for false
           FTARGET_OK=$(echo "$FTARGET_DIFF <= $FTARGET_TOLERANCE" | bc)
           BTRIGGER_OK=$(echo "$BTRIGGER_DIFF <= $BTRIGGER_TOLERANCE" | bc)
           
+          # Print convergence status and save correct values to text file in artifact
+          # Checks if converged by checking if both FTARGET_OK and BTRIGGER_OK are equal to 1
           if [ "$FTARGET_OK" -eq 1 ] && [ "$BTRIGGER_OK" -eq 1 ]; then
-            echo "✓ CONVERGED to correct answer!"
+            echo "CONVERGED to correct answer!"
             echo "converged=1" > result.txt
+          # If not both equal to 1, then did not converge to the right point
           else
-            echo "✗ Did NOT converge (Ftarget=$FTARGET, Btrigger=$BTRIGGER)"
+            echo "Did NOT converge (Ftarget=$FTARGET, Btrigger=$BTRIGGER)"
             echo "converged=0" > result.txt
           fi
 
       - name: Upload result
         uses: actions/upload-artifact@v4
         with:
+          # Records which run each artifact represents
           name: result-${{ matrix.script.name }}-run${{ matrix.run_number }}
           path: result.txt
 
   calculate-convergence-rates:
+    # Waits for all iterations of the script to have run before trying to calculate convergence
     needs: run-convergence-tests
     runs-on: ubuntu-latest
     steps:
+      # Donwloads all the artifacts that have names beginning with result-
       - name: Download all results
         uses: actions/download-artifact@v4
         with:
+          # Gets only the artifacts that have names beginning with result-
           pattern: result-*
       
+      # Calculates the convergence rate
       - name: Calculate convergence rates
         run: |
-            echo "=== Convergence Rate Summary ==="
-            echo ""
-            
-            SCRIPT="looped_ver_case_study8_multi_point_EI"
-
-            TOTAL=0
-            CONVERGED=0
-
-            # Count results
-            for dir in result-${SCRIPT}-run*; do
-            RESULT=$(grep "converged=" "$dir/result.txt" | cut -d'=' -f2)
-            TOTAL=$((TOTAL + 1))
-            CONVERGED=$((CONVERGED + RESULT))
-            done
-
+          echo "=== Convergence Rate Summary ==="
+          echo ""
+          
+          SCRIPT="looped_ver_case_study8_multi_point_EI"
+          # Initiliase counters to zero
+          TOTAL=0
+          CONVERGED=0
+          
+          # Count results from all downloaded artifacts
+          for dir in result-${SCRIPT}-run*; do
+            # Check if result.txt exists in this directory
+            if [ -f "$dir/result.txt" ]; then
+              # Find sthe line containing "converged ="" and returns it, then splits on the "=" to get the result
+              RESULT=$(grep "converged=" "$dir/result.txt" | cut -d'=' -f2)
+              # Adds one to the totala number of files
+              TOTAL=$((TOTAL + 1))
+              # Adds to converged the result, so either 0 or 1
+              CONVERGED=$((CONVERGED + RESULT))
+            fi
+          done
+          
+          #Calculate and display percentage
+          if [ $TOTAL -gt 0 ]; then
+            # Calculates the percentage to 2 decimal places
             RATE=$(echo "scale=2; $CONVERGED * 100 / $TOTAL" | bc)
-
+            # Prints a summary with the script and the convergence rate
             echo "$SCRIPT:"
             echo "  Converged: $CONVERGED / $TOTAL ($RATE%)"
             echo ""
+          else
+            # Prints something else if there's an error which can be useful for debugging
+            echo "ERROR: No results found!"
+          fi
