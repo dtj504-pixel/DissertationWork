@@ -444,6 +444,7 @@ ans
 
 # Prints the variable round7
 round7
+cat("Completed 7 rounds\n")
 cat("Total evaluations:", nrow(runs), "\n")
 
 round7$Round <- c(rep(1:6,each=8),rep(7,nrow(round7) - nrow(round6)))
