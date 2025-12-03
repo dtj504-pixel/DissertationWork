@@ -90,7 +90,7 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
   ## coerce to FLStock
   xx <- as.FLStock(x, mixedfishery_MixME_om$flts, full = FALSE, catch = catch)
 
-  ## SET UNITS FOR HARVEST SLOT (ADD THIS LINE)
+  ## SET UNITS FOR HARVEST SLOT
   units(xx@harvest) <- "f"
   
   ## remove excess data
