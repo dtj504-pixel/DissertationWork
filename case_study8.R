@@ -84,7 +84,7 @@ round1 <- data.frame(Ftrgt=sample(unique(dat$Ftrgt)[floor(seq(2,40,l=8))]),Btrig
 plot(round1[,2:1])
 
 
-# Choose an initial small set of design points an fit GP emulators for log-catch and log-risk using these initial runs.
+# Choose an initial small set of design points and fit GP emulators for log-catch and log-risk using these initial runs.
 Ftarget <- sort(unique(dat$Ftrgt))
 Btrigger <- sort(unique(dat$Btrigger))
 dat1 <- data.frame(expand.grid(Ftarget,Btrigger))
