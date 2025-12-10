@@ -146,7 +146,7 @@ res_risk <- log(runs$risk3_long)
 
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
-# Gets the Gaussian Process to produce a prediciton for risk at every point in gridd 
+# Gets the Gaussian Process to produce a prediction for risk at every point in gridd 
 # gridd is the rescaled grid of Ftrgt and Btrigger
 #This has a mean and standard deviation as we are unsure of the exact risk
 pred_risk1_g <- predict(gp_risk,newdata=gridd,type="SK")
