@@ -52,6 +52,7 @@ equal_tol <- function(x,y,tol=1e-12){
 }
 
 library(DiceKriging)
+library(DiceView)
 library(dplyr)
 library(plot3D)
 
@@ -135,10 +136,6 @@ prisk1 <- pnorm(log(0.05),pred_risk1_g$mean,pred_risk1_g$sd+1e-12)
 image2D(matrix(prisk1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 
-# Predicts mean and uncertainty for log(catch) at each parameter combination in gridd
-# SK means simple kriging
-pred_cat1_g <- predict(gp_cat,newdata=gridd,type="SK")
-
 # Best catch observed so far where risk is below 0.05
 max1 <- max(runs$C_long[runs$risk3_long < 0.05])
 
@@ -152,6 +149,31 @@ possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 
 # getting catch out of log(catch) for each point in gridd
 med_cat1 <- exp(pred_cat1_g$mean)
+
+# GP VISUALISATION EXPERIMENTS
+
+
+mean_mat <- matrix(
+  pred_risk1_g$mean,
+  nrow = length(Ftarget),
+  ncol = length(Btrigger),
+  byrow = FALSE
+)
+
+persp(
+  x = Btrigger,
+  y = Ftarget,
+  z = mean_mat,
+  xlab = "Btrigger",
+  ylab = "Ftarget",
+  zlab = "GP mean (log-risk)",
+  theta = 40,
+  phi = 25,
+  expand = 0.6,
+  col = "lightblue",
+  ticktype = "detailed"
+)
+
 
 
 # Below produces heat maps for round 1 
