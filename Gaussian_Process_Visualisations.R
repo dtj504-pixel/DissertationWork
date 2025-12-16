@@ -1,9 +1,14 @@
 # GP VISUALISATION EXPERIMENTS use DiceView
 
 # 3D view of Risk GP mean and sd plot
+
+#load appropriate libraries
 library(DiceView)
 library(rgl)
 
+#setting limits of the plot based on the points we have already evaluated
+#here this is ok because we set up a design that covers the space well
+#and this is applied in our four of the files we are focusing on
 Xlim <- rbind(
   apply(gp_risk@X, 2, min),
   apply(gp_risk@X, 2, max)
@@ -11,24 +16,38 @@ Xlim <- rbind(
 
 
 sectionview3d(
+  #tells sectionview3d which GP to plot - here it is the risk GP
   gp_risk,
+  #tells sectionview3d we have 2 input dimensions
   dim = 2,
+  #sets the limits of the polot along these two input dimensions
   Xlim = Xlim,
+  #labelling the axes
   Xname = c("Ftrgt", "Btrigger"),
   yname = "GP mean (log-risk)",
+  #we are predicitng the GP at 100x100 points to get a smooth surface, even though our space is discrete
   npoints = c(100, 100),
+  #set the colour
   col = "lightblue",
+  #scale teh axis proportionally to gte good visualisation
   scale = TRUE,
-  col_points = "red",      # color for design points
+  #colour points we have already evaluated
+  col_points = "red",      
+  #making sure we create this plot in its own window
   add = FALSE
 )
 
+#gives each axis this same scale
 rgl::aspect3d("iso")
+#sets default camera view
 rgl::view3d(theta = 40, phi = 25, zoom = 0.8)
 
+#converting to a html widget so we can render it through a Quarto document
 rglwidget()
 
+
 # 3D view of Catch GP mean and sd plot
+# repeat of the abive, except with the GP changed to the catch GP
 library(DiceView)
 library(rgl)
 
