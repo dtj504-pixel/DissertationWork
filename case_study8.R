@@ -105,24 +105,20 @@ runs <- rescale_Her(dat_run,dat=dat1)
 # on line 109 models this response using polynomial terms in the formula.
 res_cat <- log(runs$C_long)
 
-# Looks like it is using maximum likelihood estimation below and mentions this nugget thing which Mike was talking about
-# CoPilot says "nugget: a tiny diagonal noise term for numerical stability."
-
-# CoPilot also said "covtype = "exp": exponential correlation function (gives a less smooth prior than squared‑exponential)."
-# which could maybe be something to follow up on
-
+# It is using maximum likelihood estimation below
 # Also has covariance type which is important for Gaussian Processes
 
-# Below carries out the Kriging process for the two separate emulators, as detailed in the paper section 3.1
+# Below fits teh GPs for the two separate emulators, as detailed in the paper section 3.1
 gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
-res_risk <- log(runs$risk3_long)
 
+res_risk <- log(runs$risk3_long)
 gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 # Gets the Gaussian Process to produce a prediciton for risk at every point in gridd 
 # gridd is the rescaled grid of Ftrgt and Btrigger
 #This has a mean and standard deviation as we are unsure of the exact risk
 pred_risk1_g <- predict(gp_risk,newdata=gridd,type="SK")
+pred_cat1_g <- predict(gp_cat,newdata=gridd,type="SK")
 
 
 # Estimate median predicted risk
@@ -149,31 +145,6 @@ possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 
 # getting catch out of log(catch) for each point in gridd
 med_cat1 <- exp(pred_cat1_g$mean)
-
-# GP VISUALISATION EXPERIMENTS
-
-
-mean_mat <- matrix(
-  pred_risk1_g$mean,
-  nrow = length(Ftarget),
-  ncol = length(Btrigger),
-  byrow = FALSE
-)
-
-persp(
-  x = Btrigger,
-  y = Ftarget,
-  z = mean_mat,
-  xlab = "Btrigger",
-  ylab = "Ftarget",
-  zlab = "GP mean (log-risk)",
-  theta = 40,
-  phi = 25,
-  expand = 0.6,
-  col = "lightblue",
-  ticktype = "detailed"
-)
-
 
 
 # Below produces heat maps for round 1 
