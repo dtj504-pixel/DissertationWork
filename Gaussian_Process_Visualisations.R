@@ -1,5 +1,6 @@
 # GP VISUALISATION EXPERIMENTS use DiceView
 
+# 3D view of Risk GP mean and sd plot
 library(DiceView)
 library(rgl)
 
@@ -11,6 +12,34 @@ Xlim <- rbind(
 
 sectionview3d(
   gp_risk,
+  dim = 2,
+  Xlim = Xlim,
+  Xname = c("Ftrgt", "Btrigger"),
+  yname = "GP mean (log-risk)",
+  npoints = c(100, 100),
+  col = "lightblue",
+  scale = TRUE,
+  col_points = "red",      # color for design points
+  add = FALSE
+)
+
+rgl::aspect3d("iso")
+rgl::view3d(theta = 40, phi = 25, zoom = 0.8)
+
+rglwidget()
+
+# 3D view of Catch GP mean and sd plot
+library(DiceView)
+library(rgl)
+
+Xlim <- rbind(
+  apply(gp_cat@X, 2, min),
+  apply(gp_cat@X, 2, max)
+)
+
+
+sectionview3d(
+  gp_cat,
   dim = 2,
   Xlim = Xlim,
   Xname = c("Ftrgt", "Btrigger"),
