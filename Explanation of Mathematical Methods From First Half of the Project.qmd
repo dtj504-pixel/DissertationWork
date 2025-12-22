@@ -489,8 +489,6 @@ By adjusting Equation (12) found in [@GlobalOptimizationofStochasticBlackBoxSyst
 
 where $\sigma_{obs}$ is the standard deviation of the noise variable set by the user and $\sigma_n(x)$ is the standard deviation of GP $F$ at the $n^{th}$ iteration, as used beforehand. We have also changed $f^*_n$ to $f^*_{eb}$ which is the highest predicted mean at any sampled point so far so that we take into account that the uncertainty in our observations could cause a large spike[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
-**Do I need to change this code?**
-
 As our situation has no noise, in our code we are still using $f^*_n$[@Originalpaper]. Thus, we code up the equation:
 
 \begin{equation}
