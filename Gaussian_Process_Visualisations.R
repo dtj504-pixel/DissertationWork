@@ -1,5 +1,55 @@
 # GP VISUALISATION EXPERIMENTS use DiceView
 
+# 2D Visualisation whilst keeping Btrigger fixed
+# Can be easily adjusted to fix Ftarget instead if desired
+# Can also be easily adjusted to do this for the catch GP instead
+
+# load libraries
+library(mvtnorm)
+
+# Fix Btrigger at its median value but also one that is in the gridd
+unique_B <- sort(unique(gridd$Btrigger))
+B_0 <- unique_B[which.min(abs(unique_B - median(unique_B)))]
+
+# Take a slice from scaled gridd such that Btrigger = B0
+slice_idx <- gridd$Btrigger == B_0
+# Make this slice our new grid for prediction
+Xnew <- gridd[slice_idx, c("Ftarget","Btrigger")]
+
+
+# Use GP to predict functions
+pred_risk_fixed <- predict(
+  gp_risk,
+  newdata = Xnew,
+  type = "UK",
+  cov.compute = TRUE
+)
+
+# mean and variance in our new grid
+mu <- pred_risk_fixed$mean        
+Sigma <- pred_risk_fixed$cov
+
+# get 10 sample functions
+nsim <- 10
+fsim <- rmvnorm(nsim, mean = mu, sigma = Sigma)
+
+#Get initial plot with axes and mean line
+plot(
+  Xnew$Ftarget, mu,
+  type = "l",
+  lwd = 3,
+  col = "black",
+  xlab = "Ftrgt",
+  ylab = "log-risk",
+  main = "Posterior GP samples (Btrigger fixed)"
+)
+
+# Add on sampled functions with slight transparency
+for (i in 1:nsim) {
+  lines(Xnew$Ftarget, fsim[i, ], col = rgb(0, 0, 1, 0.3))
+}
+
+
 # 3D view of Risk GP mean and sd plot
 
 #load appropriate libraries
