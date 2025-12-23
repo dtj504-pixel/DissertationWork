@@ -108,7 +108,7 @@ res_cat <- log(runs$C_long)
 # It is using maximum likelihood estimation below
 # Also has covariance type which is important for Gaussian Processes
 
-# Below fits teh GPs for the two separate emulators, as detailed in the paper section 3.1
+# Below fits the GPs for the two separate emulators, as detailed in the paper section 3.1
 gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "gauss")
 
 res_risk <- log(runs$risk3_long)
