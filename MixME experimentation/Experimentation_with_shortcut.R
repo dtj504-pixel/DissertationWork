@@ -11,7 +11,7 @@ ICES_HCR <- function (stk, args, hcrpars, tracking) {
 
   ## Extract year arguments
 
-  # ay is the current advice year
+  # ay is the current assessment year
   ay <- args$ay
   # mlag is the management lag in years
   mlag <- args$management_lag
@@ -144,24 +144,27 @@ ICES_HCR <- function (stk, args, hcrpars, tracking) {
 #' @param fwd_yrs_lf_remove Integer Vector. ... Defaults to -2:-1.
 #' @param fwd_splitLD Logical. Defaults to \code{TRUE}
 
+
+# === Creating forecast function ===
 forecast_fun <- function(stk, tracking, ctrl,
-                         args,                       # contains ay (assessment year)
-                         fwd_trgt = c("fsq", "hcr"), # target in forecast
-                         fwd_yrs = 2,                # number of years to add
+                         args,                       # contains ay (assessment year) and management lag
+                         fwd_trgt = c("fsq", "hcr"), # fish to status quo (fsq) in intermediate year and then apply hcr in final calculations
+                         fwd_yrs = 2,                # number of years to add - have a space for the year inbetween to do intermediate calculations and then for the year we want a quota for
                          fwd_yrs_fsq = -2:0,         # years used to calculate fsq
                          fwd_yrs_average = -3:0,     # years used for averages
-                         fwd_yrs_rec_start = NULL,   # recruitment 
-                         fwd_yrs_sel = -3:-1,        # selectivity
-                         fwd_yrs_lf_remove = -2:-1,
-                         fwd_splitLD = TRUE) {
+                         fwd_yrs_rec_start = NULL,   # recruitment - nu;ll uses the entire history to estimate
+                         fwd_yrs_sel = -3:-1,        # selectivity of equipment - average form 3 years ago to 1 year ago 
+                         fwd_yrs_lf_remove = -2:-1,  # calculate landings to discards ratio from 2 years ago to 1 year ago
+                         fwd_splitLD = TRUE)         # Whetehr to calculate landings and discards separately
+{
   
-  ## get current (assessment) year
+  ## get current assessment year
   ay <- args$ay
   
   ## get management lag
   mlag <- args$management_lag
   
-  ## number of iterations
+  ## checking number of iterations
   niter <- dim(stk)[6]
   
   ## geomean to estimate recruitment for the stock
@@ -199,10 +202,7 @@ forecast_fun <- function(stk, tracking, ctrl,
   targ[2,] <- ctrl@iters[,"value",]
   targ[3,] <- ctrl@iters[,"value",]
   
-  ctrl0 <- fwdControl(list(
-    year  = c(ay,ctrl@target$year,ctrl@target$year+1),
-    quant = "fbar",
-    value = c(targ)))
+  ctrl0 <- fwdControl(list(year  = c(ay,ctrl@target$year,ctrl@target$year+1), quant = "fbar", value = c(targ)))
   
   ## project stock forward
   stk_fwd <- FLasher::fwd(stk0, sr = sr0, control = ctrl0)
@@ -243,8 +243,7 @@ forecast_fun <- function(stk, tracking, ctrl,
   ## Construct fwd control object
   ctrl0 <- fwdControl(list(year = ay + mlag, quant = "catch", value = TAC))
   
-  return(list(ctrl     = ctrl0,
-              tracking = tracking))
+  return(list(ctrl     = ctrl0, tracking = tracking))
 }
 
 
@@ -252,16 +251,15 @@ forecast_fun <- function(stk, tracking, ctrl,
 
 ## SECOND PART
 
-#' The objective of this script is to update the harvest control rule from
-#' constant catch to a hockey-stick harvest control rule with three parameters:
+#' The objective of this script is to update the harvest control rule from constant catch to a hockey-stick harvest control rule with three parameters:
 #' ftarget, btrigger and blim.
 
 ## Load libraries
-library(mse)      # needed to create MSE control object
-library(FLCore)   # basic FLR structures
-library(FLFishery)# FLFishery structures
-library(FLasher)  # MP short-term forecast
-library(MixME)    # main simulation package
+library(mse)  
+library(FLCore)   
+library(FLFishery)
+library(FLasher) 
+library(MixME)   
 
 ## Load tutorial data 
 data("mixedfishery_MixME_input")
@@ -303,8 +301,7 @@ input$ctrl_obj$isys@args$isysList <- list(cod = list(fwd_trgt = c("fsq", "hcr"),
                                                      fwd_yrs_sel = -3:-1,
                                                      fwd_yrs_lf_remove = NULL))
 
-#' We will have a lag of 1 year between the generation and implementation of 
-#' catch advice. We therefore need an initial catch target for each stock - this
+#' We will have a lag of 1 year between the generation and implementation of catch advice. We therefore need an initial catch target for each stock - this
 #' would typically be last year's TAC
 
 ## Update simulation arguments
