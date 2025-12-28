@@ -39,12 +39,15 @@ ICES_HCR <- function (stk, args, hcrpars, tracking) {
   # as this reduces the effect of large values, and then exponentiating
   sr0@params[] <- exp(yearMeans(log(stk_n[1,])))
   
-  ## truncate to min data year
-  minyr <- dims(stk@stock[!is.na(stk@stock.n)])$minyear # min year where data exists
+
+
+  ## find the first year with any data
+  minyr <- dims(stk@stock[!is.na(stk@stock.n)])$minyear
+  ## remove any years before this
   stk0  <- window(stk, start = minyr)
   
-  ## extend stock object by one year to forecast SSB at the beginning of the advice 
-  ## year
+  ## extend stock object by one year
+  ## automatically fills in parameters TODO: How? AVerage of last 3 years?
   stk0 <- FLasher::stf(stk0, 1)
   
   # FLasher::fwd will throw an error if there are NAs in weights in future years.
@@ -52,51 +55,65 @@ ICES_HCR <- function (stk, args, hcrpars, tracking) {
   FLCore::discards.wt(stk0)[FLCore::discards.n(stk0) == 0] <- 0
   FLCore::landings.wt(stk0)[FLCore::landings.n(stk0) == 0] <- 0
   
-  ## find status quo F
+
+  ## find status quo F slightly differently for each stock
+  # cod and whiting average last three eyars, haddock average last year only
   if(stk@name == "cod") fwd_yrs_fsq <- -2:0
   if(stk@name == "had") fwd_yrs_fsq <- 0
   if(stk@name == "whg") fwd_yrs_fsq <- -2:0
   
+  # estimated fishing mortality for the forward year for each stock
   fsq <- yearMeans(fbar(stk)[,as.character(fwd_yrs_fsq+ay-mlag)])
   
   ## FLasher cannot handle fsq=0
   fsq <- ifelse(fsq==0, 0.001,fsq)
   
-  ## Construct forward control
+
+
+  ## Construct forward fishing mortality
+  # Will overwrite the second row later
+  # Same number of columns as simulations
   targ <- matrix(0,nrow=2, ncol = ni)
   targ[1,] <- fsq
   targ[2,] <- fsq
   
+  # Wrappper that constructs the fwdControl object, setting fbar to values in the targ matrix
   ctrl0 <- fwdControl(list(
     year  = c(ay,ay+mlag),
     quant = "fbar",
     value = c(targ)))
   
-  ## project stock forward
+  ## project stock forward to get ssb in the advice year
   stk_fwd <- FLasher::fwd(stk0, sr = sr0, control = ctrl0)
   
   # ------------------------------#
   # HCR
   # ------------------------------#
   
-  ## Extract reference points 
+  ## Extract the parameters and propogate to each simulation
   Ftrgt <- propagate(FLPar(hcrpars["Ftrgt"]), ni)
   Btrigger <- propagate(FLPar(hcrpars["Btrigger"]), ni)
   Blim <- propagate(FLPar(hcrpars["Blim"]), ni)
   
-  ## calculate F multiplier 
+  ## calculate F multiplier
+
+  # calculate what ratio of Btrigger we are at for each simulation - 1 means we're at Btrigger 
   status_Btrigger <- tail(ssb(stk_fwd), 1)/Btrigger
+  # find which simulations are above Btrigger
   pos_Btrigger <- which(status_Btrigger > 1)
+  # set Ftarget to the ratio of Ftarget that corresponds to status_Btrigger
   Fmult <- status_Btrigger
+  # cap this ratio at 1
   Fmult[, , , , , pos_Btrigger] <- 1
   
   ## calculate new F target
   Ftrgt <- Ftrgt * Fmult
-  ctrl <- fwdControl(list(year = ay + mlag, quant = "fbar", 
-                          value = Ftrgt))
+  # make most of the control object for output
+  ctrl <- fwdControl(list(year = ay + mlag, quant = "fbar", value = Ftrgt))
   
   ## Attach Blim for use in implementation
   attr(ctrl, "Blim") <- Blim
   
+  #return the control object and tracking object
   return(list(ctrl = ctrl, tracking = tracking))
 }
