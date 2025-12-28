@@ -167,6 +167,11 @@ forecast_fun <- function(stk, tracking, ctrl,
   ## checking number of iterations
   niter <- dim(stk)[6]
   
+
+# TODO: Potential issue with different ways of calculating fsq for different fucntions???
+# The hCR fucntion has a fixed year for each fsq but the forecast function uses the same year for every stock
+
+
   ## geomean to estimate recruitment for the stock
   sr0 <- as.FLSR(stk, model = "geomean")
   sr0@params <- FLCore::propagate(sr0@params, iter = niter)
@@ -178,11 +183,12 @@ forecast_fun <- function(stk, tracking, ctrl,
   }
   sr0@params[] <- exp(yearMeans(log(stk_n[1,])))
   
-  ## truncate to min data year
+  ## remnove years before first data year
   minyr <- dims(stk@stock[!is.na(stk@stock.n)])$minyear # min year where data exists
   stk0  <- window(stk, start = minyr)
   
-  ## extend stock object
+  ## extend stock object and fill with assumptions calculated based on variables defined in function call
+  # use fwd_yrs+1 because we need to see if the stock crashes at the start of the year after the advice year
   stk0 <- FLasher::stf(stk0, fwd_yrs+1)
   
   # FLasher::fwd will throw an error if there are NAs in weights in future years.
@@ -190,27 +196,29 @@ forecast_fun <- function(stk, tracking, ctrl,
   FLCore::discards.wt(stk0)[FLCore::discards.n(stk0) == 0] <- 0
   FLCore::landings.wt(stk0)[FLCore::landings.n(stk0) == 0] <- 0
   
-  ## find status quo F
+  ## find status quo F for each stock
   fsq <- yearMeans(fbar(stk)[,as.character(fwd_yrs_fsq+ay-mlag)])
   
   ## FLasher cannot handle fsq=0
   fsq <- ifelse(fsq==0, 0.001,fsq)
   
-  ## Construct forward control
+  ## Construct matrix with rows as years and columns as iterations as before
+  # and fill it with the Ftarget values
   targ <- matrix(0,nrow=fwd_yrs+1, ncol = niter)
   targ[1,] <- fsq
   targ[2,] <- ctrl@iters[,"value",]
   targ[3,] <- ctrl@iters[,"value",]
   
+  # year sets the timeline, quant = fbar says we are using fishing mortality
   ctrl0 <- fwdControl(list(year  = c(ay,ctrl@target$year,ctrl@target$year+1), quant = "fbar", value = c(targ)))
   
   ## project stock forward
   stk_fwd <- FLasher::fwd(stk0, sr = sr0, control = ctrl0)
   
-  ## Extract catch target for the advice year (3 decimal places)
+  ## Extract catch target for the advice year (3 decimal places) by looking at the result object
   TAC <- round(c(catch(stk_fwd)[,ac(ay+mlag)]),3)
   
-  ## Get SSB at the end of the advice year
+  ## Get SSB at the end of the advice year (or at the start of the year after?)
   TACyr_ssb <- c(ssb(stk_fwd)[,ac(ay+mlag+1)])
   
   ## Find iterations where SSB at end of TAC year is < Blim
@@ -222,28 +230,33 @@ forecast_fun <- function(stk, tracking, ctrl,
     ## define forward control targetting Blim
     targ <- matrix(0,nrow=fwd_yrs+1, ncol = niter)
     targ[1,] <- fsq
+    # target is now Blim
     targ[2,] <- c(attr(ctrl,"Blim"))
     targ[3,] <- ctrl@iters[,"value",]
     
     ctrl_blim <- fwdControl(list(
       year  = c(ay,ay+mlag,ay+mlag+1),
+      #focus on biomass in the 2nd year
       quant = c("fbar","ssb_end","fbar"),
       value = c(targ)))
     
+    #rerun simulation focusing on Blim to find the Ftarget that is appropriate
     stk_blim <- FLasher::fwd(stk0, sr = sr0, control = ctrl_blim)
     
-    ## Find iterations with zero TAC advice
+    ## Find iterations with zero TAC advice (some stocks may be in such bad health taht we can't catch any)
     zeroTAC <- ssb(stk_blim)[,ac(ay+mlag+1)] < attr(ctrl,"Blim")
     
     ## update TAC
     TAC[belowBlim] <- round(c(catch(stk_blim)[,ac(ay+mlag)])[belowBlim],3)
+    # set any in zeroTAC to zero manually
     TAC[zeroTAC]   <- 0
   }
   
-  ## Construct fwd control object
+  ## Construct fwd control object, which we measurre using catch not fbar now
   ctrl0 <- fwdControl(list(year = ay + mlag, quant = "catch", value = TAC))
   
-  return(list(ctrl     = ctrl0, tracking = tracking))
+  # return the same objects as before
+  return(list(ctrl = ctrl0, tracking = tracking))
 }
 
 
