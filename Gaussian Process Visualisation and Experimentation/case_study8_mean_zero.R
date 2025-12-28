@@ -112,10 +112,10 @@ res_cat <- log(runs$C_long)
 
 # The ~ simply starts the definition fo the formula, the . means all variables in the design and the ^2 means include interaction terms
 # So we have a formula with Intercept, Ftarget, Btrigger and Ftarget*Btrigger
-gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 # Gets the Gaussian Process to produce a prediciton for risk at every point in gridd 
 # gridd is the rescaled grid of Ftrgt and Btrigger
@@ -189,10 +189,10 @@ names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
 res_cat <- log(runs$C_long)
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk2_g <- predict(gp_risk,newdata=gridd,type="SK")
 
@@ -245,10 +245,10 @@ names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
 res_cat <- log(runs$C_long)
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk3_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk3 <- exp(pred_risk3_g$mean)
@@ -285,10 +285,10 @@ names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
 res_cat <- log(runs$C_long)
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk4_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk4 <- exp(pred_risk4_g$mean)
@@ -325,10 +325,10 @@ names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
 res_cat <- log(runs$C_long)
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk5_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk5 <- exp(pred_risk5_g$mean)
@@ -364,10 +364,10 @@ names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
 res_cat <- log(runs$C_long)
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk6_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk6 <- exp(pred_risk6_g$mean)
@@ -405,10 +405,10 @@ names(dat_run) <- c("Ftarget","Btrigger","C_long","risk3_long")
 runs <- rescale_Her(dat_run,dat=dat1)
 
 res_cat <- log(runs$C_long)# - predict(qgams_cat)
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)# - predict(qgams_risk)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 pred_risk7_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk7 <- exp(pred_risk7_g$mean)
@@ -431,7 +431,7 @@ image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(u
 
 pot_points <- gridd[possible7,]
 
-# only one left
+# Now doesn't converge after 7 rounds, so worse than other versions
 
 # We assume it ends in seven rounds every time in this case study, which wouldn't be great for general application
 # Maybe there are other files that are more general than this one that I haven't looked at yet?
