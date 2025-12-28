@@ -1,6 +1,8 @@
 #IMPORTANT NOTE:
 # " we will assume that we can perfectly observe the stock without error"
 
+# Focusing on this example first in my project
+
 ## load libraries
 library(FLCore)
 library(FLFishery)
