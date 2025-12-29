@@ -152,7 +152,7 @@ forecast_fun <- function(stk, tracking, ctrl,
                          fwd_yrs = 2,                # number of years to add - have a space for the year inbetween to do intermediate calculations and then for the year we want a quota for
                          fwd_yrs_fsq = -2:0,         # years used to calculate fsq
                          fwd_yrs_average = -3:0,     # years used for averages
-                         fwd_yrs_rec_start = NULL,   # recruitment - nu;ll uses the entire history to estimate
+                         fwd_yrs_rec_start = NULL,   # recruitment - null uses the entire history to estimate
                          fwd_yrs_sel = -3:-1,        # selectivity of equipment - average form 3 years ago to 1 year ago 
                          fwd_yrs_lf_remove = -2:-1,  # calculate landings to discards ratio from 2 years ago to 1 year ago
                          fwd_splitLD = TRUE)         # Whetehr to calculate landings and discards separately
@@ -168,9 +168,11 @@ forecast_fun <- function(stk, tracking, ctrl,
   niter <- dim(stk)[6]
   
 
-# TODO: Potential issue with different ways of calculating fsq for different fucntions???
-# The hCR fucntion has a fixed year for each fsq but the forecast function uses the same year for every stock
+# TODO: Potential issue with different ways of calculating fsq for different functions???
+# The HCR function has a fixed year for each fsq but the forecast function uses the same year for every stock
 
+# UNDERSTAND ABOVE: a list of variables is set for each stock and so 
+# different values can be set for each one
 
   ## geomean to estimate recruitment for the stock
   sr0 <- as.FLSR(stk, model = "geomean")
@@ -278,27 +280,33 @@ library(MixME)
 data("mixedfishery_MixME_input")
 input <- mixedfishery_MixME_input
 
-## set estimation method to perfect observations 
+
+## check estimation methods by printing
 input$ctrl_obj$est@args$estmethod$cod
 input$ctrl_obj$est@args$estmethod$had
 
-## we don't need any additional arguments for stock estimation
+## we don't need any additional arguments for stock estimation#
+# We are assuming there is no error in the observations
+# This means the stock will crash only if the HCR rule is bad
 input$ctrl_obj$est@args$fitList <- NULL
 input$ctrl_obj$est@args$fwdList <- NULL
 
-
+# Tells the model to use the custom HCR function defined above to calculate HCRs
 input$ctrl_obj$hcr@args$hcrmethod$cod <- ICES_HCR
 input$ctrl_obj$hcr@args$hcrmethod$had <- ICES_HCR
 
-## Define the HCR parameters
+## Define the HCR parameters - hardcocded here for cod and haddock
+
+# THIS IS WHAT I SHOULD BE CHANGING TO CHANGE THE IDEAL Ftarget??
+
 input$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = list(cod = c("Ftrgt"=0.29, "Btrigger"=5800, "Blim"=4200),
                                                           had = c("Ftrgt"=0.353, "Btrigger"=12822, "Blim"=9227))))
 
-## Change implementation method
+## Change method of calcullating TACs to use the forecast function defined above
 input$ctrl_obj$isys@args$isysmethod$cod <- forecast_fun
 input$ctrl_obj$isys@args$isysmethod$had <- forecast_fun
 
-## Define short-term forecast parameters forecast
+## Define short-term forecast parameters
 input$ctrl_obj$isys@args$isysList <- list(cod = list(fwd_trgt = c("fsq", "hcr"), # what to target in forecast
                                                      fwd_yrs = 2,                # number of years to add
                                                      fwd_yrs_fsq = -2:0,         # years used to calculate fsq
@@ -319,19 +327,17 @@ input$ctrl_obj$isys@args$isysList <- list(cod = list(fwd_trgt = c("fsq", "hcr"),
 
 ## Update simulation arguments
 input$args$management_lag <- 1
+# arbitrarily set TAC to 1000 for intermediate year, instead of to previous year's TAC as advised above
 input$args$adviceInit$cod[] <- 1000
 input$args$adviceInit$had[] <- 1000
 
 ## Run simulation
-system.time({res <- runMixME(input$om,
-                             input$oem,
-                             input$ctrl_obj,
-                             input$args)})
+system.time({res <- runMixME(input$om,input$oem,input$ctrl_obj,input$args)})
 
 ## Check for effort optimisation failures
 res$tracking$optim
 
-## Check for MP failures
+## Check for Management Procedure failures - effectively failure to return quotas
 res$tracking$iterfail
 
 ## Check SSB
