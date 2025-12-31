@@ -462,9 +462,19 @@ for (iteration in 1:max_rounds) {
   
   # 3. Remove the prediction vectors to be safe
   rm(pred_risk_cod, pred_risk_had, pred_log_cat)
+
+  # KEEP ONLY WANTED COLUMNS IN runs
+  
+  # Define the columns we actually care about
+  important_cols <- c("Fcod", "Fhad", "TotalCatch", "RiskCod", "RiskHad")
+  
+  # Only keep those columns before binding
+  runs <- runs[, important_cols]
   
   # // LOOP ENDS //
   round_num <- iteration
+
+  
   
 }
 
