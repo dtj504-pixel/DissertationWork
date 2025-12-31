@@ -59,7 +59,8 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
     
         # Loop over candidate points
         for (i in seq_len(m)) {
-            # set knowledge gradient to 0 for any points with a predicted risk that is too high
+            # set knowledge gradient to 0 for any points with a prisk that is too low
+            # as we set pred_risk = prisk when calling this function below
             if (pred_risk[i] < eps) {
                 kg[i] <- 0
                 next
