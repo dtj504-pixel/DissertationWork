@@ -208,12 +208,12 @@ f_had <- 0.353
 
 # Define Design Space as discrete with 0.01 increments
 dat <- data.frame(expand.grid(
-  Fcod = seq(0, 1, by=0.01),
-  Fhad = seq(0, 1, by=0.01)
+  Fcod = seq(0, 1, by=0.05),
+  Fhad = seq(0, 1, by=0.05)
 ))
 
 #Intialise runs object
-runs<- NULL
+runs <- NULL
 
 # Pick 5 RANDOM points from your grid to initialize the model
 # (We use set.seed to make sure it's reproducible)
@@ -224,46 +224,46 @@ warmup_points <- dat[warmup_indices, ]
 print("--- STARTING WARM-UP PHASE (5 Iterations) ---")
 
 for (i in 1:nrow(warmup_points)) {
-    
-    # Get the F values for this warm-up run
-    f_cod_curr <- warmup_points$Fcod[i]
-    f_had_curr <- warmup_points$Fhad[i]
-    
-    print(paste("Warm-up Run:", i, "| Testing Fcod:", f_cod_curr, "Fhad:", f_had_curr))
-    
-    # 1. RUN SIMULATION
-    res <- obj_func(f_cod_curr, f_had_curr, mixedfishery_MixME_om, stk_oem)
-    
-    # 2. EXTRACT CATCH (Direct Lookup)
-    catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-    catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-    total_catch <- catch_cod + catch_had
-    
-    # 3. EXTRACT RISK (Direct Lookup)
-    Blim_cod <- 107000
-    Blim_had <- 9227
-    
-    risk_cod_annual <- iterMeans(res$tracking$cod$stk["SB.om", ac(2020:2039)] < Blim_cod, na.rm = TRUE)
-    risk_had_annual <- iterMeans(res$tracking$had$stk["SB.om", ac(2020:2039)] < Blim_had, na.rm = TRUE)
-    
-    risk_cod_val <- c(risk_cod_annual[, "2039"])
-    risk_had_val <- c(risk_had_annual[, "2039"])
-    
-    # 4. STORE DATA
-    dat_run <- data.frame(
-        Fcod = f_cod_curr,
-        Fhad = f_had_curr,
-        TotalCatch = total_catch,
-        RiskCod = risk_cod_val,
-        RiskHad = risk_had_val
-    )
-    
-    # Add to 'runs'
-    if (is.null(runs)) {
-        runs <- dat_run
-    } else {
-        runs <- rbind(runs, dat_run)
-    }
+  
+  # Get the F values for this warm-up run
+  f_cod_curr <- warmup_points$Fcod[i]
+  f_had_curr <- warmup_points$Fhad[i]
+  
+  print(paste("Warm-up Run:", i, "| Testing Fcod:", f_cod_curr, "Fhad:", f_had_curr))
+  
+  # 1. RUN SIMULATION
+  res <- obj_func(f_cod_curr, f_had_curr, mixedfishery_MixME_om, stk_oem)
+  
+  # 2. EXTRACT CATCH (Direct Lookup)
+  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  total_catch <- catch_cod + catch_had
+  
+  # 3. EXTRACT RISK (Direct Lookup)
+  Blim_cod <- 107000
+  Blim_had <- 9227
+  
+  risk_cod_annual <- iterMeans(res$tracking$cod$stk["SB.om", ac(2020:2039)] < Blim_cod, na.rm = TRUE)
+  risk_had_annual <- iterMeans(res$tracking$had$stk["SB.om", ac(2020:2039)] < Blim_had, na.rm = TRUE)
+  
+  risk_cod_val <- c(risk_cod_annual[, "2039"])
+  risk_had_val <- c(risk_had_annual[, "2039"])
+  
+  # 4. STORE DATA
+  dat_run <- data.frame(
+    Fcod = f_cod_curr,
+    Fhad = f_had_curr,
+    TotalCatch = total_catch,
+    RiskCod = risk_cod_val,
+    RiskHad = risk_had_val
+  )
+  
+  # Add to 'runs'
+  if (is.null(runs)) {
+    runs <- dat_run
+  } else {
+    runs <- rbind(runs, dat_run)
+  }
 }
 
 print("--- WARM-UP COMPLETE. 'runs' now has 5 valid data points. ---")
@@ -275,7 +275,7 @@ print(runs)
 
 # // LOOP STARTS HERE AS WE ARE CHANGING FTARGET //
 
-max_rounds <- 20
+max_rounds <- 3
 round_num <- 1
 
 #TODO: Can I rename the variables ion each round so I can clearly see the progression?
@@ -342,28 +342,44 @@ for (iteration in 1:max_rounds) {
   print(log_total_catch)
   
   # Runs variable to count all runs so far and all their associated data
-  if (iteration == 1) {
-    runs <- dat_run
-  } 
-  else {
-    runs <- rbind(runs, dat_run)
-  }
+  runs <- rbind(runs, dat_run)
   
   print("runs is")
   print(runs)
   
+  # --- FIX FOR FLAT DATA --- until get Risk working properly
+  risk_cod_input <- runs$RiskCod
+  risk_had_input <- runs$RiskHad
+  
+  print("risk_cod_input is")
+  print(risk_cod_input)
+  
+  
+  print("risk_had_input is")
+  print(risk_had_input)
+  
+  # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash
+  if(var(risk_cod_input, na.rm = TRUE) == 0) {
+    risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-10)
+  }
+  
+  if(var(risk_had_input, na.rm = TRUE) == 0) {
+    risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-10)
+  }
+  
   # SET UP THE GPS
   # Adding 1e-15 to nuggets to avoid 0 nugget variance
   gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$TotalCatch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
-  gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$RiskCod,nugget=1e-12*var(runs$RiskCod)+1e-15,covtype = "exp")
-  gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$RiskHad,nugget=1e-12*var(runs$RiskHad)+1e-15,covtype = "exp")
+  gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
+  gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
   
+  print("GPs done")
   
   # Find the remaining plausible points using BHM
   
-  pred_risk_cod <- predict(gp_cod_risk, newdata = gridd, type = "SK")
-  pred_risk_had <- predict(gp_had_risk, newdata = gridd, type = "SK")
-  pred_log_cat <- predict(gp_log_cat, newdata = gridd, type = "SK")
+  pred_risk_cod <- predict(gp_cod_risk, newdata = dat, type = "SK")
+  pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
+  pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
   
   # Get probability that risk =< 0.05 for both cod and haddock
   prisk_cod <- pnorm(0.05, pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
@@ -398,15 +414,16 @@ for (iteration in 1:max_rounds) {
   #TDOD: Put in correct X_pred
   kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
   
+  print("kg done")
   
   # Calculate the remaining points - get loop to end when none left
-  gridd_with_kg <- data.frame(expand.grid(Fcod,Fhad))
-  gridd_with_kg$kg <- kg
-  gridd_with_kg$possible <- possible
-  names(gridd_with_kg) <- c("Fcod","Fhad", "kg","possible"  )
+  dat_with_kg <- dat
+  dat_with_kg$kg <- kg
+  dat_with_kg$possible <- possible
+  names(dat_with_kg) <- c("Fcod","Fhad", "kg","possible"  )
   
   # Filter to only plausible points with positive KG
-  cand <- subset(gridd_with_kg, possible == TRUE & kg > 0)
+  cand <- subset(dat_with_kg, possible == TRUE & kg > 0)
   
   # Create keys for filtering
   cand$key <- paste(cand$Fcod, cand$Fhad, sep = "_")
@@ -427,9 +444,24 @@ for (iteration in 1:max_rounds) {
   # Get candidate point with highest KG
   next_point <- cand[which.max(cand$kg), c("Fcod","Fhad")]
   
+  print("next point is")
+  print(next_point)
+  
   # Set the point with the highest KG as the new Ftargets to evaluate
   f_cod <- next_point$Fcod
   f_had <- next_point$Fhad
+  
+  # --- CRITICAL MEMORY CLEANUP ---
+  
+  # 1. Remove the heavy simulation result
+  # If you don't do this, R might keep it in memory for the next loop
+  rm(res) 
+  
+  # 2. Remove the Kriging models (they can be heavy too)
+  rm(gp_log_cat, gp_cod_risk, gp_had_risk)
+  
+  # 3. Remove the prediction vectors to be safe
+  rm(pred_risk_cod, pred_risk_had, pred_log_cat)
   
   # // LOOP ENDS //
   round_num <- iteration
