@@ -10,10 +10,11 @@ library(mse)
 library(stockassessment)
 library(MixME)
 
-## load example data - starts oof 
+
+## load example data
 data("mixedfishery_MixME_om")
 
-# GENERATE OM AND OEM - repeating process form previous tutorials
+# GENERATE OM AND OEM - repeating process from previous tutorials
 
 # This determines what proportion of each stock's catch goes to each fleet based on the historic data
 out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, flts = mixedfishery_MixME_om$flts, verbose = TRUE)
@@ -24,7 +25,7 @@ mixedfishery_MixME_om$flts <- out$flts
 # This projects the fishery forward in time using historical patterns as seen in previous tutorials, 
 # allowing us to simulate results of the management advice into the future
 # yearMeans uses recent historical averages as parameters for the projection
-out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,  wts.nyears = 3,  sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
+out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20, wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
 ## Add new outputs from future years to the operating model
 mixedfishery_MixME_om$stks <- out$stks
 mixedfishery_MixME_om$flts <- out$flts
@@ -35,10 +36,7 @@ iy = 2020
 
 # set an arbitrary effort-based target for each fleet as we only want the values at the beginning of 2020
 ctrlArgs <- lapply(1:length(mixedfishery_MixME_om$flts), function(x) {
-  list(year = iy,
-       quant = "effort",
-       fishery = names(mixedfishery_MixME_om$flts)[x],
-       value = 1)
+  list(year = iy,quant = "effort",fishery = names(mixedfishery_MixME_om$flts)[x],value = 1)
 })
 
 # This matrix maps which fleets catch which stocks
@@ -48,7 +46,7 @@ ctrlArgs$FCB <- makeFCB(biols = mixedfishery_MixME_om$stks, flts = mixedfishery_
 flasher_ctrl <- do.call(FLasher::fwdControl, ctrlArgs)
 
 # This simulates one year of fishing to get starting conditions right
-omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks, fishery   = mixedfishery_MixME_om$flts, control   = flasher_ctrl)
+omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks, fishery = mixedfishery_MixME_om$flts, control = flasher_ctrl)
 
 #Update the operating model with projected population numbers
 mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
@@ -64,7 +62,7 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
   # for each fleet, find which catch element corresponds to the current stock
   catch <- sapply(mixedfishery_MixME_om$flts, function(y) which(names(y) %in% name(x)))
   
-  # get catches form eahc fleet and convert to FLStock
+  # get catches from each fleet and convert to FLStock
   xx <- as.FLStock(x, mixedfishery_MixME_om$flts, full = FALSE, catch = catch)
 
     
@@ -106,6 +104,8 @@ input$ctrl_obj$hcr@args$hcrmethod$cod
 input$ctrl_obj$hcr@args$hcrmethod$had
 
 # Set the target fishing mortality for both stocks - may be recommended by ICES
+
+#THIS IS WHAT I SHOULD BE CHANGING EACH TIME and running an algorithm to find the best one
 input$ctrl_obj$hcr@args$ftrg$cod <- 0.28  # use MSY f-target
 input$ctrl_obj$hcr@args$ftrg$had <- 0.353 # use MSY f-target
 
