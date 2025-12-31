@@ -212,6 +212,66 @@ dat <- data.frame(expand.grid(
   Fhad = seq(0, 1, by=0.01)
 ))
 
+#Intialise runs object
+runs<- NULL
+
+# Pick 5 RANDOM points from your grid to initialize the model
+# (We use set.seed to make sure it's reproducible)
+set.seed(123) 
+warmup_indices <- sample(nrow(dat), 5)
+warmup_points <- dat[warmup_indices, ]
+
+print("--- STARTING WARM-UP PHASE (5 Iterations) ---")
+
+for (i in 1:nrow(warmup_points)) {
+    
+    # Get the F values for this warm-up run
+    f_cod_curr <- warmup_points$Fcod[i]
+    f_had_curr <- warmup_points$Fhad[i]
+    
+    print(paste("Warm-up Run:", i, "| Testing Fcod:", f_cod_curr, "Fhad:", f_had_curr))
+    
+    # 1. RUN SIMULATION
+    res <- obj_func(f_cod_curr, f_had_curr, mixedfishery_MixME_om, stk_oem)
+    
+    # 2. EXTRACT CATCH (Direct Lookup)
+    catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+    catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+    total_catch <- catch_cod + catch_had
+    
+    # 3. EXTRACT RISK (Direct Lookup)
+    Blim_cod <- 107000
+    Blim_had <- 9227
+    
+    risk_cod_annual <- iterMeans(res$tracking$cod$stk["SB.om", ac(2020:2039)] < Blim_cod, na.rm = TRUE)
+    risk_had_annual <- iterMeans(res$tracking$had$stk["SB.om", ac(2020:2039)] < Blim_had, na.rm = TRUE)
+    
+    risk_cod_val <- c(risk_cod_annual[, "2039"])
+    risk_had_val <- c(risk_had_annual[, "2039"])
+    
+    # 4. STORE DATA
+    dat_run <- data.frame(
+        Fcod = f_cod_curr,
+        Fhad = f_had_curr,
+        TotalCatch = total_catch,
+        RiskCod = risk_cod_val,
+        RiskHad = risk_had_val
+    )
+    
+    # Add to 'runs'
+    if (is.null(runs)) {
+        runs <- dat_run
+    } else {
+        runs <- rbind(runs, dat_run)
+    }
+}
+
+print("--- WARM-UP COMPLETE. 'runs' now has 5 valid data points. ---")
+print(runs)
+
+
+
+
 
 # // LOOP STARTS HERE AS WE ARE CHANGING FTARGET //
 
@@ -227,9 +287,6 @@ for (iteration in 1:max_rounds) {
   
   # // WE HAVE NOW RUN THE FULL MODEL FOR A SINGLE SET OF F TARGETS //
   
-  
-  
-  
   # Get Catch directly from the 'tracking' object
   # We use 'C.om' which we saw in your diagnostics
   catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
@@ -238,15 +295,6 @@ for (iteration in 1:max_rounds) {
   total_catch <- catch_cod + catch_had
   
   print(total_catch)
-  
-  
-  
-  
-  
-  
-  
-  
-  
   
   ## // Calculate the risk for both stocks in each year and at end of the projection//
   # TODO: Improve to a probability somehow, multiple iteratiosn if needed
@@ -306,9 +354,9 @@ for (iteration in 1:max_rounds) {
   
   # SET UP THE GPS
   # Adding 1e-15 to nuggets to avoid 0 nugget variance
-  gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$TotalCatch,nugget=1e-12*var(runs$log_total_catch)+1e-15,covtype = "exp")
-  gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$RiskCod,nugget=1e-12*var(runs$risk_cod)+1e-15,covtype = "exp")
-  gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$RiskHad,nugget=1e-12*var(runs$risk_had)+1e-15,covtype = "exp")
+  gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$TotalCatch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
+  gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$RiskCod,nugget=1e-12*var(runs$RiskCod)+1e-15,covtype = "exp")
+  gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$RiskHad,nugget=1e-12*var(runs$RiskHad)+1e-15,covtype = "exp")
   
   
   # Find the remaining plausible points using BHM
