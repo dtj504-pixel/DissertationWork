@@ -1,3 +1,12 @@
+# // In Exploring _simualtion_outputs.R they start with data tha has 100 iterations and
+# // so perhaps I need to tets the risk calculations out of this kind fo data
+# // and od a basic version first and then integrate it with my model
+
+
+
+
+
+
 # 1. SET THE NUMBER OF ITERATIONS
 n_iter <- 50  # Start with 50 to keep it fast for testing (100 is standard)
 
