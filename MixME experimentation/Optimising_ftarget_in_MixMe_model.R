@@ -1,5 +1,3 @@
-## PSEUDOCODE EXPANDED
-
 #IMPORTANT NOTE:
 # " we will assume that we can perfectly observe the stock without error"
 
@@ -17,11 +15,12 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   
   # Create the main MixME input object
   # This bundles together all the components needed to run the MSE
+  # Set management type to fixedF
   input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem, management_lag = 0, management_type = "fixedF", parallel = FALSE)
   
   # Set up the observation error model
   # Cod and haddock catches occur at the start of the year so timing=0
-  # Not very realistic - could consider changing
+  # TODO: Not very realistic - could consider changing
   input$oem@args$catch_timing$cod <- 0
   input$oem@args$catch_timing$had <- 0
   
@@ -30,13 +29,12 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   input$oem@observations$stk$had@range[c("minfbar","maxfbar")] <- c(3,5)
   
   
-  # Set the target fishing mortality for both stocks - may be recommended by ICES
-  
-  #THIS IS WHAT I SHOULD BE CHANGING EACH TIME and running an algorithm to find the best one
-  input$ctrl_obj$hcr@args$ftrg$cod <- f_cod  # use MSY f-target
-  input$ctrl_obj$hcr@args$ftrg$had <- f_had # use MSY f-target
+  # Set the target fishing mortality for both stocks as the next point decided by the algorithm
+  input$ctrl_obj$hcr@args$ftrg$cod <- f_cod
+  input$ctrl_obj$hcr@args$ftrg$had <- f_had
   
   ## Update fbar ranges
+  # TODO: From old script, may not be needed here
   input$args$frange$cod <- c("minfbar" = 2, "maxfbar" = 4)
   input$args$frange$had <- c("minfbar" = 3, "maxfbar" = 5)
   
@@ -44,7 +42,8 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   #RUN MIXME SIMULATION
   res <- runMixME(om  = input$om, oem = input$oem, ctrl_obj = input$ctrl_obj, args = input$args)
   
-  # UNDERSTANDING MIXME OUPUTS
+  # TODO: Remove checks? Helpful but not needed
+
   ## Check for advice failure
   apply(res$tracking$iterfail, 1, mean)
   
@@ -61,7 +60,7 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   ## Check maximum overshoot of the quota by fleets
   max(res$tracking$overquota, na.rm = TRUE)
   
-  ## Define Blim for each stock
+  ## Define Blim for each stock - required for way calculating risk right now
   hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))  # https://doi.org/10.17895/ices.advice.5897
   
   # Update the control object with the new HCR parameters
@@ -71,9 +70,7 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   
 }
 
-
-# //DEFINE KG FUNCTION HERE//
-
+# Calculate how correlated two pairs of Fcod and Fhad are based on their distance in the grid
 cov_exp <- function(X1, X2, theta, sigma2) {
   n1 <- nrow(X1)
   n2 <- nrow(X2)  
@@ -88,6 +85,7 @@ cov_exp <- function(X1, X2, theta, sigma2) {
 knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 100, prisk_cod, prisk_had, eps = 1e-4) 
 { 
   X_pred <- dat[, c("Fcod","Fhad")]
+  # Get correlation matrix for the whole design space of Fcod and Fhad
   cov_grid <- cov_exp(X_pred, X_pred, theta = model@covariance@range.val, sigma2 = model@covariance@sd2)
   m <- length(mu)
   var <- sigma^2
@@ -106,7 +104,7 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
     
     mu_i <- mu[i]
     sigma_i <- sqrt(var[i] + obs_noise_var)
-    # nsim simulated observations - using rnorm to sample from a normal distribution is ok here as we are running a GP
+    # nsim simulated observations - using rnorm to sample from a normal distribution is ok as we are running a GP
     # to model the catch, which is assumed to be normally distributed
     y_sim <- rnorm(nsim, mu_i, sigma_i)
     # the covariance between every point in the grid and the point x_i
@@ -121,7 +119,7 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
       # This evaluates the posterior mean for every point in the space, updating other points based on closeness 
       # to the evaluated point by using the cov matrix
       mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
-      # takes this new maximum mu inot a vector for later averaging
+      # takes this new maximum mu for later averaging
       max_after[s] <- max(mu_new)
     }
     # Computes expected increase in the maximum posterior mean, mu
@@ -143,8 +141,7 @@ out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, flts = mixedfisher
 mixedfishery_MixME_om$stks <- out$stks
 mixedfishery_MixME_om$flts <- out$flts
 
-# This projects the fishery forward in time using historical patterns as seen in previous tutorials, 
-# allowing us to simulate results of the management advice into the future
+# Project the fishery forward in time using historical patterns allowing us to simulate results of the management advice into the future
 # yearMeans uses recent historical averages as parameters for the projection
 out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20, wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
 
@@ -166,7 +163,7 @@ ctrlArgs$FCB <- makeFCB(biols = mixedfishery_MixME_om$stks, flts = mixedfishery_
 # Generate effort-based FLasher::fwd forecast control
 flasher_ctrl <- do.call(FLasher::fwdControl, ctrlArgs)
 
-# This simulates one year of fishing to get starting conditions right
+# Simulate one year of fishing to get starting conditions right
 omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks, fishery = mixedfishery_MixME_om$flts, control = flasher_ctrl)
 
 #Update the operating model with projected population numbers
@@ -182,9 +179,8 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
   # for each fleet, find which catch element corresponds to the current stock
   catch <- sapply(mixedfishery_MixME_om$flts, function(y) which(names(y) %in% name(x)))
   
-  # get catches form eahc fleet and convert to FLStock
+  # get catches form each fleet and convert to FLStock
   xx <- as.FLStock(x, mixedfishery_MixME_om$flts, full = FALSE, catch = catch)
-  
   
   #specifies fishing mortality is measured as instantaneous fishing mortality rate
   units(xx@harvest) <- "f"
@@ -200,13 +196,12 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 
 
-
-
 # Set an intial F target for both stocks so the first loop has something to work with
 f_cod <- 0.28
 f_had <- 0.353
 
-# Define Design Space as discrete with 0.01 increments
+# Define Design Space as discrete with 0.05 increments
+# Can change to 0.01 to be more granular once finished testing
 dat <- data.frame(expand.grid(
   Fcod = seq(0, 1, by=0.05),
   Fhad = seq(0, 1, by=0.05)
@@ -216,12 +211,13 @@ dat <- data.frame(expand.grid(
 runs <- NULL
 
 # Pick 5 RANDOM points from your grid to initialize the model
-# (We use set.seed to make sure it's reproducible)
+# set.seed to make sure it's reproducible
+# TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
 warmup_indices <- sample(nrow(dat), 5)
 warmup_points <- dat[warmup_indices, ]
 
-print("--- STARTING WARM-UP PHASE (5 Iterations) ---")
+print("STARTING WARM-UP PHASE of 5 Iterations")
 
 for (i in 1:nrow(warmup_points)) {
   
@@ -231,25 +227,28 @@ for (i in 1:nrow(warmup_points)) {
   
   print(paste("Warm-up Run:", i, "| Testing Fcod:", f_cod_curr, "Fhad:", f_had_curr))
   
-  # 1. RUN SIMULATION
+  # RUN SIMULATION
   res <- obj_func(f_cod_curr, f_had_curr, mixedfishery_MixME_om, stk_oem)
   
-  # 2. EXTRACT CATCH (Direct Lookup)
+  # EXTRACT CATCH
   catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
   catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  # Calculate total catch
   total_catch <- catch_cod + catch_had
   
-  # 3. EXTRACT RISK (Direct Lookup)
+  # Set Blim for convenience
   Blim_cod <- 107000
   Blim_had <- 9227
   
+  # Calculate risk - binary as 0 or 1 so far, will improve later on
   risk_cod_annual <- iterMeans(res$tracking$cod$stk["SB.om", ac(2020:2039)] < Blim_cod, na.rm = TRUE)
   risk_had_annual <- iterMeans(res$tracking$had$stk["SB.om", ac(2020:2039)] < Blim_had, na.rm = TRUE)
   
+  # Extract risk at the end of the simulation
   risk_cod_val <- c(risk_cod_annual[, "2039"])
   risk_had_val <- c(risk_had_annual[, "2039"])
   
-  # 4. STORE DATA
+  # STORE DATA
   dat_run <- data.frame(
     Fcod = f_cod_curr,
     Fhad = f_had_curr,
@@ -266,51 +265,38 @@ for (i in 1:nrow(warmup_points)) {
   }
 }
 
-print("--- WARM-UP COMPLETE. 'runs' now has 5 valid data points. ---")
+print("WARM-UP COMPLETE. 'runs' now has 5 valid data points.")
 print(runs)
 
-
-
-
-
-# // LOOP STARTS HERE AS WE ARE CHANGING FTARGET //
-
+# Set max runs (kept low for testing) and initial round number
 max_rounds <- 3
 round_num <- 1
-
-#TODO: Can I rename the variables ion each round so I can clearly see the progression?
 
 for (iteration in 1:max_rounds) {
   
   # Run the model with the new F targets (set at the end of the last run)
   res <- obj_func(f_cod,f_had,mixedfishery_MixME_om,stk_oem)
   
-  # // WE HAVE NOW RUN THE FULL MODEL FOR A SINGLE SET OF F TARGETS //
+  # WE HAVE NOW RUN THE FULL MODEL FOR A SINGLE SET OF F TARGETS
   
   # Get Catch directly from the 'tracking' object
-  # We use 'C.om' which we saw in your diagnostics
   catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
   catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-  
+  # Calculate total catch
   total_catch <- catch_cod + catch_had
   
-  print(total_catch)
-  
   ## // Calculate the risk for both stocks in each year and at end of the projection//
-  # TODO: Improve to a probability somehow, multiple iteratiosn if needed
+  # TODO: Improve to a probability somehow, multiple iterations if needed
   
   # Define Blims
   Blim_cod <- 107000
   Blim_had <- 9227
   
   # Extract SSB directly
-  # This is safe because we verified "SB.om" exists
   ssb_cod_data <- res$tracking$cod$stk["SB.om", ac(2020:2039)]
   ssb_had_data <- res$tracking$had$stk["SB.om", ac(2020:2039)]
   
-  # Calculate Risk Profiles (Annual)
-  # CRITICAL FIX: Added 'na.rm = TRUE'. 
-  # Without this, the 5.9% NAs in your data would make the Risk = NA.
+  # Calculate risk for each stock annually
   risk_cod_annual <- iterMeans(ssb_cod_data < Blim_cod, na.rm = TRUE)
   risk_had_annual <- iterMeans(ssb_had_data < Blim_had, na.rm = TRUE)
   
@@ -321,11 +307,7 @@ for (iteration in 1:max_rounds) {
   # As we're focusing on the final risk, we set these as our risk metrics
   risk_cod <- risk_cod_2039
   risk_had <- risk_had_2039
-  
-  print(risk_cod)
-  print(risk_had)
-  
-  
+
   # Set up data frame to store data from current run
   dat_run <- data.frame(
     Fcod = c(f_cod),
@@ -337,28 +319,18 @@ for (iteration in 1:max_rounds) {
   
   # Adding names to reference in GPs and for readability
   names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
+
   # Taking log of the catch so GP models are more stable
   log_total_catch <- log(dat_run$TotalCatch + 1e-12) # add small constant to avoid log(0)
-  print(log_total_catch)
   
   # Runs variable to count all runs so far and all their associated data
   runs <- rbind(runs, dat_run)
-  
-  print("runs is")
-  print(runs)
-  
+
   # --- FIX FOR FLAT DATA --- until get Risk working properly
   risk_cod_input <- runs$RiskCod
   risk_had_input <- runs$RiskHad
   
-  print("risk_cod_input is")
-  print(risk_cod_input)
-  
-  
-  print("risk_had_input is")
-  print(risk_had_input)
-  
-  # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash
+  # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
   if(var(risk_cod_input, na.rm = TRUE) == 0) {
     risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-10)
   }
@@ -369,6 +341,7 @@ for (iteration in 1:max_rounds) {
   
   # SET UP THE GPS
   # Adding 1e-15 to nuggets to avoid 0 nugget variance
+  # Should be able to remove when risk calculations fixed
   gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$TotalCatch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
   gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
   gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
@@ -376,7 +349,6 @@ for (iteration in 1:max_rounds) {
   print("GPs done")
   
   # Find the remaining plausible points using BHM
-  
   pred_risk_cod <- predict(gp_cod_risk, newdata = dat, type = "SK")
   pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
   pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
@@ -392,6 +364,7 @@ for (iteration in 1:max_rounds) {
   print(valid_runs)
   
   # Check if any valid runs exist before calculating current max
+  # TODO: Put in due to an error but can't rememebr why needed
   if(length(valid_runs) > 0) {
     current_max <- max(valid_runs, na.rm = TRUE)
   } 
@@ -411,12 +384,11 @@ for (iteration in 1:max_rounds) {
   # Calculate KG
   mu <- pred_log_cat$mean
   sigma <- pred_log_cat$sd
-  #TDOD: Put in correct X_pred
   kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
   
   print("kg done")
   
-  # Calculate the remaining points - get loop to end when none left
+  # Calculate the remaining points
   dat_with_kg <- dat
   dat_with_kg$kg <- kg
   dat_with_kg$possible <- possible
@@ -432,7 +404,7 @@ for (iteration in 1:max_rounds) {
   # Remove already evaluated points
   cand <- cand[!(cand$key %in% runs$key), ]
   
-  # Check if candidates exhausted
+  # Check if candidates exhausted - get loop to end when none left
   if (nrow(cand) == 0) {
     cat("No unevaluated candidates with positive EI. Stopping at round", iteration, "\n")
     break
@@ -451,21 +423,19 @@ for (iteration in 1:max_rounds) {
   f_cod <- next_point$Fcod
   f_had <- next_point$Fhad
   
-  # --- CRITICAL MEMORY CLEANUP ---
+  # CRITICAL MEMORY CLEANUP - added in due to RStudio running out of storage without this
   
-  # 1. Remove the heavy simulation result
-  # If you don't do this, R might keep it in memory for the next loop
+  # Remove the heavy simulation result
   rm(res) 
   
-  # 2. Remove the Kriging models (they can be heavy too)
+  # Remove the Kriging models (they can be heavy too)
   rm(gp_log_cat, gp_cod_risk, gp_had_risk)
   
-  # 3. Remove the prediction vectors to be safe
+  # Remove the prediction vectors to be safe
   rm(pred_risk_cod, pred_risk_had, pred_log_cat)
 
   # KEEP ONLY WANTED COLUMNS IN runs
-  
-  # Define the columns we actually care about
+  # Define the columns we actually care about, otherwise we can't do rbind to runs properly next iteration
   important_cols <- c("Fcod", "Fhad", "TotalCatch", "RiskCod", "RiskHad")
   
   # Only keep those columns before binding
@@ -474,7 +444,5 @@ for (iteration in 1:max_rounds) {
   # // LOOP ENDS //
   round_num <- iteration
 
-  
-  
 }
 
