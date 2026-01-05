@@ -406,6 +406,9 @@ for (iteration in 1:max_rounds) {
   eps <- 1e-4
   # Determine plausible points where min(1 - pcat, prisk) > eps
   possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
+
+  # Visualises region that has risk <0.05 and better catch than best evaluated so far
+  image2D(matrix(possible * (1-pcat),nrow=11),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
   # Calculate KG
   mu <- pred_log_cat$mean
