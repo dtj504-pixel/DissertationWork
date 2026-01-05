@@ -89,15 +89,13 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   cov_grid <- cov_exp(X_pred, X_pred, theta = model@covariance@range.val, sigma2 = model@covariance@sd2)
   m <- length(mu)
   var <- sigma^2
-  # Current best mean catch
-  mu_best <- max(mu)   
   kg <- numeric(m)
   
   # Loop over candidate points
   for (i in seq_len(m)) {
-    # set knowledge gradient to 0 for any points with a prisks taht are too low
+    # set knowledge gradient to 0 for any unsafe points - here has become prisks that are too high
     # TODO: Improve by removing any points in that are implausible when evaluating? or beforehand?
-    if (prisk_cod[i] < eps || prisk_had[i] < eps) {
+    if (prisk_cod[i] > eps || prisk_had[i] > eps) {
       kg[i] <- 0
       next
     }
@@ -229,24 +227,38 @@ for (i in 1:nrow(warmup_points)) {
   
   # RUN SIMULATION
   res <- obj_func(f_cod_curr, f_had_curr, mixedfishery_MixME_om, stk_oem)
-  
-  # EXTRACT CATCH
+
+  # Get Catch directly from the 'tracking' object
   catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
   catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
   # Calculate total catch
   total_catch <- catch_cod + catch_had
-  
-  # Set Blim for convenience
+
+  # Define Blims
   Blim_cod <- 107000
   Blim_had <- 9227
   
-  # Calculate risk - binary as 0 or 1 so far, will improve later on
-  risk_cod_annual <- iterMeans(res$tracking$cod$stk["SB.om", ac(2020:2039)] < Blim_cod, na.rm = TRUE)
-  risk_had_annual <- iterMeans(res$tracking$had$stk["SB.om", ac(2020:2039)] < Blim_had, na.rm = TRUE)
-  
-  # Extract risk at the end of the simulation
-  risk_cod_val <- c(risk_cod_annual[, "2039"])
-  risk_had_val <- c(risk_had_annual[, "2039"])
+  # --- FIX 1: USE IDENTICAL LOGIC TO MAIN LOOP ---
+    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
+    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+
+    # Cod Risk (Penalty Method)
+    if (is.na(ssb_cod_data)) {
+        risk_cod_val <- -log(max(1, Blim_cod)) 
+    } else if(ssb_cod_data > Blim_cod) {
+        risk_cod_val <- 0 # Safe
+    } else {
+        risk_cod_val <- -log(max(1, Blim_cod - ssb_cod_data)) 
+    }
+
+    # Haddock Risk (Penalty Method)
+    if (is.na(ssb_had_data)) {
+        risk_had_val <- -log(max(1, Blim_had)) 
+    } else if (ssb_had_data > Blim_had) {
+        risk_had_val <- 0 # Safe
+    } else {
+        risk_had_val <- -log(max(1, Blim_had - ssb_had_data)) 
+    }
   
   # STORE DATA
   dat_run <- data.frame(
@@ -287,26 +299,39 @@ for (iteration in 1:max_rounds) {
   
   ## // Calculate the risk for both stocks in each year and at end of the projection//
   # TODO: Improve to a probability somehow, multiple iterations if needed
-  
+  # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
+
   # Define Blims
   Blim_cod <- 107000
   Blim_had <- 9227
-  
-  # Extract SSB directly
-  ssb_cod_data <- res$tracking$cod$stk["SB.om", ac(2020:2039)]
-  ssb_had_data <- res$tracking$had$stk["SB.om", ac(2020:2039)]
-  
-  # Calculate risk for each stock annually
-  risk_cod_annual <- iterMeans(ssb_cod_data < Blim_cod, na.rm = TRUE)
-  risk_had_annual <- iterMeans(ssb_had_data < Blim_had, na.rm = TRUE)
-  
-  # Extract the final year for the optimization
-  risk_cod_2039 <- c(risk_cod_annual[, "2039"])
-  risk_had_2039 <- c(risk_had_annual[, "2039"])
-  
-  # As we're focusing on the final risk, we set these as our risk metrics
-  risk_cod <- risk_cod_2039
-  risk_had <- risk_had_2039
+
+  # Extract SSB directly - still focusing on the end fo the simualtion in 2039
+  ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
+  ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+
+  # Calculate risk for cod
+  if (is.na(ssb_cod_data)) {
+      # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
+      risk_cod <- -log(Blim_cod) 
+  } else if(ssb_cod_data > Blim_cod) {
+      # Safe zone: No penalty
+      risk_cod <- 0
+  } else {
+      # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
+      risk_cod <- -log(Blim_cod - ssb_cod_data) 
+  }
+
+  # Calculate risk for haddock
+  if (is.na(ssb_had_data)) {
+      # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
+      risk_had <- -log(Blim_had) 
+  } else if (ssb_had_data > Blim_had) {
+      # Safe zone: No penalty
+      risk_had <- 0
+  } else {
+      # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
+      risk_had <- -log(Blim_had - ssb_had_data) 
+  }
 
   # Set up data frame to store data from current run
   dat_run <- data.frame(
@@ -320,13 +345,14 @@ for (iteration in 1:max_rounds) {
   # Adding names to reference in GPs and for readability
   names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
 
-  # Taking log of the catch so GP models are more stable
-  log_total_catch <- log(dat_run$TotalCatch + 1e-12) # add small constant to avoid log(0)
   
   # Runs variable to count all runs so far and all their associated data
   runs <- rbind(runs, dat_run)
 
-  # --- FIX FOR FLAT DATA --- until get Risk working properly
+  # Taking log of the catch so GP models are more stable
+  log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
+
+  # --- FIX FOR FLAT DATA --- as we only have one iteration
   risk_cod_input <- runs$RiskCod
   risk_had_input <- runs$RiskHad
   
@@ -341,8 +367,8 @@ for (iteration in 1:max_rounds) {
   
   # SET UP THE GPS
   # Adding 1e-15 to nuggets to avoid 0 nugget variance
-  # Should be able to remove when risk calculations fixed
-  gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = runs$TotalCatch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
+  # TODO: remove when risk calculations fixed
+  gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
   gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
   gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
   
@@ -353,12 +379,12 @@ for (iteration in 1:max_rounds) {
   pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
   pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
   
-  # Get probability that risk =< 0.05 for both cod and haddock
-  prisk_cod <- pnorm(0.05, pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
-  prisk_had <- pnorm(0.05, pred_risk_had$mean, pred_risk_had$sd + 1e-12)
+  # Get probability that risk =< -log(1000) for both cod and haddock
+  prisk_cod <- pnorm(-log(1000), pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
+  prisk_had <- pnorm(-log(1000), pred_risk_had$mean, pred_risk_had$sd + 1e-12)
   
   # Filter for valid runs
-  valid_runs <- runs$TotalCatch[runs$RiskCod < 0.05 & runs$RiskHad < 0.05]
+  valid_runs <- runs$TotalCatch[runs$RiskCod > -log(1000) & runs$RiskHad > -log(1000)]
   
   print("valid_runs is")
   print(valid_runs)
@@ -379,7 +405,7 @@ for (iteration in 1:max_rounds) {
   # Set epsilon for plausibility threshold
   eps <- 1e-4
   # Determine plausible points where min(1 - pcat, prisk) > eps
-  possible <- (apply(cbind((1 - pcat), prisk_cod, prisk_had), 1, min) > eps)
+  possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
   
   # Calculate KG
   mu <- pred_log_cat$mean
