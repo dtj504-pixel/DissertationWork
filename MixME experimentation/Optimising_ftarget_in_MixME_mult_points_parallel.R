@@ -1,3 +1,19 @@
+library(simsalapar)
+library(doParallel)
+library(foreach)
+library(parallel)
+
+# 1. Check how many cores you have
+n_cores <- parallel::detectCores() - 1 
+
+# 2. Create and Register the Cluster
+# This works on both Windows and Mac/Linux
+cl <- makeCluster(n_cores) 
+registerDoParallel(cl)
+
+print(paste("Cluster registered with", getDoParWorkers(), "workers."))
+
+
 #IMPORTANT NOTE:
 # " we will assume that we can perfectly observe the stock without error"
 
@@ -16,8 +32,7 @@ library(mse)
 library(stockassessment)
 library(MixME)
 library(DiceKriging)
-# Add in new library
-library(simsalapar)
+
 
 obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   
@@ -51,7 +66,7 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   res <- runMixME(om  = input$om, oem = input$oem, ctrl_obj = input$ctrl_obj, args = input$args)
   
   # TODO: Remove checks? Helpful but not needed
-
+  
   ## Check for advice failure
   apply(res$tracking$iterfail, 1, mean)
   
@@ -231,30 +246,135 @@ next_points <- rbind(point_1, warmup_points)
 
 # CHANGED: Provide eight rows of points to run (due to nature of varlist function)
 points_to_run <- varlist(
-    # The "Grid" - counts from 1 to 8
-    run_id = list(type = "grid", value = 1:nrow(next_points)),
-
-    # The "Frozen" Data - the table of pairs available to all workers which we can pipck by run_id
-    input_data = list(type = "frozen", value = next_points)
+  # The "Grid" - counts from 1 to 8
+  run_id = list(type = "grid", value = 1:nrow(next_points)),
+  
+  # The "Frozen" Data - the table of pairs available to all workers which we can pipck by run_id
+  input_data = list(type = "frozen", value = next_points)
 )
 
 # This is the function that will eventually run on each core
 doOne <- function(run_id,input_data) {
   
-  # 1. Retrieve the specific inputs for this run ID
+  # Retrieve the specific inputs for this run ID
   # We use the 'frozen' input_data table and pick the row matching run_id
   this_Fcod <- input_data$Fcod[run_id]
   this_Fhad <- input_data$Fhad[run_id]
   
-  # 2. Run your actual simulation/objective function
-  # We assume it returns a single value or a specific vector
-  result <- obj_func(f_cod = this_Fcod, f_had = this_Fhad , mixedfishery_MixME_om = mixedfishery_MixME_om , stk_oem = stk_oem)
+  # Run the simualtion
+  res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad , mixedfishery_MixME_om = mixedfishery_MixME_om , stk_oem = stk_oem)
   
-  # 3. Return the result
-  return(result)
+  # Get Catch directly from the 'tracking' object
+  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  # Calculate total catch
+  total_catch <- catch_cod + catch_had
+  
+  ## // Calculate the risk for both stocks in each year and at end of the projection//
+  # TODO: Improve to a probability somehow, multiple iterations if needed
+  # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
+  
+  # Define Blims
+  Blim_cod <- 107000
+  Blim_had <- 9227
+  
+  # Extract SSB directly - still focusing on the end of the simualtion in 2039
+  ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
+  ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+  
+  # Calculate risk for cod
+  if (is.na(ssb_cod_data)) {
+    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
+    risk_cod <- -log(Blim_cod) 
+  } else if(ssb_cod_data > Blim_cod) {
+    # Safe zone: No penalty
+    risk_cod <- 0
+  } else {
+    # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
+    risk_cod <- -log(Blim_cod - ssb_cod_data) 
+  }
+  
+  # Calculate risk for haddock
+  if (is.na(ssb_had_data)) {
+    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
+    risk_had <- -log(Blim_had) 
+  } else if (ssb_had_data > Blim_had) {
+    # Safe zone: No penalty
+    risk_had <- 0
+  } else {
+    # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
+    risk_had <- -log(Blim_had - ssb_had_data) 
+  }
+  
+  # Set up variable to return
+  to_return <- c(Fcod = this_Fcod, Fhad = this_Fhad, RiskCod = risk_cod, RiskHad = risk_had, TotalCatch = total_catch)
+  
+  # Return the result
+  return(to_return)
 }
 
-result_run_id_1 <- doOne(1,points_to_run$input_data$value)
+# 1. Identify everything the worker needs to know
+# This includes your function AND the large data objects used inside it
+vars_to_export <- c("obj_func", "mixedfishery_MixME_om", "stk_oem")
+
+# 2. Export them to the cluster 'cl'
+# (This assumes you created 'cl' using makeCluster)
+clusterExport(cl, vars_to_export)
+
+# 3. CRITICAL: Load libraries on the workers
+# If obj_func uses packages like FLCore, FLR, or tidyverse, you MUST load them on the workers
+clusterEvalQ(cl, {
+    library(FLCore)
+    library(FLFishery)
+    library(mse)
+    library(stockassessment)
+    library(MixME)
+    library(DiceKriging)
+})
+
+
+result <- doForeach(points_to_run, doOne = doOne)
+
+
+# Set up data frame to store data from current run
+dat_run <- data.frame(
+  Fcod = c(result$Fcod),
+  Fhad = c(result$Fhad),
+  TotalCatch = c(result$TotalCatch),
+  RiskCod = c(result$RiskCod),
+  RiskHad = c(result$RiskHad)
+)
+
+dat_run
+
+# Adding names to reference in GPs and for readability
+names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
+
+
+# Runs variable to count all runs so far and all their associated data
+runs <- rbind(runs, dat_run)
+
+runs
+
+
+## // Adjusting for GPS //
+
+# Taking log of the catch so GP models are more stable
+log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
+
+# --- FIX FOR FLAT DATA --- as we only have one iteration
+risk_cod_input <- runs$RiskCod
+risk_had_input <- runs$RiskHad
+
+# If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
+if(var(risk_cod_input, na.rm = TRUE) == 0) {
+  risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-10)
+}
+
+if(var(risk_had_input, na.rm = TRUE) == 0) {
+  risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-10)
+}
+
 
 
 
@@ -279,7 +399,8 @@ for (iteration in 1:max_rounds) {
     input_data = list(type = "frozen", value = next_points)
   )
 
-
+  
+  ## // CURRENLTY OLD CODE BELOW // 
 
   # Run the model with the new F targets (set at the end of the last run)
   # TODO: Will break on second iteration due to f_cod and f_had becoming vectors
