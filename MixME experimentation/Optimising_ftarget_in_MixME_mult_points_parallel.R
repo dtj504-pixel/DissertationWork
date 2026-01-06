@@ -3,14 +3,6 @@ library(doParallel)
 library(foreach)
 library(parallel)
 
-# 1. Check how many cores you have
-n_cores <- parallel::detectCores() - 1 
-
-# 2. Create and Register the Cluster
-# This works on both Windows and Mac/Linux
-registerDoParallel(cores = n_cores)
-
-
 
 #IMPORTANT NOTE:
 # " we will assume that we can perfectly observe the stock without error"
@@ -252,8 +244,8 @@ points_to_run <- varlist(
 )
 
 # This is the function that will eventually run on each core
-doOne <- function(run_id,input_data,func,static_data) {
-
+doOne <- function(run_id,input_data) {
+  
   #Fixing could not find functions error in runners by loading libraries - DO NOT REMOVE
   library(FLCore)
   library(FLFishery)
@@ -261,10 +253,6 @@ doOne <- function(run_id,input_data,func,static_data) {
   library(stockassessment)
   library(MixME)
   library(DiceKriging)
-
-  # Unpacking data that ahs been passed in as a list (to avoid compression)
-  om  <- static_data$om
-  oem <- static_data$oem
   
   # Retrieve the specific inputs for this run ID
   # We use the 'frozen' input_data table and pick the row matching run_id
@@ -272,7 +260,7 @@ doOne <- function(run_id,input_data,func,static_data) {
   this_Fhad <- input_data$Fhad[run_id]
   
   # Run the simulation
-  res <- func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = om, stk_oem = oem)
+  res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
   
   # Get Catch directly from the 'tracking' object
   catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
@@ -323,12 +311,15 @@ doOne <- function(run_id,input_data,func,static_data) {
   return(to_return)
 }
 
-my_static_data <- list(om = mixedfishery_MixME_om,oem = stk_oem)
+# 1. Check how many cores you have
+n_cores <- parallel::detectCores() - 1 
 
-result <- doForeach(points_to_run,func = obj_func,static_data = my_static_data,doOne = doOne)
+result <- doMclapply(points_to_run,doOne = doOne,cores = n_cores)
 
 data_frame_result <- as.data.frame(result)
 data_frame_result
+
+names(data_frame_result) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
 
 
 # Set up data frame to store data from current run
@@ -350,6 +341,7 @@ names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
 runs <- rbind(runs, dat_run)
 
 runs
+
 
 
 ## // Adjusting for GPs later on //
