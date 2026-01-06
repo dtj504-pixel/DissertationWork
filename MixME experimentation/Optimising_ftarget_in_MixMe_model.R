@@ -3,6 +3,12 @@
 
 # Focusing on this example first in my project
 
+# TODO: Struggling with compute time as I believe I can only run one simulation at once, even if I find eight points to evaluate next
+# What I would need to do is find these eight points and then run the simualtions for them in eight different "places" at the same time
+# and be able to get the results from all of these and plug them into my following code
+# which I have a brief idea of how to do in Python but not in R
+# TODO: I think this means I will need the Viking computers or to look at running multiple "places" in R
+
 ## load libraries
 library(FLCore)
 library(FLFishery)

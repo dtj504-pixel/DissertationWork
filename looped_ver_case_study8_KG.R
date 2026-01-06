@@ -306,6 +306,7 @@ for (iteration in 2:max_rounds) {
     new_points[, c("Ftrgt", "Btrigger")]
   )
   
+  # Get value of objective function for all points
   dat_run <- objective_func(new_round, lookup_data = dat)
   runs <- rescale_Her(dat_run, dat = dat1)
 
