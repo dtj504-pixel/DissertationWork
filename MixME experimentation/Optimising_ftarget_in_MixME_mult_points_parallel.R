@@ -109,11 +109,11 @@ doOne <- function(run_id,input_data) {
   # Calculate total catch
   total_catch <- catch_cod + catch_had
   
-  ## // Calculate the risk for both stocks in each year and at end of the projection//
+  ## // Calculate the risk for both stocks //
   # TODO: Improve to a probability somehow, multiple iterations if needed
   # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
   
-  # Define Blims
+  # Define Blims here for safety
   Blim_cod <- 107000
   Blim_had <- 9227
   
@@ -121,28 +121,23 @@ doOne <- function(run_id,input_data) {
   ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
   ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
   
-  # Calculate risk for cod
+  # free up memory now that we have the data we need from res
+  rm(res)   
+  
+  # Calculate risk for cod using new linear statistic to avoud sudden jumps resulting in variance explosions
+  # but still scaled to between -1 and 1 to keep the GP stable (ok as know Blims are not 0 here)
   if (is.na(ssb_cod_data)) {
-    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
-    risk_cod <- -log(Blim_cod) 
-  } else if(ssb_cod_data > Blim_cod) {
-    # Safe zone: No penalty
-    risk_cod <- 0
+    # Maximum penalty as -1 means we have crashed to SSB = 0
+     risk_cod <- -1 
   } else {
-    # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
-    risk_cod <- -log(Blim_cod - ssb_cod_data) 
+     risk_cod <- (ssb_cod_data - Blim_cod) / Blim_cod
   }
   
-  # Calculate risk for haddock
   if (is.na(ssb_had_data)) {
-    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
-    risk_had <- -log(Blim_had) 
-  } else if (ssb_had_data > Blim_had) {
-    # Safe zone: No penalty
-    risk_had <- 0
+    # Maximum penalty as -1 means we have crashed to SSB = 0
+     risk_had <- -1
   } else {
-    # The "risk" is how deep we are in the hole. We log it to make the GPs more stable
-    risk_had <- -log(Blim_had - ssb_had_data) 
+     risk_had <- (ssb_had_data - Blim_had) / Blim_had
   }
   
   # Set up variable to return
@@ -294,6 +289,10 @@ dat <- data.frame(expand.grid(
 
 # // SETUP FOR LOOP //
 
+# Define Blims
+  Blim_cod <- 107000
+  Blim_had <- 9227
+
 # Set an intial F target for both stocks so the first loop has something to work with
 # Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
 f_cod_1 <- 0.28
@@ -375,11 +374,11 @@ for (iteration in 1:max_rounds) {
     
     # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
     if(var(risk_cod_input, na.rm = TRUE) == 0) {
-        risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-10)
+        risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-9)
     }
     
     if(var(risk_had_input, na.rm = TRUE) == 0) {
-        risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-10)
+        risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-9)
     }
     
     # SET UP THE GPS
@@ -396,18 +395,22 @@ for (iteration in 1:max_rounds) {
     pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
     
+    # Define the Risk Constraint Thresholds
+    risk_threshold_cod <- -1000 / Blim_cod  # approx -0.009
+    risk_threshold_had <- -1000 / Blim_had    # approx -0.108
+    
     # Get probability that risk =< -log(1000) for both cod and haddock
-    prisk_cod <- pnorm(-log(1000), pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
-    prisk_had <- pnorm(-log(1000), pred_risk_had$mean, pred_risk_had$sd + 1e-12)
+    prisk_cod <- pnorm(risk_threshold_cod, pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
+    prisk_had <- pnorm(risk_threshold_had, pred_risk_had$mean, pred_risk_had$sd + 1e-12)
     
     # Filter for valid runs
-    valid_runs <- runs$TotalCatch[runs$RiskCod > -log(1000) & runs$RiskHad > -log(1000)]
+    valid_runs <- runs$TotalCatch[runs$RiskCod > risk_threshold_cod & runs$RiskHad > risk_threshold_had]
     
     print("valid_runs is")
     print(valid_runs)
     
     # Check if any valid runs exist before calculating current max
-    # TODO: Put in due to an error but can't rememebr why needed
+    # TODO: Put in due to an error but can't remember why needed
     if(length(valid_runs) > 0) {
         current_max <- max(valid_runs, na.rm = TRUE)
     } 
@@ -424,7 +427,7 @@ for (iteration in 1:max_rounds) {
     # Determine plausible points where min(1 - pcat, prisk) > eps
     possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
 
-    # Visualises region that has risk <0.05 and better catch than best evaluated so far
+    # Visualises region that has risk < threshold and better catch than best evaluated so far
     # TODO: Check I am naming this the correct way around
     image2D(matrix(possible * (1-pcat),nrow=21),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
     
@@ -453,7 +456,7 @@ for (iteration in 1:max_rounds) {
     
     # Check if candidates exhausted - get loop to end when none left
     if (nrow(cand) == 0) {
-        cat("No unevaluated candidates with positive EI. Stopping at round", iteration, "\n")
+        cat("No unevaluated candidates with positive KG. Stopping at round", iteration, "\n")
         break
     }
     
