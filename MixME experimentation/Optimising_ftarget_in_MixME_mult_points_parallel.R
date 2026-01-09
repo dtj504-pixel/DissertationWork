@@ -316,13 +316,21 @@ n_cores <- parallel::detectCores() - 1
 
 result <- doMclapply(points_to_run,doOne = doOne,cores = n_cores)
 
-data_frame_result <- as.data.frame(result)
-data_frame_result
+# Now just need correct table mainpulaation
+# look at names = TRUE, getArray and if type frozen or inner is good to get the results object into something I can work with
+# use array2df to get a data frame
+data_frame_initial <- as.data.frame(do.call(rbind, result))
 
-names(data_frame_result) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
+# Extract the values which are currently a list
+vals <- do.call(rbind, data_frame_initial$value)
+
+# Bind them with the other columns (excluding the original 'value' column)
+data_frame_result <- cbind(as.data.frame(vals), data_frame_initial[, c("error", "warning", "time")])
+
+names(data_frame_result) <- c("Fcod","Fhad","RiskCod","RiskHad","TotalCatch","error","warning","time")
 
 
-# Set up data frame to store data from current run
+# Set up data frame to store data from current run - only keeping values that I want
 dat_run <- data.frame(
   Fcod = c(data_frame_result$Fcod),
   Fhad = c(data_frame_result$Fhad),
