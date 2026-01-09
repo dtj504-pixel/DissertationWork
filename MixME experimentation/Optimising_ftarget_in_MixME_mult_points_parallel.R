@@ -1,9 +1,3 @@
-library(simsalapar)
-library(doParallel)
-library(foreach)
-library(parallel)
-
-
 #IMPORTANT NOTE:
 # " we will assume that we can perfectly observe the stock without error"
 
@@ -14,6 +8,8 @@ library(parallel)
 # and be able to get the results from all of these and plug them into my following code
 # which I have a brief idea of how to do in Python but not in R
 # TODO: I think this means I will need the Viking computers or to look at running multiple "places" in R
+# I am able to run the simualtions on the different cores of my computer, but currently only have three cores spare for this
+# I should be getting a new computer which has fifteen cores spare for this soon, but this may still prove to not be enough
 
 ## load libraries
 library(FLCore)
@@ -22,6 +18,11 @@ library(mse)
 library(stockassessment)
 library(MixME)
 library(DiceKriging)
+library(simsalapar)
+library(doParallel)
+library(foreach)
+library(parallel)
+library(plot3D)
 
 
 obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
@@ -83,6 +84,74 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   
 }
 
+# This is the function that will eventually run on each core
+doOne <- function(run_id,input_data) {
+  
+  #Fixing could not find functions error in runners by loading libraries - DO NOT REMOVE
+  library(FLCore)
+  library(FLFishery)
+  library(mse)  
+  library(stockassessment)
+  library(MixME)
+  library(DiceKriging)
+  
+  # Retrieve the specific inputs for this run ID
+  # We use the 'frozen' input_data table and pick the row matching run_id
+  this_Fcod <- input_data$Fcod[run_id]
+  this_Fhad <- input_data$Fhad[run_id]
+  
+  # Run the simulation
+  res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
+  
+  # Get Catch directly from the 'tracking' object
+  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  # Calculate total catch
+  total_catch <- catch_cod + catch_had
+  
+  ## // Calculate the risk for both stocks in each year and at end of the projection//
+  # TODO: Improve to a probability somehow, multiple iterations if needed
+  # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
+  
+  # Define Blims
+  Blim_cod <- 107000
+  Blim_had <- 9227
+  
+  # Extract SSB directly - still focusing on the end of the simualtion in 2039
+  ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
+  ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+  
+  # Calculate risk for cod
+  if (is.na(ssb_cod_data)) {
+    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
+    risk_cod <- -log(Blim_cod) 
+  } else if(ssb_cod_data > Blim_cod) {
+    # Safe zone: No penalty
+    risk_cod <- 0
+  } else {
+    # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
+    risk_cod <- -log(Blim_cod - ssb_cod_data) 
+  }
+  
+  # Calculate risk for haddock
+  if (is.na(ssb_had_data)) {
+    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
+    risk_had <- -log(Blim_had) 
+  } else if (ssb_had_data > Blim_had) {
+    # Safe zone: No penalty
+    risk_had <- 0
+  } else {
+    # The "risk" is how deep we are in the hole. We log it to make the GPs more stable
+    risk_had <- -log(Blim_had - ssb_had_data) 
+  }
+  
+  # Set up variable to return
+  to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,RiskCod = risk_cod,RiskHad = risk_had,TotalCatch = total_catch)
+  
+  # Return the result
+  return(to_return)
+}
+
 # Calculate how correlated two pairs of Fcod and Fhad are based on their distance in the grid
 cov_exp <- function(X1, X2, theta, sigma2) {
   n1 <- nrow(X1)
@@ -103,6 +172,8 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   m <- length(mu)
   var <- sigma^2
   kg <- numeric(m)
+  # Current best mean catch
+  mu_best <- max(mu) 
   
   # Loop over candidate points
   for (i in seq_len(m)) {
@@ -140,6 +211,9 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   # Returns the vector of knowledge gradient values for each point in the design space
   kg
 }
+
+
+
 
 ## load example data
 data("mixedfishery_MixME_om")
@@ -218,7 +292,10 @@ dat <- data.frame(expand.grid(
 ))
 
 
+# // SETUP FOR LOOP //
+
 # Set an intial F target for both stocks so the first loop has something to work with
+# Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
 f_cod_1 <- 0.28
 f_had_1 <- 0.353
 point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
@@ -226,146 +303,199 @@ point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
 # CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
-warmup_indices <- sample(nrow(dat), 2)
+warmup_indices <- sample(nrow(dat), 5)
 warmup_points <- dat[warmup_indices, ]
 next_points <- rbind(point_1, warmup_points)
 
-
-
-# TESTING OUTSIDE OF THE LOOP FIRST
-
-# CHANGED: Provide eight rows of points to run (due to nature of varlist function)
-points_to_run <- varlist(
-  # The "Grid" - counts from 1 to 3
-  run_id = list(type = "grid", value = 1:nrow(next_points)),
-  
-  # The "Frozen" Data - the table of pairs available to all workers which we can pipck by run_id
-  input_data = list(type = "frozen", value = next_points)
-)
-
-# This is the function that will eventually run on each core
-doOne <- function(run_id,input_data) {
-  
-  #Fixing could not find functions error in runners by loading libraries - DO NOT REMOVE
-  library(FLCore)
-  library(FLFishery)
-  library(mse)  
-  library(stockassessment)
-  library(MixME)
-  library(DiceKriging)
-  
-  # Retrieve the specific inputs for this run ID
-  # We use the 'frozen' input_data table and pick the row matching run_id
-  this_Fcod <- input_data$Fcod[run_id]
-  this_Fhad <- input_data$Fhad[run_id]
-  
-  # Run the simulation
-  res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
-  
-  # Get Catch directly from the 'tracking' object
-  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-  # Calculate total catch
-  total_catch <- catch_cod + catch_had
-  
-  ## // Calculate the risk for both stocks in each year and at end of the projection//
-  # TODO: Improve to a probability somehow, multiple iterations if needed
-  # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
-  
-  # Define Blims
-  Blim_cod <- 107000
-  Blim_had <- 9227
-  
-  # Extract SSB directly - still focusing on the end of the simualtion in 2039
-  ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
-  ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
-  
-  # Calculate risk for cod
-  if (is.na(ssb_cod_data)) {
-    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
-    risk_cod <- -log(Blim_cod) 
-  } else if(ssb_cod_data > Blim_cod) {
-    # Safe zone: No penalty
-    risk_cod <- 0
-  } else {
-    # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
-    risk_cod <- -log(Blim_cod - ssb_cod_data) 
-  }
-  
-  # Calculate risk for haddock
-  if (is.na(ssb_had_data)) {
-    # If it crashed, we treat SSB as effectively 0 so the penalty is the log of the full distance (Blim - 0)
-    risk_had <- -log(Blim_had) 
-  } else if (ssb_had_data > Blim_had) {
-    # Safe zone: No penalty
-    risk_had <- 0
-  } else {
-    # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
-    risk_had <- -log(Blim_had - ssb_had_data) 
-  }
-  
-  # Set up variable to return
-  to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,RiskCod = risk_cod,RiskHad = risk_had,TotalCatch = total_catch)
-  
-  # Return the result
-  return(to_return)
-}
-
-# 1. Check how many cores you have
+# To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
 
-result <- doMclapply(points_to_run,doOne = doOne,cores = n_cores)
+# Set max runs (kept low for testing) and initial round number
+max_rounds <- 3
+round_num <- 1
 
-# Now just need correct table mainpulaation
-# look at names = TRUE, getArray and if type frozen or inner is good to get the results object into something I can work with
-# use array2df to get a data frame
-data_frame_initial <- as.data.frame(do.call(rbind, result))
+# Intiliase runs for safety
+runs <- NULL
 
-# Extract the values which are currently a list
-vals <- do.call(rbind, data_frame_initial$value)
+# // START OF LOOP //
 
-# Bind them with the other columns (excluding the original 'value' column)
-data_frame_result <- cbind(as.data.frame(vals), data_frame_initial[, c("error", "warning", "time")])
-
-names(data_frame_result) <- c("Fcod","Fhad","RiskCod","RiskHad","TotalCatch","error","warning","time")
-
-
-# Set up data frame to store data from current run - only keeping values that I want
-dat_run <- data.frame(
-  Fcod = c(data_frame_result$Fcod),
-  Fhad = c(data_frame_result$Fhad),
-  TotalCatch = c(data_frame_result$TotalCatch),
-  RiskCod = c(data_frame_result$RiskCod),
-  RiskHad = c(data_frame_result$RiskHad)
-)
-
-dat_run
-
-# Adding names to reference in GPs and for readability
-names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
-
-
-# Runs variable to count all runs so far and all their associated data
-runs <- rbind(runs, dat_run)
-
-runs
-
-
-
-## // Adjusting for GPs later on //
-
-# Taking log of the catch so GP models are more stable
-  log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-
-  # --- FIX FOR FLAT DATA --- as we only have one iteration
-  risk_cod_input <- runs$RiskCod
-  risk_had_input <- runs$RiskHad
+for (iteration in 1:max_rounds) {
   
-  # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
-  if(var(risk_cod_input, na.rm = TRUE) == 0) {
-    risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-10)
-  }
-  
-  if(var(risk_had_input, na.rm = TRUE) == 0) {
-    risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-10)
-  }
+    # CHANGED: Provide eight rows of points to run (due to nature of varlist function)
+    points_to_run <- varlist(
+    # The "Grid" - counts from 1 to 3
+    run_id = list(type = "grid", value = 1:nrow(next_points)),
+    
+    # The "Frozen" Data - the table of pairs available to all workers which we can pick by run_id
+    input_data = list(type = "frozen", value = next_points)
+    )
+
+    # Run all the points in parallel, one at a time one each core
+    result <- doMclapply(points_to_run,doOne = doOne,cores = n_cores)
+
+    # Make a data frame with each result as a row
+    data_frame_initial <- as.data.frame(do.call(rbind, result))
+
+    # Extract the values which are currently a list
+    vals <- do.call(rbind, data_frame_initial$value)
+
+    # Bind them with the other columns (excluding the original 'value' column to avoid duplicating)
+    data_frame_result <- cbind(as.data.frame(vals), data_frame_initial[, c("error", "warning", "time")])
+
+    names(data_frame_result) <- c("Fcod","Fhad","RiskCod","RiskHad","TotalCatch","error","warning","time")
+
+
+    # Set up data frame to store data from current run - only keeping values that I want
+    # NOte: TotalCatch is in the middle now
+    dat_run <- data.frame(
+    Fcod = c(data_frame_result$Fcod),
+    Fhad = c(data_frame_result$Fhad),
+    TotalCatch = c(data_frame_result$TotalCatch),
+    RiskCod = c(data_frame_result$RiskCod),
+    RiskHad = c(data_frame_result$RiskHad)
+    )
+
+    dat_run
+
+    # Adding names to reference in GPs and for readability
+    names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
+
+
+    # Runs variable to count all runs so far and all their associated data
+    runs <- rbind(runs, dat_run)
+
+    runs
+
+    # Taking log of the catch so GP models are more stable
+    log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
+
+    # --- FIX FOR FLAT DATA --- as we only have one iteration
+    risk_cod_input <- runs$RiskCod
+    risk_had_input <- runs$RiskHad
+    
+    # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
+    if(var(risk_cod_input, na.rm = TRUE) == 0) {
+        risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-10)
+    }
+    
+    if(var(risk_had_input, na.rm = TRUE) == 0) {
+        risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-10)
+    }
+    
+    # SET UP THE GPS
+    # Adding 1e-15 to nuggets to avoid 0 nugget variance
+    # TODO: remove when risk calculations fixed
+    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
+    gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
+    gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
+    
+    print("GPs done")
+    
+    # Find the remaining plausible points using BHM
+    pred_risk_cod <- predict(gp_cod_risk, newdata = dat, type = "SK")
+    pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
+    pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
+    
+    # Get probability that risk =< -log(1000) for both cod and haddock
+    prisk_cod <- pnorm(-log(1000), pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
+    prisk_had <- pnorm(-log(1000), pred_risk_had$mean, pred_risk_had$sd + 1e-12)
+    
+    # Filter for valid runs
+    valid_runs <- runs$TotalCatch[runs$RiskCod > -log(1000) & runs$RiskHad > -log(1000)]
+    
+    print("valid_runs is")
+    print(valid_runs)
+    
+    # Check if any valid runs exist before calculating current max
+    # TODO: Put in due to an error but can't rememebr why needed
+    if(length(valid_runs) > 0) {
+        current_max <- max(valid_runs, na.rm = TRUE)
+    } 
+    else {
+        current_max <- 0 
+        print("Warning: No runs met the safety criteria (< 5% risk)")
+    }
+    
+    # Probability catch is =< current max
+    pcat <- pnorm(log(current_max), pred_log_cat$mean, pred_log_cat$sd + 1e-12)
+    
+    # Set epsilon for plausibility threshold
+    eps <- 1e-4
+    # Determine plausible points where min(1 - pcat, prisk) > eps
+    possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
+
+    # Visualises region that has risk <0.05 and better catch than best evaluated so far
+    # TODO: Check I am naming this the correct way around
+    image2D(matrix(possible * (1-pcat),nrow=21),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+    
+    # Calculate KG
+    mu <- pred_log_cat$mean
+    sigma <- pred_log_cat$sd
+    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
+    
+    print("kg done")
+    
+    # Calculate the remaining points
+    dat_with_kg <- dat
+    dat_with_kg$kg <- kg
+    dat_with_kg$possible <- possible
+    names(dat_with_kg) <- c("Fcod","Fhad", "kg","possible"  )
+    
+    # Filter to only plausible points with positive KG
+    cand <- subset(dat_with_kg, possible == TRUE & kg > 0)
+    
+    # Create keys for filtering
+    cand$key <- paste(cand$Fcod, cand$Fhad, sep = "_")
+    runs$key <- paste(runs$Fcod, runs$Fhad, sep = "_")
+    
+    # Remove already evaluated points
+    cand <- cand[!(cand$key %in% runs$key), ]
+    
+    # Check if candidates exhausted - get loop to end when none left
+    if (nrow(cand) == 0) {
+        cat("No unevaluated candidates with positive EI. Stopping at round", iteration, "\n")
+        break
+    }
+    
+    # Print how many points are left
+    cat("Unevaluated candidates with KG > 0:", nrow(cand), "\n")
+    
+    # Select next points - keeping consistent with number of random points selected at the start
+    if (nrow(cand) <= 6) {
+        next_points <- cand[order(-cand$kg), c("Fcod", "Fhad")]
+    } else {
+        top_candidates <- cand[order(-cand$kg), ][1:nrow(cand), ]
+        set.seed(123)
+        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 6)
+        top_candidates$cluster <- km_result$cluster
+        next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
+        df[which.max(df$kg), c("Fcod", "Fhad", "kg")]
+        }))
+    }
+    
+    print("next points are")
+    print(next_points)
+    
+
+    # CRITICAL MEMORY CLEANUP - added in due to RStudio running out of storage without this
+    
+    # Remove the heavy simulation result
+    rm(result) 
+    
+    # Remove the Kriging models (they can be heavy too)
+    rm(gp_log_cat, gp_cod_risk, gp_had_risk)
+    
+    # Remove the prediction vectors to be safe
+    rm(pred_risk_cod, pred_risk_had, pred_log_cat)
+
+    # KEEP ONLY WANTED COLUMNS IN runs
+    # Define the columns we actually care about, otherwise we can't do rbind to runs properly next iteration
+    important_cols <- c("Fcod", "Fhad", "TotalCatch", "RiskCod", "RiskHad")
+    
+    # Only keep those columns before binding
+    runs <- runs[, important_cols]
+    
+    # // LOOP ENDS //
+    round_num <- iteration
+
+}

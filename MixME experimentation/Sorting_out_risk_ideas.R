@@ -193,3 +193,13 @@ res <- obj_func(f_cod,f_had,mixedfishery_MixME_om,stk_oem)
       # Danger zone: The "risk" is how deep we are in the hole. We log it to make the GPs more stable
       risk_had <- -log(Blim_had - ssb_had_data) 
   }
+
+
+## // NEW IDEA //
+
+# Remove logs but divide by Blim to stabilise GPs
+
+# Calculate Safety Score (Higher is better, 0 is the limit)
+# We normalize by Blim so Cod and Haddock are on the same scale (-1 to +1)
+risk_cod <- (ssb_cod_data - Blim_cod) / Blim_cod
+risk_had <- (ssb_had_data - Blim_had) / Blim_had

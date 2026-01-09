@@ -96,6 +96,8 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   m <- length(mu)
   var <- sigma^2
   kg <- numeric(m)
+  # Current best mean catch
+  mu_best <- max(mu) 
   
   # Loop over candidate points
   for (i in seq_len(m)) {
