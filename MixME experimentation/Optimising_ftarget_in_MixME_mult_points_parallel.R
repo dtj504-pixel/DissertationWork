@@ -8,6 +8,7 @@
 # and be able to get the results from all of these and plug them into my following code
 # which I have a brief idea of how to do in Python but not in R
 # TODO: I think this means I will need the Viking computers or to look at running multiple "places" in R
+
 # I am able to run the simualtions on the different cores of my computer, but currently only have three cores spare for this
 # I should be getting a new computer which has fifteen cores spare for this soon, but this may still prove to not be enough
 
@@ -289,9 +290,10 @@ dat <- data.frame(expand.grid(
 
 # // SETUP FOR LOOP //
 
-# Define Blims
-  Blim_cod <- 107000
-  Blim_had <- 9227
+# Define Blims - sticking to ones given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
+
+Blim_cod <- 107000
+Blim_had <- 9227
 
 # Set an intial F target for both stocks so the first loop has something to work with
 # Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy

@@ -200,9 +200,6 @@ pred_risk2_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk2 <- exp(pred_risk2_g$mean)
 
 
-#TODO Remove duplicate imports
-
-library(plot3D)
 image2D(matrix(med_risk2,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 # now lets look at the probability that the risk is less than 0.05 
 prisk2 <- pnorm(log(0.05),pred_risk2_g$mean,pred_risk2_g$sd+1e-12)
@@ -252,7 +249,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk3_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk3 <- exp(pred_risk3_g$mean)
-library(plot3D)
 image2D(matrix(med_risk3,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk3 <- pnorm(log(0.05),pred_risk3_g$mean,pred_risk3_g$sd+1e-12)
 image2D(matrix(prisk3,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -292,7 +288,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk4_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk4 <- exp(pred_risk4_g$mean)
-library(plot3D)
 image2D(matrix(med_risk4,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk4 <- pnorm(log(0.05),pred_risk4_g$mean,pred_risk4_g$sd+1e-12)
 image2D(matrix(prisk4,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -332,7 +327,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk5_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk5 <- exp(pred_risk5_g$mean)
-library(plot3D)
 image2D(matrix(med_risk5,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk5 <- pnorm(log(0.05),pred_risk5_g$mean,pred_risk5_g$sd+1e-12)
 image2D(matrix(prisk5,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -371,7 +365,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk6_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk6 <- exp(pred_risk6_g$mean)
-library(plot3D)
 image2D(matrix(med_risk6,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk6 <- pnorm(log(0.05),pred_risk6_g$mean,pred_risk6_g$sd+1e-12)
 image2D(matrix(prisk6,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -412,7 +405,6 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",resp
 
 pred_risk7_g <- predict(gp_risk,newdata=gridd,type="SK")
 med_risk7 <- exp(pred_risk7_g$mean)
-library(plot3D)
 image2D(matrix(med_risk7,nrow=11),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 prisk7 <- pnorm(log(0.05),pred_risk7_g$mean,pred_risk7_g$sd+1e-12)
 image2D(matrix(prisk7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
