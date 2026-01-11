@@ -290,11 +290,22 @@ for (iteration in 2:max_rounds) {
   med_risk <- exp(pred_risk_g$mean)
   image2D(matrix(med_risk, nrow=11), breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt")
   
+  # Probability that the risk is less than 0.05
   prisk <- pnorm(log(0.05), pred_risk_g$mean, pred_risk_g$sd + 1e-12)
+
+  # List to store prisk each round by indexing on round number
+  prisk_history_list[[round_num]] <- c(round = round_num, prisk)
+
   image2D(matrix(prisk, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
   current_max <- max(runs$C_long[runs$risk3_long < 0.05])
+
+  # Probability a point is less than or equal to the current maximum catch
   pcat <- pnorm(log(current_max), pred_cat_g$mean, pred_cat_g$sd + 1e-12)
+
+  # List to store pcat each round by indexing on round number
+  pcat_history_list[[round_num]]  <- c(round = round_num, pcat) 
+
   possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
   med_cat <- exp(pred_cat_g$mean)
 
@@ -313,6 +324,10 @@ for (iteration in 2:max_rounds) {
   
   round_num <- iteration
 }
+
+# Get out prisk and pcat tables to help wiht any possible debugging
+prisk_table <- as.data.frame(do.call(rbind, prisk_history_list))
+pcat_table  <- as.data.frame(do.call(rbind, pcat_history_list))
 
 #FINAL RESULTS
 cat("\n OPTIMIZATION COMPLETE \n")
