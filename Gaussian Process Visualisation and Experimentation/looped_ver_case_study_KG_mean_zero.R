@@ -354,7 +354,7 @@ cat("Total evaluations:", nrow(runs), "\n")
 
 # Get final answer
 
-# NOw takes 12 rounds and so 90 evaluations to find correct solution
+# Now takes 12 rounds and so 90 evaluations to find correct solution
 pot_points_final <- gridd[possible, ]
 if (nrow(pot_points_final) > 0) {
   ans <- unrescale_Her(pot_points_final[1, ], dat1)
@@ -367,5 +367,5 @@ if (nrow(pot_points_final) > 0) {
 # Create final dataset for plotting
 dat_round <- left_join(dat, all_rounds, by = c("Ftrgt", "Btrigger"))
 
-# Color coding
+# Colour coding
 col_round <- c("white", hcl.colors(max(all_rounds$Round), "viridis", rev = TRUE))

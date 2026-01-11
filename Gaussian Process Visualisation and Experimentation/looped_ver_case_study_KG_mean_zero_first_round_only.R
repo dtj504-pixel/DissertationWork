@@ -368,5 +368,5 @@ if (nrow(pot_points_final) > 0) {
 # Create final dataset for plotting
 dat_round <- left_join(dat, all_rounds, by = c("Ftrgt", "Btrigger"))
 
-# Color coding
+# Colour coding
 col_round <- c("white", hcl.colors(max(all_rounds$Round), "viridis", rev = TRUE))
