@@ -1,4 +1,23 @@
-# // In Exploring_simualtion_outputs.R they start with data tha has 100 iterations and
+# Looking at changing to a probability in the shortcut model
+
+# === NEW RISK CALCULATION ===
+    # We grab the vector of 100 iterations for the final year
+    ssb_cod_vec <- c(res$tracking$cod$stk["SB.om", ac(2039)])
+    ssb_had_vec <- c(res$tracking$had$stk["SB.om", ac(2039)])
+    
+    # Calculate Probability (Percentage of iterations below Blim)
+    # Returns a number between 0 and 1
+    risk_cod <- mean(ssb_cod_vec < Blim_cod, na.rm = TRUE)
+    risk_had <- mean(ssb_had_vec < Blim_had, na.rm = TRUE)
+
+
+
+
+
+
+
+
+# // In Exploring_simulation_outputs.R they start with data tha has 100 iterations and
 # // so perhaps I need to test the risk calculations out of this kind of data
 # // and do a basic version first and then integrate it with my model
 
