@@ -322,9 +322,9 @@ runs <- NULL
 
 for (iteration in 1:max_rounds) {
   
-    # CHANGED: Provide eight rows of points to run (due to nature of varlist function)
+    # CHANGED: Provide six rows of points to run (due to nature of varlist function)
     points_to_run <- varlist(
-    # The "Grid" - counts from 1 to 3
+    # The "Grid" - counts from 1 to 6
     run_id = list(type = "grid", value = 1:nrow(next_points)),
     
     # The "Frozen" Data - the table of pairs available to all workers which we can pick by run_id
