@@ -345,6 +345,9 @@ doOne <- function(run_id,input_data){
 
     ##############################################
     # APPARENTLY I DON'T HAVE MULTIPLE ITERATIONS AND SO THIS IS ONLY MARGINALLY DIFFERENT FROM PREV SIMULATION
+
+    # Will need to chnage to same risk calculation as in Optimising_ftarget_in_MixME_mult_points_parallel.R
+    # if I want GP models to work properly, as else eveyr risk is 0 or 1
     ###########################################
     
     # Define Blims here for safety
