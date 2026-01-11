@@ -203,8 +203,6 @@ all_rounds$Round <- 1
 max_rounds <- 20
 round_num <- 1
 
-#TODO: Can I rename the variables ion each round so I can clearly see the progression?
-
 for (iteration in 2:max_rounds) {
   
   cat("\n  Round", iteration, "\n")
@@ -212,8 +210,6 @@ for (iteration in 2:max_rounds) {
   # Calculate AEI
   mu <- pred_cat_g$mean
   sigma <- pred_cat_g$sd
-  # TODO: Can I calculate this for only the remaining possible points
-  # Could change EI function to first assign anything with pred_risk to 0 before calculating
   ei <- augmented_expected_improvement(mu, sigma, log(current_max), xi = 0.05, pred_risk = prisk, eps = eps, noise_var = 0)
   
   # Create candidate set
