@@ -3,14 +3,13 @@
 
 # Focusing on this example first in my project
 
-# TODO: Struggling with compute time as I believe I can only run one simulation at once, even if I find eight points to evaluate next
-# What I would need to do is find these eight points and then run the simualtions for them in eight different "places" at the same time
-# and be able to get the results from all of these and plug them into my following code
-# which I have a brief idea of how to do in Python but not in R
-# TODO: I think this means I will need the Viking computers or to look at running multiple "places" in R
+# // TODO: Currently DETERMINSTIC treatment of sampled points - issue if simulations or data are stochastic //
+
 
 # I am able to run the simualtions on the different cores of my computer, but currently only have three cores spare for this
 # I should be getting a new computer which has fifteen cores spare for this soon, but this may still prove to not be enough
+
+# TODO: I think this means I will need the Viking computers
 
 ## load libraries
 library(FLCore)
@@ -436,6 +435,7 @@ for (iteration in 1:max_rounds) {
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
+    # TODO: May need ot change. Calculating this deterministically as obs_noise_var = 0.
     kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
     
     print("kg done")

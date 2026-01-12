@@ -1,6 +1,9 @@
 ## // UNDER ADJUSTMENT SO MIGHT GET QUITE ODD //
 # NO data to test on yet as no data for whiting in MixME tutorial
 
+# // TODO: Currently DETERMINSTIC treatment of sampled points - issue if simulations or data are stochastic //
+
+
 ## load libraries
 library(FLCore)
 library(FLFishery)
@@ -583,6 +586,7 @@ for (iteration in 1:max_rounds) {
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
+    # TODO: May need ot change. Calculating this deterministically as obs_noise_var = 0.
     kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
     
     print("kg done")
