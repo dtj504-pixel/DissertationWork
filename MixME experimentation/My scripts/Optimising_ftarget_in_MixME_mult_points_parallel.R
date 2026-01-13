@@ -300,15 +300,16 @@ f_cod_1 <- 0.28
 f_had_1 <- 0.353
 point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
 
-# CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
+# CHANGED: Pick 6 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
-warmup_indices <- sample(nrow(dat), 5)
+warmup_indices <- sample(nrow(dat), 6)
 warmup_points <- dat[warmup_indices, ]
 next_points <- rbind(point_1, warmup_points)
 
 # To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
+n_corescc
 
 # Set max runs (kept low for testing) and initial round number
 max_rounds <- 3
@@ -323,7 +324,7 @@ for (iteration in 1:max_rounds) {
   
     # CHANGED: Provide six rows of points to run (due to nature of varlist function)
     points_to_run <- varlist(
-    # The "Grid" - counts from 1 to 6
+    # The "Grid" - counts from 1 to 7
     run_id = list(type = "grid", value = 1:nrow(next_points)),
     
     # The "Frozen" Data - the table of pairs available to all workers which we can pick by run_id
@@ -471,7 +472,7 @@ for (iteration in 1:max_rounds) {
     } else {
         top_candidates <- cand[order(-cand$kg), ][1:nrow(cand), ]
         set.seed(123)
-        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 6)
+        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 7)
         top_candidates$cluster <- km_result$cluster
         next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
         df[which.max(df$kg), c("Fcod", "Fhad", "kg")]
