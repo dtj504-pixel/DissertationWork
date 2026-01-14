@@ -480,12 +480,12 @@ input <- mixedfishery_MixME_input
 
 # // SETUP FOR LOOP //
 
-# Define Design Space as discrete with 0.1 increments
+# Define Design Space as discrete with 0.05 increments
 # Can change to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0, 1, by=0.1),
-  Fhad = seq(0, 1, by=0.1),
-  Fwhg = seq(0, 1, by=0.1)
+  Fcod = seq(0.1, 0.5, by=0.05),
+  Fhad = seq(0.1, 0.5, by=0.05),
+  Fwhg = seq(0.1,0.5, by=0.05)
 ))
 
 # Define Blims - sticking to ones given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy

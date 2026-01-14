@@ -279,11 +279,11 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 
 
-# Define Design Space as discrete with 0.05 increments
-# Can change to 0.01 to be more granular once finished testing
+# Define Design Space as discrete with 0.02 increments
+# Can change to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0, 1, by=0.05),
-  Fhad = seq(0, 1, by=0.05)
+  Fcod = seq(0.1, 0.5, by=0.02),
+  Fhad = seq(0.1, 0.5, by=0.02)
 ))
 
 
