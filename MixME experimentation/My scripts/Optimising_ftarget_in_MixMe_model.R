@@ -209,19 +209,25 @@ f_had <- 0.353
 # Define Design Space as discrete with 0.02 increments
 # Can change to 0.01 to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0.1, 0.5, by=0.02),
-  Fhad = seq(0.1, 0.5, by=0.02)
+  Fcod = seq(0, 1, by=0.05),
+  Fhad = seq(0, 1, by=0.05)
 ))
 
 #Intialise runs object
 runs <- NULL
 
-# Pick 5 RANDOM points from your grid to initialize the model
-# set.seed to make sure it's reproducible
+# To prep for running in parallel, check how many cores you have
+n_cores <- parallel::detectCores() - 1 
+n_warmup <- 2 * n_cores - 1
+
+# CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
-warmup_indices <- sample(nrow(dat), 5)
+warmup_indices <- sample(nrow(dat), n_warmup)
 warmup_points <- dat[warmup_indices, ]
+next_points <- rbind(point_1, warmup_points)
+
+next_points
 
 print("STARTING WARM-UP PHASE of 5 Iterations")
 

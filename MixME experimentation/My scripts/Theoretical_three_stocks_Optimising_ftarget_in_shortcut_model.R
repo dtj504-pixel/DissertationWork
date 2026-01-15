@@ -483,9 +483,9 @@ input <- mixedfishery_MixME_input
 # Define Design Space as discrete with 0.05 increments
 # Can change to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0.1, 0.5, by=0.05),
-  Fhad = seq(0.1, 0.5, by=0.05),
-  Fwhg = seq(0.1,0.5, by=0.05)
+  Fcod = seq(0, 1, by=0.05),
+  Fhad = seq(0, 1, by=0.05),
+  Fwhg = seq(0, 1, by=0.05)
 ))
 
 # Define Blims - sticking to ones given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
@@ -501,17 +501,20 @@ f_had_1 <- 0.353
 f_whg_1 <- 0.25  # EXAMPLE VALUE
 point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1, Fwhg = f_whg_1)
 
+# To prep for running in parallel, check how many cores you have
+n_cores <- parallel::detectCores() - 1 
+n_warmup <- 2 * n_cores - 1
+
 # CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
-warmup_indices <- sample(nrow(dat), 5)
+warmup_indices <- sample(nrow(dat), n_warmup)
 warmup_points <- dat[warmup_indices, ]
 next_points <- rbind(point_1, warmup_points)
 
 next_points
 
-# To prep for running in parallel, check how many cores you have
-n_cores <- parallel::detectCores() - 1 
+
 
 # Set max runs (kept low for testing) and initial round number
 max_rounds <- 3
