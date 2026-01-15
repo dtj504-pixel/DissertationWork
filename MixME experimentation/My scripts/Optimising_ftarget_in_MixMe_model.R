@@ -16,6 +16,7 @@ library(mse)
 library(stockassessment)
 library(MixME)
 library(DiceKriging)
+library(plot3D)
 
 obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   
@@ -205,6 +206,7 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 # Set an intial F target for both stocks so the first loop has something to work with
 f_cod <- 0.28
 f_had <- 0.353
+point_1 <- data.frame(Fcod = f_cod, Fhad = f_had)
 
 # Define Design Space as discrete with 0.02 increments
 # Can change to 0.01 to be more granular once finished testing
@@ -421,8 +423,18 @@ for (iteration in 1:max_rounds) {
   # Determine plausible points where min(1 - pcat, prisk) > eps
   possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
 
+  # 1. Get the axis values (sorted and unique)
+  u_fcod <- sort(unique(dat$Fcod)) # Y-axis
+  u_fhad <- sort(unique(dat$Fhad)) # X-axis
+
+  # 2. Create the matrix
+  #    We use nrow = length(u_fhad) because we want rows to correspond to X (Fhad).
+  #    We use byrow = TRUE because the vector contains all Fcod values for the first Fhad, 
+  #    then all Fcod values for the second Fhad, etc. This maps perfectly to filling rows.
+  z_mat <- matrix(possible * (1 - pcat),nrow = length(u_fhad),ncol = length(u_fcod), byrow = TRUE)
+
   # Visualises region that has risk <0.05 and better catch than best evaluated so far
-  image2D(matrix(possible * (1-pcat),nrow=11),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  image2D(z_mat,y=u_fhad,x=u_fcod,xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
   # Calculate KG
   mu <- pred_log_cat$mean

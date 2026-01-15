@@ -550,16 +550,29 @@ for (iteration in 1:max_rounds) {
 
     # Taking log of the catch so GP models are more stable
     log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-    risk_cod <- runs$RiskCod
-    risk_had <- runs$RiskHad
 
+    # --- FIX FOR FLAT DATA --- as we only have one iteration
+    # --- FIX FOR FLAT DATA --- as we only have one iteration
+    risk_cod_input <- runs$RiskCod
+    risk_had_input <- runs$RiskHad
+
+    # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
+    if(var(risk_cod_input, na.rm = TRUE) == 0) {
+        risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-9)
+    }
+    
+    if(var(risk_had_input, na.rm = TRUE) == 0) {
+        risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-9)
+    }
+
+    
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
     # TODO: remove when risk calculations fixed
     gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
-    gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
-    gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
+    gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
+    gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
     
     print("GPs done")
     
@@ -567,11 +580,15 @@ for (iteration in 1:max_rounds) {
     pred_risk_cod <- predict(gp_cod_risk, newdata = dat, type = "SK")
     pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
+
+    # Define the Risk Constraint Thresholds
+    risk_threshold_cod <- -1000 / Blim_cod  # approx -0.009
+    risk_threshold_had <- -1000 / Blim_had    # approx -0.108 
     
     # Get probability that risk =< -log(1000) for both cod and haddock
-    prisk_cod <- pnorm(log(0.05), pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
-    prisk_had <- pnorm(log(0.05), pred_risk_had$mean, pred_risk_had$sd + 1e-12)
-    
+    prisk_cod <- pnorm(risk_threshold_cod, pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
+    prisk_had <- pnorm(risk_threshold_had, pred_risk_had$mean, pred_risk_had$sd + 1e-12)
+
     # Probability catch is =< current max
     pcat <- pnorm(log(current_max), pred_log_cat$mean, pred_log_cat$sd + 1e-12)
     
