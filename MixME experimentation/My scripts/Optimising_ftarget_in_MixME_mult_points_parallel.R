@@ -3,13 +3,13 @@
 
 # Focusing on this example first in my project
 
-# // TODO: Currently DETERMINSTIC treatment of sampled points - issue if simulations or data are stochastic //
-
-
+# TODO: Struggling with compute time as I believe I can only run one simulation at once, even if I find eight points to evaluate next
+# What I would need to do is find these eight points and then run the simualtions for them in eight different "places" at the same time
+# and be able to get the results from all of these and plug them into my following code
+# which I have a brief idea of how to do in Python but not in R
+# TODO: I think this means I will need the Viking computers or to look at running multiple "places" in R
 # I am able to run the simualtions on the different cores of my computer, but currently only have three cores spare for this
 # I should be getting a new computer which has fifteen cores spare for this soon, but this may still prove to not be enough
-
-# TODO: I think this means I will need the Viking computers
 
 ## load libraries
 library(FLCore)
@@ -279,20 +279,19 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 
 
-# Define Design Space as discrete with 0.02 increments
-# Can change to be more granular once finished testing
+# Define Design Space as discrete with 0.05 increments
+# Can change to 0.01 to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0.1, 0.5, by=0.02),
-  Fhad = seq(0.1, 0.5, by=0.02)
+  Fcod = seq(0, 1, by=0.05),
+  Fhad = seq(0, 1, by=0.05)
 ))
 
 
 # // SETUP FOR LOOP //
 
-# Define Blims - sticking to ones given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
-
-Blim_cod <- 107000
-Blim_had <- 9227
+# Define Blims
+  Blim_cod <- 107000
+  Blim_had <- 9227
 
 # Set an intial F target for both stocks so the first loop has something to work with
 # Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
@@ -300,16 +299,20 @@ f_cod_1 <- 0.28
 f_had_1 <- 0.353
 point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
 
-# CHANGED: Pick 6 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
+# CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
-warmup_indices <- sample(nrow(dat), 6)
-warmup_points <- dat[warmup_indices, ]
-next_points <- rbind(point_1, warmup_points)
 
 # To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
-n_corescc
+n_warmup <- 2 * n_cores - 1
+
+warmup_indices <- sample(nrow(dat),n_warmup)
+warmup_points <- dat[warmup_indices, ]
+next_points <- rbind(point_1, warmup_points)
+next_points
+
+
 
 # Set max runs (kept low for testing) and initial round number
 max_rounds <- 3
@@ -322,9 +325,9 @@ runs <- NULL
 
 for (iteration in 1:max_rounds) {
   
-    # CHANGED: Provide six rows of points to run (due to nature of varlist function)
+    # CHANGED: Provide eight rows of points to run (due to nature of varlist function)
     points_to_run <- varlist(
-    # The "Grid" - counts from 1 to 7
+    # The "Grid" - counts from 1 to 3
     run_id = list(type = "grid", value = 1:nrow(next_points)),
     
     # The "Frozen" Data - the table of pairs available to all workers which we can pick by run_id
@@ -431,12 +434,12 @@ for (iteration in 1:max_rounds) {
 
     # Visualises region that has risk < threshold and better catch than best evaluated so far
     # TODO: Check I am naming this the correct way around
-    image2D(matrix(possible * (1-pcat),nrow=21),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+    grid_dim <- sqrt(nrow(dat))
+    image2D(matrix(possible * (1-pcat),nrow=grid_dim),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
     
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
-    # TODO: May need ot change. Calculating this deterministically as obs_noise_var = 0.
     kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
     
     print("kg done")
@@ -472,7 +475,7 @@ for (iteration in 1:max_rounds) {
     } else {
         top_candidates <- cand[order(-cand$kg), ][1:nrow(cand), ]
         set.seed(123)
-        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 7)
+        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 6)
         top_candidates$cluster <- km_result$cluster
         next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
         df[which.max(df$kg), c("Fcod", "Fhad", "kg")]

@@ -106,6 +106,7 @@ input$ctrl_obj$hcr@args$hcrmethod$had
 # Set the target fishing mortality for both stocks - may be recommended by ICES
 
 #THIS IS WHAT I SHOULD BE CHANGING EACH TIME and running an algorithm to find the best one
+# Looks like it has been taken from # https://doi.org/10.17895/ices.advice.5897 as well
 input$ctrl_obj$hcr@args$ftrg$cod <- 0.28  # use MSY f-target
 input$ctrl_obj$hcr@args$ftrg$had <- 0.353 # use MSY f-target
 
