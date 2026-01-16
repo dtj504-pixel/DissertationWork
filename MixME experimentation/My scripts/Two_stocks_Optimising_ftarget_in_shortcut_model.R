@@ -282,8 +282,8 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 # Define Design Space as discrete with 0.05 increments
 # Can change to 0.01 to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0, 1, by=0.05),
-  Fhad = seq(0, 1, by=0.05)
+  Fcod = seq(0.0, 0.6, by=0.02), # Starts at 0 to capture low F
+  Fhad = seq(0.0, 0.6, by=0.02)  # Starts at 0 to capture low F
 ))
 
 
@@ -302,9 +302,10 @@ point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
 
 # To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
-n_warmup <- 2 * n_cores - 1
 
-# CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
+n_warmup <- 2 * n_cores
+
+# CHANGED: Pick other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
 warmup_indices <- sample(nrow(dat), n_warmup)
@@ -433,7 +434,7 @@ for (iteration in 1:max_rounds) {
 
     # Visualises region that has risk < threshold and better catch than best evaluated so far
     # TODO: Check I am naming this the correct way around
-    image2D(matrix(possible * (1-pcat),nrow=21),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+    image2D(matrix(possible * (1-pcat),nrow=31),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
     
     # Calculate KG
     mu <- pred_log_cat$mean
@@ -469,12 +470,12 @@ for (iteration in 1:max_rounds) {
     cat("Unevaluated candidates with KG > 0:", nrow(cand), "\n")
     
     # Select next points - keeping consistent with number of random points selected at the start
-    if (nrow(cand) <= 6) {
+    if (nrow(cand) <= n_warmup) {
         next_points <- cand[order(-cand$kg), c("Fcod", "Fhad")]
     } else {
         top_candidates <- cand[order(-cand$kg), ][1:nrow(cand), ]
         set.seed(123)
-        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 6)
+        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = n_warmup)
         top_candidates$cluster <- km_result$cluster
         next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
         df[which.max(df$kg), c("Fcod", "Fhad", "kg")]
@@ -485,7 +486,7 @@ for (iteration in 1:max_rounds) {
     print(next_points)
     
 
-    # CRITICAL MEMORY CLEANUP - added in due to RStudio running out of storage without this
+    # CRITICAL MEMORY CLEANUP
     
     # Remove the heavy simulation result
     rm(result) 
@@ -496,14 +497,13 @@ for (iteration in 1:max_rounds) {
     # Remove the prediction vectors to be safe
     rm(pred_risk_cod, pred_risk_had, pred_log_cat)
 
-    # KEEP ONLY WANTED COLUMNS IN runs
     # Define the columns we actually care about, otherwise we can't do rbind to runs properly next iteration
     important_cols <- c("Fcod", "Fhad", "TotalCatch", "RiskCod", "RiskHad")
     
     # Only keep those columns before binding
     runs <- runs[, important_cols]
-    
-    # // LOOP ENDS //
+
+    # update round number
     round_num <- iteration
 
 }

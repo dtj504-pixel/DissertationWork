@@ -211,8 +211,8 @@ point_1 <- data.frame(Fcod = f_cod, Fhad = f_had)
 # Define Design Space as discrete with 0.02 increments
 # Can change to 0.01 to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0, 1, by=0.05),
-  Fhad = seq(0, 1, by=0.05)
+  Fcod = seq(0.0, 0.6, by=0.02), # Starts at 0 to capture low F
+  Fhad = seq(0.0, 0.6, by=0.02)  # Starts at 0 to capture low F
 ))
 
 #Intialise runs object

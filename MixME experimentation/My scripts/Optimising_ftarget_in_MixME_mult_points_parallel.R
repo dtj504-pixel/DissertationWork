@@ -282,8 +282,8 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 # Define Design Space as discrete with 0.05 increments
 # Can change to 0.01 to be more granular once finished testing
 dat <- data.frame(expand.grid(
-  Fcod = seq(0, 1, by=0.05),
-  Fhad = seq(0, 1, by=0.05)
+  Fcod = seq(0.0, 0.6, by=0.02), # Starts at 0 to capture low F
+  Fhad = seq(0.0, 0.6, by=0.02)  # Starts at 0 to capture low F
 ))
 
 
@@ -305,7 +305,7 @@ set.seed(123)
 
 # To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
-n_warmup <- 2 * n_cores - 1
+n_warmup <- 2 * n_cores
 
 warmup_indices <- sample(nrow(dat),n_warmup)
 warmup_points <- dat[warmup_indices, ]
@@ -470,12 +470,12 @@ for (iteration in 1:max_rounds) {
     cat("Unevaluated candidates with KG > 0:", nrow(cand), "\n")
     
     # Select next points - keeping consistent with number of random points selected at the start
-    if (nrow(cand) <= 6) {
+    if (nrow(cand) <= n_warmup) {
         next_points <- cand[order(-cand$kg), c("Fcod", "Fhad")]
     } else {
         top_candidates <- cand[order(-cand$kg), ][1:nrow(cand), ]
         set.seed(123)
-        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = 6)
+        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = n_warmup)
         top_candidates$cluster <- km_result$cluster
         next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
         df[which.max(df$kg), c("Fcod", "Fhad", "kg")]
