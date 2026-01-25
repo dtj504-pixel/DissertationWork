@@ -1,15 +1,8 @@
-#IMPORTANT NOTE:
-# " we will assume that we can perfectly observe the stock without error"
-
-# Focusing on this example first in my project
+## // UNDER ADJUSTMENT SO MIGHT GET QUITE ODD //
+# NO data to test on yet as no data for whiting in MixME tutorial
 
 # // TODO: Currently DETERMINSTIC treatment of sampled points - issue if simulations or data are stochastic //
 
-
-# I am able to run the simualtions on the different cores of my computer, but currently only have three cores spare for this
-# I should be getting a new computer which has fifteen cores spare for this soon, but this may still prove to not be enough
-
-# TODO: I think this means I will need the Viking computers
 
 ## load libraries
 library(FLCore)
@@ -24,130 +17,369 @@ library(foreach)
 library(parallel)
 library(plot3D)
 
+## === Define a custom harvest control rule ===
+ICES_HCR <- function (stk, args, hcrpars, tracking) {
+  
+#' @param stk contains information about fish stocks, e.g. age
+#' @param args contains useful arguments such as ay and mlag
+#' @param hcrpars contains the parameters of the HCR, e.g. Ftrgt, Btrigger, Blim
+#' @param tracking contains the current tracking object and is currently returned unchanged
 
-obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
+  ## Extract year arguments
+
+  # ay is the current assessment year
+  ay <- args$ay
+  # mlag is the management lag in years
+  mlag <- args$management_lag
+  # this is the number of iterations
+  ni <- dims(stk)[["iter"]]
   
-  # Create the main MixME input object
-  # This bundles together all the components needed to run the MSE
-  # Set management type to fixedF
-  input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem, management_lag = 0, management_type = "fixedF", parallel = FALSE)
+
+  # SHORT-TERM FORECAST
+  ## Carry out short-term forecast to get ssb at the beginning of the advice year
   
-  # Set up the observation error model
-  # Cod and haddock catches occur at the start of the year so timing=0
-  # TODO: Not very realistic - could consider changing
-  input$oem@args$catch_timing$cod <- 0
-  input$oem@args$catch_timing$had <- 0
+  ## historical geomean to estimate recruitment for the stock (prevents big spikes in recruitment having a large effect)
+  sr0 <- as.FLSR(stk, model = "geomean")
+  # propagate sr0 params to match number of simulations
+  sr0@params <- FLCore::propagate(sr0@params, iter = ni)
   
-  # Define the age range for calculating average fishing mortality (Fbar) for both stocks
-  input$oem@observations$stk$cod@range[c("minfbar","maxfbar")] <- c(2,4)
-  input$oem@observations$stk$had@range[c("minfbar","maxfbar")] <- c(3,5)
+  # hardcoded using different starting years for different stocks when estimating recruitment
+  if(stk@name == "cod") stk_n <- window(stk@stock.n, start = 2015)
+  if(stk@name == "had") stk_n <- window(stk@stock.n, start = 1993)
   
+  # We get the row of data for the youngest fish and calculate the geometric mean for that row
+  # We do this by taking a log before calculating the average, as this reduces the effect of large values, 
+  # and then exponentiating
+  sr0@params[] <- exp(yearMeans(log(stk_n[1,])))
   
-  # Set the target fishing mortality for both stocks as the next point decided by the algorithm
-  input$ctrl_obj$hcr@args$ftrg$cod <- f_cod
-  input$ctrl_obj$hcr@args$ftrg$had <- f_had
+
+  ## find the first year with any data
+  minyr <- dims(stk@stock[!is.na(stk@stock.n)])$minyear
+  ## remove any years before this
+  stk0  <- window(stk, start = minyr)
   
-  ## Update fbar ranges
-  # TODO: From old script, may not be needed here
-  input$args$frange$cod <- c("minfbar" = 2, "maxfbar" = 4)
-  input$args$frange$had <- c("minfbar" = 3, "maxfbar" = 5)
+  ## extend stock object by one year
+  ## automatically fills in parameters by averaging over the last 3 years
+  stk0 <- FLasher::stf(stk0, 1)
   
+  # FLasher::fwd will throw an error if there are NAs in weights in future years.
+  # I need to zero these if associated numbers are zero
+  FLCore::discards.wt(stk0)[FLCore::discards.n(stk0) == 0] <- 0
+  FLCore::landings.wt(stk0)[FLCore::landings.n(stk0) == 0] <- 0
   
-  #RUN MIXME SIMULATION
-  res <- runMixME(om  = input$om, oem = input$oem, ctrl_obj = input$ctrl_obj, args = input$args)
+
+  ## find status quo F slightly differently for each stock
+  # cod and whiting average last three years, haddock average last year only
+  if(stk@name == "cod") fwd_yrs_fsq <- -2:0
+  if(stk@name == "had") fwd_yrs_fsq <- 0
   
-  # TODO: Remove checks? Helpful but not needed
+  # estimated fishing mortality for the forward year for each stock
+  fsq <- yearMeans(fbar(stk)[,as.character(fwd_yrs_fsq+ay-mlag)])
   
-  ## Check for advice failure
-  apply(res$tracking$iterfail, 1, mean)
+  ## FLasher cannot handle fsq=0
+  fsq <- ifelse(fsq==0, 0.001,fsq)
+
+  ## Construct forward fishing mortality with same n umber fo rows a simualtions
+  # Will overwrite the second row later
+  targ <- matrix(0,nrow=2, ncol = ni)
+  targ[1,] <- fsq
+  targ[2,] <- fsq
   
-  ## Check for effort optimisation failure
-  res$tracking$optim
+  # Wrappper that constructs the fwdControl object, setting fbar to values in the targ matrix
+  ctrl0 <- fwdControl(list(
+    year  = c(ay,ay+mlag),
+    quant = "fbar",
+    value = c(targ)))
   
-  ## Check for effort optimisation message
-  res$tracking$message
+  ## project stock forward to get ssb in the advice year
+  stk_fwd <- FLasher::fwd(stk0, sr = sr0, control = ctrl0)
   
-  ## Check quota uptake for cod and haddock
-  res$tracking$uptake["cod",,,1]
-  res$tracking$uptake["had",,,1]
+
+  # HCR
+
+  ## Extract the parameters and propogate to each simulation
+  Ftrgt <- propagate(FLPar(hcrpars["Ftrgt"]), ni)
+  Btrigger <- propagate(FLPar(hcrpars["Btrigger"]), ni)
+  Blim <- propagate(FLPar(hcrpars["Blim"]), ni)
   
-  ## Check maximum overshoot of the quota by fleets
-  max(res$tracking$overquota, na.rm = TRUE)
+  ## calculate F multiplier
+
+  # calculate what ratio of Btrigger we are at for each simulation - 1 means we're at Btrigger 
+  status_Btrigger <- tail(ssb(stk_fwd), 1)/Btrigger
+  # find which simulations are above Btrigger
+  pos_Btrigger <- which(status_Btrigger > 1)
+  # set Ftarget to the ratio of Ftarget that corresponds to status_Btrigger
+  Fmult <- status_Btrigger
+  # cap this ratio at 1
+  Fmult[, , , , , pos_Btrigger] <- 1
   
-  ## Define Blim for each stock - required for way calculating risk right now
-  hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))  # https://doi.org/10.17895/ices.advice.5897
+  ## calculate new F target
+  Ftrgt <- Ftrgt * Fmult
+  # make most of the control object for output
+  ctrl <- fwdControl(list(year = ay + mlag, quant = "fbar", value = Ftrgt))
   
-  # Update the control object with the new HCR parameters
-  res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
+  ## Attach Blim for use in implementation
+  attr(ctrl, "Blim") <- Blim
   
+  #return the control object and tracking object
+  return(list(ctrl = ctrl, tracking = tracking))
+}
+
+#' Advice implementation using FLasher
+#' 
+#' Carry out a short-term forecast using Flasher
+#' to transform advised fishing mortality into an advised catch target.
+#' 
+#' @param stk Object of class \code{FLStock} containing observed stock 
+#'            information including commercial catch data, individual mean 
+#'            weights and biological parameters.
+#' @param tracking Tracking object
+#' @param args Additional arguments
+#' @param forecast Logical. Should a short-term forecast be carried out? Defaults
+#'                 to \code{TRUE}
+#' @param fwd_trgt Character. Catch or effort target to use during forecast. 
+#'                 Defaults to 'fsq'.
+#' @param fwd_yrs Integer. The number of years to forecast. Defaults to 1.
+#' @param fwd_yrs_average Integer vector. The historical data years over which
+#'                        biological parameter are averaged for use during 
+#'                        forecast. Defaults to -3:-1.
+#' @param fwd_yrs_rec_start Integer. Starting historical year from which to sample
+#'                          projection period recruitment during forecast.
+#' @param fwd_yrs_sel Integer vector. The historical data years over which
+#'                    catch selection-at-age is averaged for use during forecast.
+#'                    Defaults to -3:-1.
+#' @param fwd_yrs_lf_remove Integer Vector. ... Defaults to -2:-1.
+#' @param fwd_splitLD Logical. Defaults to \code{TRUE}
+
+
+# === Creating forecast function ===
+forecast_fun <- function(stk, tracking, ctrl,
+                         args,                       # contains ay (assessment year) and management lag
+                         fwd_trgt = c("fsq", "hcr"), # fish to status quo (fsq) in intermediate year and then apply hcr in final calculations
+                         fwd_yrs = 2,                # number of years to add - have a space for the year inbetween to do intermediate calculations and then for the year we want a quota for
+                         fwd_yrs_fsq = -2:0,         # years used to calculate fsq
+                         fwd_yrs_average = -3:0,     # years used for averages
+                         fwd_yrs_rec_start = NULL,   # recruitment - null uses the entire history to estimate
+                         fwd_yrs_sel = -3:-1,        # selectivity of equipment - average form 3 years ago to 1 year ago 
+                         fwd_yrs_lf_remove = -2:-1,  # calculate landings to discards ratio from 2 years ago to 1 year ago
+                         fwd_splitLD = TRUE)         # Whetehr to calculate landings and discards separately
+{  
+  ## get current assessment year
+  ay <- args$ay
+  
+  ## get management lag
+  mlag <- args$management_lag
+  
+  ## checking number of iterations
+  niter <- dim(stk)[6]  
+
+# Potential issue with different ways of calculating fsq for different functions???
+# The HCR function has a fixed year for each fsq but the forecast function uses the same year for every stock
+# UNDERSTAND ABOVE: a list of variables is set for each stock and so  different values can be set for each one
+
+  ## geomean to estimate recruitment for the stock
+  sr0 <- as.FLSR(stk, model = "geomean")
+  sr0@params <- FLCore::propagate(sr0@params, iter = niter)
+  
+  if (!is.null(fwd_yrs_rec_start)) {
+    stk_n <- window(stk@stock.n, start = fwd_yrs_rec_start)
+  } else {
+    stk_n <- stk@stock.n
+  }
+  sr0@params[] <- exp(yearMeans(log(stk_n[1,])))
+  
+  ## remnove years before first data year
+  minyr <- dims(stk@stock[!is.na(stk@stock.n)])$minyear # min year where data exists
+  stk0  <- window(stk, start = minyr)
+  
+  ## extend stock object and fill with assumptions calculated based on variables defined in function call
+  # use fwd_yrs+1 because we need to see if the stock crashes at the start of the year after the advice year
+  stk0 <- FLasher::stf(stk0, fwd_yrs+1)
+  
+  # FLasher::fwd will throw an error if there are NAs in weights in future years.
+  # I need to zero these if associated numbers are zero
+  FLCore::discards.wt(stk0)[FLCore::discards.n(stk0) == 0] <- 0
+  FLCore::landings.wt(stk0)[FLCore::landings.n(stk0) == 0] <- 0
+  
+  ## find status quo F for each stock
+  fsq <- yearMeans(fbar(stk)[,as.character(fwd_yrs_fsq+ay-mlag)])
+  
+  ## FLasher cannot handle fsq=0
+  fsq <- ifelse(fsq==0, 0.001,fsq)
+  
+  ## Construct matrix with rows as years and columns as iterations as before
+  # and fill it with the Ftarget values
+  targ <- matrix(0,nrow=fwd_yrs+1, ncol = niter)
+  targ[1,] <- fsq
+  targ[2,] <- ctrl@iters[,"value",]
+  targ[3,] <- ctrl@iters[,"value",]
+  
+  # year sets the timeline, quant = fbar says we are using fishing mortality
+  ctrl0 <- fwdControl(list(year  = c(ay,ctrl@target$year,ctrl@target$year+1), quant = "fbar", value = c(targ)))
+  
+  ## project stock forward
+  stk_fwd <- FLasher::fwd(stk0, sr = sr0, control = ctrl0)
+  
+  ## Extract catch target for the advice year (3 decimal places) by looking at the result object
+  TAC <- round(c(catch(stk_fwd)[,ac(ay+mlag)]),3)
+  
+  ## Get SSB at the end of the advice year (or at the start of the year after?)
+  TACyr_ssb <- c(ssb(stk_fwd)[,ac(ay+mlag+1)])
+  
+  ## Find iterations where SSB at end of TAC year is < Blim
+  belowBlim <- which(TACyr_ssb < attr(ctrl, "Blim"))
+  
+  ## Go through model fits - where SSB < Blim, forecast to target Blim
+  if (length(belowBlim) > 0) {
+    
+    ## define forward control targetting Blim
+    targ <- matrix(0,nrow=fwd_yrs+1, ncol = niter)
+    targ[1,] <- fsq
+    # target is now Blim
+    targ[2,] <- c(attr(ctrl,"Blim"))
+    targ[3,] <- ctrl@iters[,"value",]
+    
+    ctrl_blim <- fwdControl(list(
+      year  = c(ay,ay+mlag,ay+mlag+1),
+      #focus on biomass in the 2nd year to force us to end at Blim instead if we were below
+      quant = c("fbar","ssb_end","fbar"),
+      value = c(targ)))
+    
+    #rerun simulation focusing on Blim to find the Ftarget that is appropriate
+    stk_blim <- FLasher::fwd(stk0, sr = sr0, control = ctrl_blim)
+    
+    ## Find iterations with zero TAC advice (some stocks may be in such bad health taht we can't catch any)
+    zeroTAC <- ssb(stk_blim)[,ac(ay+mlag+1)] < attr(ctrl,"Blim")
+    
+    ## update TAC
+    TAC[belowBlim] <- round(c(catch(stk_blim)[,ac(ay+mlag)])[belowBlim],3)
+    # set any in zeroTAC to zero manually
+    TAC[zeroTAC]   <- 0
+  }
+  
+  ## Construct fwd control object, which we measurre using catch not fbar now
+  ctrl0 <- fwdControl(list(year = ay + mlag, quant = "catch", value = TAC))
+  
+  # return the same objects as before
+  return(list(ctrl = ctrl0, tracking = tracking))
+}
+
+# Defining objective function to run simulation 
+obj_func <- function(f_cod, f_had, input) {
+  
+    # Check estimation methods
+    input$ctrl_obj$est@args$estmethod$cod
+    input$ctrl_obj$est@args$estmethod$had
+
+    # we don't need any additional arguments for stock estimation
+    # We are assuming there is no error in the observations
+    # This means the stock will crash only if the HCR rule is bad
+    input$ctrl_obj$est@args$fitList <- NULL
+    input$ctrl_obj$est@args$fwdList <- NULL
+    
+    # INJECT CUSTOM FUNCTIONS into the model
+    input$ctrl_obj$hcr@args$hcrmethod$cod <- ICES_HCR
+    input$ctrl_obj$hcr@args$hcrmethod$had <- ICES_HCR
+    
+    # Change method of calculating TACs to use the forecast function defined above
+    input$ctrl_obj$isys@args$isysmethod$cod <- forecast_fun
+    input$ctrl_obj$isys@args$isysmethod$had <- forecast_fun
+    
+    # SET PARAMETERS for the HCR
+    input$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = list(
+        cod = c("Ftrgt" = f_cod, "Btrigger" = 5800,  "Blim" = 4200),
+        had = c("Ftrgt" = f_had, "Btrigger" = 12822, "Blim" = 9227)
+    )))
+    
+    # Set Forecast/ISYS Arguments
+    # Using similar settings to Cod/Had and those defined in ICES_HCR function for whiting
+    input$ctrl_obj$isys@args$isysList <- list(
+        cod = list(fwd_trgt = c("fsq", "hcr"), fwd_yrs = 2, fwd_yrs_fsq = -2:0, fwd_yrs_average = -2:0, fwd_yrs_rec_start = 2015, fwd_yrs_sel = -3:-1),
+        had = list(fwd_trgt = c("fsq", "hcr"), fwd_yrs = 2, fwd_yrs_fsq = 0,    fwd_yrs_average = -2:0, fwd_yrs_rec_start = 1993, fwd_yrs_sel = -3:-1)
+    )
+    
+    # Initialize Advice
+    ## Update simulation arguments
+    input$args$management_lag <- 1
+    # TODO: Change the below
+    # arbitrarily set TAC to 1000 for intermediate year, instead of to previous year's TAC as advised
+    input$args$adviceInit$cod[] <- 1000
+    input$args$adviceInit$had[] <- 1000
+    
+    # RUN SIMULATION
+    res <- runMixME(om = input$om, oem = input$oem, ctrl_obj = input$ctrl_obj, args = input$args)
+
+    ## Check for effort optimisation failures
+    res$tracking$optim
+
+    ## Check for Management Procedure failures - effectively failure to return quotas
+    res$tracking$iterfail
+
   return(res)
-  
 }
 
-# This is the function that will eventually run on each core
-doOne <- function(run_id,input_data) {
-  
-  #Fixing could not find functions error in runners by loading libraries - DO NOT REMOVE
-  library(FLCore)
-  library(FLFishery)
-  library(mse)  
-  library(stockassessment)
-  library(MixME)
-  library(DiceKriging)
-  
-  # Retrieve the specific inputs for this run ID
-  # We use the 'frozen' input_data table and pick the row matching run_id
-  this_Fcod <- input_data$Fcod[run_id]
-  this_Fhad <- input_data$Fhad[run_id]
-  
-  # Run the simulation
-  res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
-  
-  # Get Catch directly from the 'tracking' object
-  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-  # Calculate total catch
-  total_catch <- catch_cod + catch_had
-  
-  ## // Calculate the risk for both stocks //
-  # TODO: Improve to a probability somehow, multiple iterations if needed
-  # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
-  
-  # Define Blims here for safety
-  Blim_cod <- 107000
-  Blim_had <- 9227
-  
-  # Extract SSB directly - still focusing on the end of the simualtion in 2039
-  ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
-  ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
-  
-  # free up memory now that we have the data we need from res
-  rm(res)   
-  
-  # Calculate risk for cod using new linear statistic to avoud sudden jumps resulting in variance explosions
-  # but still scaled to between -1 and 1 to keep the GP stable (ok as know Blims are not 0 here)
-  if (is.na(ssb_cod_data)) {
-    # Maximum penalty as -1 means we have crashed to SSB = 0
-     risk_cod <- -1 
-  } else {
-     risk_cod <- (ssb_cod_data - Blim_cod) / Blim_cod
-  }
-  
-  if (is.na(ssb_had_data)) {
-    # Maximum penalty as -1 means we have crashed to SSB = 0
-     risk_had <- -1
-  } else {
-     risk_had <- (ssb_had_data - Blim_had) / Blim_had
-  }
-  
-  # Set up variable to return
-  to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,RiskCod = risk_cod,RiskHad = risk_had,TotalCatch = total_catch)
-  
-  # Return the result
-  return(to_return)
+# Define funciton that will get risk and catch for each version of f_cod, f_had
+doOne <- function(run_id,input_data){
+
+    #Fixing could not find functions error in runners by loading libraries - DO NOT REMOVE
+    library(FLCore)
+    library(FLFishery)
+    library(mse)  
+    library(stockassessment)
+    library(MixME)
+    library(DiceKriging)
+    
+    # Retrieve the specific inputs for this run ID
+    # We use the 'frozen' input_data table and pick the row matching run_id
+    this_Fcod <- input_data$Fcod[run_id]
+    this_Fhad <- input_data$Fhad[run_id]
+    
+    # Run the simulation
+    res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, input = input)
+    
+    # Get Catch directly from the 'tracking' object
+    catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+    catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+    # Calculate total catch
+    total_catch <- catch_cod + catch_had
+    
+    ## // Calculate the risk for all three stocks //
+    # TODO: Improve to a probability somehow, multiple iterations if needed - I NOW HAVE THIS! YAY!
+
+    ##############################################
+    # APPARENTLY I DON'T HAVE MULTIPLE ITERATIONS AND SO THIS IS ONLY MARGINALLY DIFFERENT FROM PREV SIMULATION
+
+    # Will need to chnage to same risk calculation as in Optimising_ftarget_in_MixME_mult_points_parallel.R
+    # if I want GP models to work properly, as else eveyr risk is 0 or 1
+    ###########################################
+    
+    # Define Blims here for safety
+    Blim_cod <- 107000
+    Blim_had <- 9227
+    
+    # Extract SSB directly - still focusing on the end of the simualtion in 2039
+    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
+    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+
+    # Remove large result object to preserve memory
+    rm(res)   
+
+    # Make sure NAs are calulatedas failures as they coudl be the stock crashing
+    cod_is_failure <- is.na(ssb_cod_data) | (ssb_cod_data < Blim_cod)
+    had_is_failure <- is.na(ssb_had_data) | (ssb_had_data < Blim_had)
+
+    # Calculate Probability (Percentage of iterations below Blim)
+    risk_cod <- mean(cod_is_failure)
+    risk_had <- mean(had_is_failure)
+    
+    # Set up variable to return
+    to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,RiskCod = risk_cod,RiskHad = risk_had,TotalCatch = total_catch)
+    
+    # Return the result
+    return(to_return)
 }
 
-# Calculate how correlated two pairs of Fcod and Fhad are based on their distance in the grid
+# Calculate how correlated two vectors of Fcod and Fhad are based on their distance in the grid
 cov_exp <- function(X1, X2, theta, sigma2) {
   n1 <- nrow(X1)
   n2 <- nrow(X2)  
@@ -159,6 +391,7 @@ cov_exp <- function(X1, X2, theta, sigma2) {
   sigma2 * exp(-D)
 }
 
+# Defining knowledge gradient acquisition fucntion so I can determine which points are best to run next
 knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 100, prisk_cod, prisk_had, eps = 1e-4) 
 { 
   X_pred <- dat[, c("Fcod","Fhad")]
@@ -207,90 +440,34 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   kg
 }
 
+## SECOND PART
+
+#' The objective of this script is to update the harvest control rule from constant catch 
+#' to a hockey-stick harvest control rule with three parameters: ftarget, btrigger and blim.
+#' 
+#' # TODO: Consider changing Blim as well? Would give me a lot more dimensions but could be more in line with the goal above
+
+## Load libraries
+library(mse)  
+library(FLCore)   
+library(FLFishery)
+library(FLasher) 
+library(MixME)   
+
+## Load tutorial data - I am using the correct data
+data("mixedfishery_MixME_input")
+input <- mixedfishery_MixME_input
 
 
+# // SETUP FOR LOOP //
 
-## load example data
-data("mixedfishery_MixME_om")
-
-# GENERATE OM AND OEM - repeating process from previous tutorials
-
-# This determines what proportion of each stock's catch goes to each fleet based on the historic data
-out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, flts = mixedfishery_MixME_om$flts, verbose = TRUE)
-# Update the stocks and fleets with the calculated quota shares
-mixedfishery_MixME_om$stks <- out$stks
-mixedfishery_MixME_om$flts <- out$flts
-
-# Project the fishery forward in time using historical patterns allowing us to simulate results of the management advice into the future
-# yearMeans uses recent historical averages as parameters for the projection
-out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20, wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
-
-## Add new outputs from future years to the operating model
-mixedfishery_MixME_om$stks <- out$stks
-mixedfishery_MixME_om$flts <- out$flts
-
-# initial projection year
-iy = 2020
-
-# set an arbitrary effort-based target for each fleet as we only want the values at the beginning of 2020
-ctrlArgs <- lapply(1:length(mixedfishery_MixME_om$flts), function(x) {
-  list(year = iy,quant = "effort",fishery = names(mixedfishery_MixME_om$flts)[x],value = 1)
-})
-
-# This matrix maps which fleets catch which stocks
-ctrlArgs$FCB <- makeFCB(biols = mixedfishery_MixME_om$stks, flts = mixedfishery_MixME_om$flts)
-
-# Generate effort-based FLasher::fwd forecast control
-flasher_ctrl <- do.call(FLasher::fwdControl, ctrlArgs)
-
-# Simulate one year of fishing to get starting conditions right
-omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks, fishery = mixedfishery_MixME_om$flts, control = flasher_ctrl)
-
-#Update the operating model with projected population numbers
-mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
-mixedfishery_MixME_om$stks$cod@n[,ac(iy)] <- omfwd$biols$cod@n[,ac(iy)]
-
-
-# CREATE THE NOISY, REAL-LIFE DATA
-#TODO: double check this and that this won't be an issue, as suggests we know the reality somewhere which we shouldn't
-
-# Create a list of FLStock objects from the FLBiol objects in the operating model
-stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
-  
-  # for each fleet, find which catch element corresponds to the current stock
-  catch <- sapply(mixedfishery_MixME_om$flts, function(y) which(names(y) %in% name(x)))
-  
-  # get catches form each fleet and convert to FLStock
-  xx <- as.FLStock(x, mixedfishery_MixME_om$flts, full = FALSE, catch = catch)
-  
-  #specifies fishing mortality is measured as instantaneous fishing mortality rate
-  units(xx@harvest) <- "f"
-  
-  # remove excess data as we don't observe stock biomass or stock numbers-at-age directly in reality
-  # forces us to simulate these using only the available data
-  stock.n(xx)[] <- NA
-  stock(xx)[]   <- NA
-  
-  # return the converted object
-  return(xx)
-}))
-
-
-
-
-
-# Define Design Space as discrete with 0.05 increments
-# Can change to 0.01 to be more granular once finished testing
+# Define Design Space as discrete with 0.02 increments
 dat <- data.frame(expand.grid(
   Fcod = seq(0.0, 0.6, by=0.02), # Starts at 0 to capture low F
   Fhad = seq(0.0, 0.6, by=0.02)  # Starts at 0 to capture low F
 ))
 
-
-# // SETUP FOR LOOP //
-
 # Define Blims - sticking to ones given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
-
 Blim_cod <- 107000
 Blim_had <- 9227
 
@@ -302,16 +479,16 @@ point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
 
 # To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
+n_warmup <- 2 * n_cores - 1
 
-n_warmup <- 2 * n_cores
-
-# CHANGED: Pick other RANDOM points from your grid to initialize the model with a set seed for reproducibility
+# CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
 # TODO: Could space apart equally as in Mike's code to explore the space more 
 set.seed(123) 
 warmup_indices <- sample(nrow(dat), n_warmup)
 warmup_points <- dat[warmup_indices, ]
 next_points <- rbind(point_1, warmup_points)
 
+next_points
 
 
 # Set max runs (kept low for testing) and initial round number
@@ -321,7 +498,8 @@ round_num <- 1
 # Intiliase runs for safety
 runs <- NULL
 
-# // START OF LOOP //
+
+# START LOOP
 
 for (iteration in 1:max_rounds) {
   
@@ -354,15 +532,15 @@ for (iteration in 1:max_rounds) {
     dat_run <- data.frame(
     Fcod = c(data_frame_result$Fcod),
     Fhad = c(data_frame_result$Fhad),
-    TotalCatch = c(data_frame_result$TotalCatch),
     RiskCod = c(data_frame_result$RiskCod),
-    RiskHad = c(data_frame_result$RiskHad)
+    RiskHad = c(data_frame_result$RiskHad),
+    TotalCatch = c(data_frame_result$TotalCatch)
     )
 
     dat_run
 
     # Adding names to reference in GPs and for readability
-    names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
+    names(dat_run) <- c("Fcod","Fhad","RiskCod","RiskHad","TotalCatch")
 
 
     # Runs variable to count all runs so far and all their associated data
@@ -372,6 +550,8 @@ for (iteration in 1:max_rounds) {
 
     # Taking log of the catch so GP models are more stable
     log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
+    risk_cod <- runs$RiskCod
+    risk_had <- runs$RiskHad
 
     # --- FIX FOR FLAT DATA --- as we only have one iteration
     risk_cod_input <- runs$RiskCod
@@ -385,6 +565,7 @@ for (iteration in 1:max_rounds) {
     if(var(risk_had_input, na.rm = TRUE) == 0) {
         risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-9)
     }
+
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
@@ -403,11 +584,11 @@ for (iteration in 1:max_rounds) {
     # Define the Risk Constraint Thresholds
     risk_threshold_cod <- -1000 / Blim_cod  # approx -0.009
     risk_threshold_had <- -1000 / Blim_had    # approx -0.108
-    
+
     # Get probability that risk =< -log(1000) for both cod and haddock
     prisk_cod <- pnorm(risk_threshold_cod, pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
     prisk_had <- pnorm(risk_threshold_had, pred_risk_had$mean, pred_risk_had$sd + 1e-12)
-    
+
     # Filter for valid runs
     valid_runs <- runs$TotalCatch[runs$RiskCod > risk_threshold_cod & runs$RiskHad > risk_threshold_had]
     
@@ -430,11 +611,12 @@ for (iteration in 1:max_rounds) {
     # Set epsilon for plausibility threshold
     eps <- 1e-4
     # Determine plausible points where min(1 - pcat, prisk) > eps
-    possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
+    possible <- pmin((1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1) > eps
 
-    # Visualises region that has risk < threshold and better catch than best evaluated so far
+    # Visualises region that has risk < threshold and better catch than best evaluated so far - NEEDS TO BE 3D NOW
     # TODO: Check I am naming this the correct way around
-    image2D(matrix(possible * (1-pcat),nrow=31),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+    grid_dim <- sqrt(nrow(dat))
+    image2D(matrix(possible * (1-pcat),nrow=grid_dim),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
     
     # Calculate KG
     mu <- pred_log_cat$mean
@@ -448,7 +630,7 @@ for (iteration in 1:max_rounds) {
     dat_with_kg <- dat
     dat_with_kg$kg <- kg
     dat_with_kg$possible <- possible
-    names(dat_with_kg) <- c("Fcod","Fhad", "kg","possible"  )
+    names(dat_with_kg) <- c("Fcod","Fhad","kg","possible")
     
     # Filter to only plausible points with positive KG
     cand <- subset(dat_with_kg, possible == TRUE & kg > 0)
@@ -486,7 +668,7 @@ for (iteration in 1:max_rounds) {
     print(next_points)
     
 
-    # CRITICAL MEMORY CLEANUP
+    # CRITICAL MEMORY CLEANUP - added in due to RStudio running out of storage without this
     
     # Remove the heavy simulation result
     rm(result) 
@@ -497,13 +679,15 @@ for (iteration in 1:max_rounds) {
     # Remove the prediction vectors to be safe
     rm(pred_risk_cod, pred_risk_had, pred_log_cat)
 
+    # KEEP ONLY WANTED COLUMNS IN runs
     # Define the columns we actually care about, otherwise we can't do rbind to runs properly next iteration
-    important_cols <- c("Fcod", "Fhad", "TotalCatch", "RiskCod", "RiskHad")
+    important_cols <- c("Fcod","Fhad","RiskCod","RiskHad","TotalCatch")
     
     # Only keep those columns before binding
     runs <- runs[, important_cols]
-
-    # update round number
+    
+    # // LOOP ENDS //
     round_num <- iteration
 
 }
+# END OF LOOP
