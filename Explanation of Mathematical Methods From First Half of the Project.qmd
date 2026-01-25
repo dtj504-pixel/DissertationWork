@@ -181,6 +181,8 @@ What mathematical methods will I explain in this document?
 
 -   Knowledge Gradient
 
+-   K-Means Clustering
+
 # Context
 
 We are building on the paper "Using history matching to speed up management strategy evaluation grid searches". This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the catch whilst keeping the risk below 0.05 for a single-stock fishery. The paper does not consider fleet dynamics. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal catch with the constraint of keeping the risk below 0.05.
@@ -194,6 +196,8 @@ To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly,
 -   We use the GP which is modelling the catch to get the value for the catch at every point in the sample space which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best catch)
+
+-   We select 8 plausible points to sample in the next round
 
 We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{target}$ and $B_{trigger}$ that maximise the catch whilst keeping the risk below 0.05.
 
@@ -425,15 +429,15 @@ possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
 
 ## Expected Improvement
 
-The first type of acquisition function we will look at is Expected Improvement (EI). Suppose we have sampled the points $x_1, ... ,x_n$ and observe the values $f(x_{1:n})$. Then, if we were to return a solution at this point, bearing in mind we observe the objective function $f$ without noise and we can only return points we have already evaluated, we would return $f^*_n = max\{f(x_1),...,f(x_n)\}$. Imagine we then consider evaluating another point $x_{n+1}$ to get $f(x_{n+1})$. We can then define the Expected Improvement as:
+The first type of acquisition function we will look at is Expected Improvement (EI). Suppose we have sampled the points $x_1, ... ,x_n$ and observe the values $f(x_{1:n})$. Then, if we were to return a solution at this point, bearing in mind we observe the objective function $f$ without noise and we can only return points we have already evaluated, we would return $f^*_n = max\{f(x_1),...,f(x_n)\}$ [@BayesianOptimisationTutorial]. Imagine we then consider evaluating another point $x_{n+1}$ to get $f(x_{n+1})$. We can then define the Expected Improvement as:
 
 \begin{equation}
     EI_n(x_{n+1}) := E[F(x_{n+1})|f(x_{1:n})-f^*_n]^+
 \end{equation}
 
-where $[F(x_{n+1})-f^*_n]^+$ is the positive part of $[F(x_{n+1})-f^*_n]$. This acquisition function is relatively easy to optimise and many different methods have been developed for doing this.
+where $[F(x_{n+1})-f^*_n]^+$ is the positive part of $[F(x_{n+1})-f^*_n]$. This acquisition function is relatively easy to optimise and many different methods have been developed for doing this [@BayesianOptimisationTutorial]. 
 
-In our case, we want to sample multiple points at the same time, up to 8 points each round. This method of EI can be coded up as the function:
+This method of EI can be coded up as the function:
 
 ``` r
 expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", 
@@ -475,7 +479,7 @@ $$
 Z = \frac{\mu_n(x_{n+1})-f_n^*}{\sigma_n(x_{n+1})}
 $$
 
-@eq-EIincode can be gained from @eq-priordistribution by setting $k = n+1$ and then studying the distribution of $F(x_{n+1})-f^*_n$. However, we can also consider it as a version of Equation (15) from [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions] where we first flip the signs are we are focused on the maximisation case and then set $f_{min} = f^*_n$, $\hat{y} = \mu_n(x)$ and $s = \sigma_n(x)$.
+@eq-EIincode can be gained from @eq-priordistribution by setting $k = n+1$ and then studying the distribution of $F(x_{n+1})-f^*_n$. However, we can also consider it as a version of Equation (15) from [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions] where we first flip the signs as we are focused on the maximisation case and then set $f_{min} = f^*_n$, $\hat{y} = \mu_n(x)$ and $s = \sigma_n(x)$.
 
 ## Augmented Expected Improvement
 
@@ -535,13 +539,13 @@ where `noise_var` corresponds to $\sigma_{obs}^2$ and `sigma` corresponds to $\s
 
 ## Knowledge Gradient
 
-We remove the assumption of EI that we have to return a pre-evaluated point as our best point[@BayesianOptimisationTutorial]. This allows us to do some different computations to the ones in EI. We also now start by saying that the solution we would choose if we have to stop sampling after n points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
+We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. This allows us to do some different computations to the ones in EI. We also now start by saying that the solution we would choose if we have to stop sampling after n points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
 
 \begin{equation}
     \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
 \end{equation}
 
-where $x$ is any point in the sample space[@BayesianOptimisationTutorial].
+where $x$ is any point in the sample space [@BayesianOptimisationTutorial].
 
 Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ and the conditional expected value for $F(x_n^*)$ changes to be:
 
@@ -671,10 +675,38 @@ All the arguments of the function are as before with a few exceptions. `obs_nois
 
 ## Kmeans process for selecting multiple points
 
-We have now been able to determine which points are possible based on the probability that their catch is higher than the current maximum catch (using Bayesian History Matching) and the probability that they cause a risk of the stock falling below Blim of less than 5%. These points will be called the Possible Space. We have then assigned a value to each of these possible points using one of the acquistion functions above. Now, we want to decide which points are the best points to evaluate next.
+We have now been able to determine which points are possible based on the probability that their catch is higher than the current maximum catch (using Bayesian History Matching) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
 
-For one point, this would be very simple as you would take the point with the highest value assigned by the acquisition function. However, we want to sample multiple points next and we want a good trade-off between exploration and exploitation. - FIND CITATION!!
+For sampling only one point next, this would be very simple as you would take the point with the highest value assigned by the acquisition function [@BayesianOptimisationTutorial]. However, we want to sample 8 points next so that we continue the pattern set up in the original paper and we want a good trade-off between exploration and exploitation [@Originalpaper]. - FIND CITATION!!
 
-So, we use the `kmeans` function which is part of the stats package in R, which is normally automatically loaded into an R session. This function uses the algorithm from Hartigan and Wong, 2018 by default (which is how it has been set in my code) [@AKMeansClusteringAlgorithm][@kmeansdocumentation]. - SORT CITATION FORMATTING This algoritm creates clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. - EXPLAIN MORE AFTER READING PAPER
+So, we use the `kmeans` function which is part of the stats package in R (which is automatically loaded into an R session). This function uses the algorithm from Hartigan and Wong, 2018 by default[@AKMeansClusteringAlgorithm][@kmeansdocumentation]. The k-means clustering method is the most commonly used due to its simplicity compared to other clustering algorithms[@kodinariya2013review.]
 
-However, before the algorithm can start, we must specify how many clusters we want. - FIND CITATION This can be difficult in many cases. - FIND CITATION In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. We then run the algorithm on the Possible Space to form the clusters. Then, we pick one point from each cluster to sample in our next round. This allows us to search for viable points by looking in the Possible Space but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively.
+This algoritm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by  the previous step. This may result in some points changing clusters[@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters[@AKMeansClusteringAlgorithm][@kodinariya2013review].
+
+However, before the algorithm can start, we must specify how many clusters we want [@kodinariya2013review]. This can be difficult in many cases [@kodinariya2013review]. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. We then run the algorithm on $PS$ to form the clusters. Then, we pick one point from each cluster to sample in our next round. This allows us to search for viable points by looking in the Possible Space but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively. - FIND CITATION/ REPEAT CITATIONS
+
+The code for this process can be seen below:
+
+```r
+# Select next points
+
+# cand is our Possible Space
+ if (nrow(cand) <= 8) {
+    # Here, we take all of the points as there are less than the amount we want to sample left
+   next_points <- cand[order(-cand$ei), c("Ftarget", "Btrigger")]
+ } else {
+    # We order the points based on the value given by the acquisition function, from highest to lowest here
+   top_candidates <- cand[order(-cand$ei), ][1:nrow(cand), ]
+   # We need to set a seed to make the points that kmeans picks as the first centroids reproducible
+   set.seed(123)
+   # We find the clusters
+   km_result <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
+   # We add the cluster column to our table
+   top_candidates$cluster <- km_result$cluster
+   # We pick the point with the highest value from the acquisition function from each cluster and assemble these points into a vector
+   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
+     df[which.max(df$ei), c("Ftarget", "Btrigger", "ei")]
+   }))
+ }
+
+```
