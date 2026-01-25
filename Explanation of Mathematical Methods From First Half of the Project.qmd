@@ -668,3 +668,13 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0,
 ```
 
 All the arguments of the function are as before with a few exceptions. `obs_noise_var` is the new name for the noise variable set by the user; `theta` is the length scale of our GP determining how quickly the objective function changes as $Ftarget$ and $Btrigger$ change; and `nsim` tells the code how many times to estimate the value of $f(x_{n+1})$ using $F(x_{n+1})$ before we calculate $KG_n(x)$[@DiceKrigingDocumentation].
+
+## Kmeans process for selecting multiple points
+
+We have now been able to determine which points are possible based on the probability that their catch is higher than the current maximum catch (using Bayesian History Matching) and the probability that they cause a risk of the stock falling below Blim of less than 5%. These points will be called the Possible Space. We have then assigned a value to each of these possible points using one of the acquistion functions above. Now, we want to decide which points are the best points to evaluate next.
+
+For one point, this would be very simple as you would take the point with the highest value assigned by the acquisition function. However, we want to sample multiple points next and we want a good trade-off between exploration and exploitation. - FIND CITATION!!
+
+So, we use the `kmeans` function which is part of the stats package in R, which is normally automatically loaded into an R session. This function uses the algorithm from Hartigan and Wong, 2018 by default (which is how it has been set in my code) [@AKMeansClusteringAlgorithm][@kmeansdocumentation]. - SORT CITATION FORMATTING This algoritm creates clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. - EXPLAIN MORE AFTER READING PAPER
+
+However, before the algorithm can start, we must specify how many clusters we want. - FIND CITATION This can be difficult in many cases. - FIND CITATION In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. We then run the algorithm on the Possible Space to form the clusters. Then, we pick one point from each cluster to sample in our next round. This allows us to search for viable points by looking in the Possible Space but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively.
