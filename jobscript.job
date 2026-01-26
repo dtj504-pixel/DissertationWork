@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=Optimising_ftarget_in_MixME_mult_points_parallel             # Job name - may want to set to the file name
 #SBATCH --partition=nodes               # What partition the job should run on, nodes is good as each node has 96 cores
-#SBATCH --time=0-04:00:00               # Time limit (DD-HH:MM:SS)
+#SBATCH --time=0-01:00:00               # Time limit (DD-HH:MM:SS)
 #SBATCH --ntasks=1                      # Number of MPI tasks to request
 #SBATCH --cpus-per-task=96               # Number of CPU cores per MPI task, need to increase as I am using multiple cores
 #SBATCH --mem=100G                        # Total memory to request - upgraded to 100GB for next time
