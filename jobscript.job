@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=looped_ver_case_study8_KG             # Job name - may want to set to the file name
+#SBATCH --job-name=Optimising_ftarget_in_MixME_mult_points_parallel             # Job name - may want to set to the file name
 #SBATCH --partition=nodes               # What partition the job should run on, nodes is good as each node has 96 cores
 #SBATCH --time=0-04:00:00               # Time limit (DD-HH:MM:SS)
 #SBATCH --ntasks=1                      # Number of MPI tasks to request
-#SBATCH --cpus-per-task=1               # Number of CPU cores per MPI task, need to increase as I am using multiple cores
-#SBATCH --mem=2G                        # Total memory to request
+#SBATCH --cpus-per-task=96               # Number of CPU cores per MPI task, need to increase as I am using multiple cores
+#SBATCH --mem=10GB                        # Total memory to request
 #SBATCH --account=math-covid19-2020       # Project account to use
 #SBATCH --mail-type=END,FAIL            # Mail events (NONE, BEGIN, END, FAIL, ALL), will send me an email if things fail or end
 #SBATCH --mail-user=dtj504@york.ac.uk   # Where to send mail
@@ -21,4 +21,4 @@ module purge
 module load R/4.5.2-gfbf-2025b
 
 # Commands to run
-Rscript looped_ver_case_study8_KG.R
+Rscript ./MixME_experimentation/My_scripts/Optimising_ftarget_in_MixME_mult_points_parallel.R
