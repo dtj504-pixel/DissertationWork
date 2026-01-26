@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=case_study8              # Job name - may want to set to the file name
+#SBATCH --job-name=looped_ver_case_study8_KG             # Job name - may want to set to the file name
 #SBATCH --partition=nodes               # What partition the job should run on, nodes is good as each node has 96 cores
 #SBATCH --time=0-04:00:00               # Time limit (DD-HH:MM:SS)
 #SBATCH --ntasks=1                      # Number of MPI tasks to request
@@ -21,4 +21,4 @@ module purge
 module load R/4.5.2-gfbf-2025b
 
 # Commands to run
-Rscript case_study8.R
+Rscript looped_ver_case_study8_KG.R
