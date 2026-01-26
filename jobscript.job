@@ -4,7 +4,7 @@
 #SBATCH --time=0-04:00:00               # Time limit (DD-HH:MM:SS)
 #SBATCH --ntasks=1                      # Number of MPI tasks to request
 #SBATCH --cpus-per-task=96               # Number of CPU cores per MPI task, need to increase as I am using multiple cores
-#SBATCH --mem=10GB                        # Total memory to request
+#SBATCH --mem=100GB                        # Total memory to request - upgraded to 100GB for next time
 #SBATCH --account=math-covid19-2020       # Project account to use
 #SBATCH --mail-type=END,FAIL            # Mail events (NONE, BEGIN, END, FAIL, ALL), will send me an email if things fail or end
 #SBATCH --mail-user=dtj504@york.ac.uk   # Where to send mail
