@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=case_study8              # Job name - may want to set to the file name
+#SBATCH --partition=nodes               # What partition the job should run on, nodes is good as each node has 96 cores
+#SBATCH --time=0-04:00:00               # Time limit (DD-HH:MM:SS)
+#SBATCH --ntasks=1                      # Number of MPI tasks to request
+#SBATCH --cpus-per-task=1               # Number of CPU cores per MPI task, need to increas as I am using multiple cores
+#SBATCH --mem=2G                        # Total memory to request
+#SBATCH --account=dept-proj-year        # Project account to use
+#SBATCH --mail-type=END,FAIL            # Mail events (NONE, BEGIN, END, FAIL, ALL), will send me an email if things fail or end
+#SBATCH --mail-user=dtj504@york.ac.uk   # Where to send mail
+#SBATCH --output=%x-%j.log              # Standard output log
+#SBATCH --error=%x-%j.err               # Standard error log
+
+# Abort if any command fails
+set -e
+
+# Purge any previously loaded modules
+module purge
+
+# Load R module - verified this version by running command
+module load R/4.5.2-gfbf-2025b
+
+# Commands to run
+Rscript case_study8.R
