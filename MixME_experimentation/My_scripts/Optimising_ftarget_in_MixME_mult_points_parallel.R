@@ -3,14 +3,6 @@
 
 # Focusing on this example first in my project
 
-# TODO: Struggling with compute time as I believe I can only run one simulation at once, even if I find eight points to evaluate next
-# What I would need to do is find these eight points and then run the simualtions for them in eight different "places" at the same time
-# and be able to get the results from all of these and plug them into my following code
-# which I have a brief idea of how to do in Python but not in R
-# TODO: I think this means I will need the Viking computers or to look at running multiple "places" in R
-# I am able to run the simualtions on the different cores of my computer, but currently only have three cores spare for this
-# I should be getting a new computer which has fifteen cores spare for this soon, but this may still prove to not be enough
-
 ## load libraries
 library(FLCore)
 library(FLFishery)
@@ -110,8 +102,6 @@ doOne <- function(run_id,input_data) {
   total_catch <- catch_cod + catch_had
   
   ## // Calculate the risk for both stocks //
-  # TODO: Improve to a probability somehow, multiple iterations if needed
-  # CONCLUSION: Need multiple iterations to generate a probabilistic risk as this data ("mixedfishery_MixME_om") is deterministic
   
   # Define Blims here for safety
   Blim_cod <- 107000
@@ -314,8 +304,8 @@ next_points
 
 
 
-# Set max runs (kept low for testing) and initial round number
-max_rounds <- 3
+# Set max runs and initial round number
+max_rounds <- 30
 round_num <- 1
 
 # Intiliase runs for safety
@@ -388,7 +378,6 @@ for (iteration in 1:max_rounds) {
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
-    # TODO: remove when risk calculations fixed
     gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
     gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
     gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
