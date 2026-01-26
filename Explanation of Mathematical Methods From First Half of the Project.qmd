@@ -435,7 +435,7 @@ The first type of acquisition function we will look at is Expected Improvement (
     EI_n(x_{n+1}) := E[F(x_{n+1})|f(x_{1:n})-f^*_n]^+
 \end{equation}
 
-where $[F(x_{n+1})-f^*_n]^+$ is the positive part of $[F(x_{n+1})-f^*_n]$. This acquisition function is relatively easy to optimise and many different methods have been developed for doing this [@BayesianOptimisationTutorial]. 
+where $[F(x_{n+1})-f^*_n]^+$ is the positive part of $[F(x_{n+1})-f^*_n]$. This acquisition function is relatively easy to optimise and many different methods have been developed for doing this [@BayesianOptimisationTutorial].
 
 This method of EI can be coded up as the function:
 
@@ -681,13 +681,13 @@ For sampling only one point next, this would be very simple as you would take th
 
 So, we use the `kmeans` function which is part of the stats package in R (which is automatically loaded into an R session). This function uses the algorithm from Hartigan and Wong, 2018 by default[@AKMeansClusteringAlgorithm][@kmeansdocumentation]. The k-means clustering method is the most commonly used due to its simplicity compared to other clustering algorithms[@kodinariya2013review.]
 
-This algoritm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by  the previous step. This may result in some points changing clusters[@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters[@AKMeansClusteringAlgorithm][@kodinariya2013review].
+This algoritm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters[@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters[@AKMeansClusteringAlgorithm][@kodinariya2013review].
 
 However, before the algorithm can start, we must specify how many clusters we want [@kodinariya2013review]. This can be difficult in many cases [@kodinariya2013review]. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. We then run the algorithm on $PS$ to form the clusters. Then, we pick one point from each cluster to sample in our next round. This allows us to search for viable points by looking in the Possible Space but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 The code for this process can be seen below:
 
-```r
+``` r
 # Select next points
 
 # cand is our Possible Space
@@ -708,5 +708,4 @@ The code for this process can be seen below:
      df[which.max(df$ei), c("Ftarget", "Btrigger", "ei")]
    }))
  }
-
 ```
