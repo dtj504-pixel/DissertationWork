@@ -454,7 +454,7 @@ for (iteration in 1:max_rounds) {
         cat("No unevaluated candidates with positive KG. Stopping at round", iteration, "\n")
         pot_points_final <- dat[possible, ]
         cat("\nOptimal parameters:\n")
-        pint(pot_points_final)
+        print(pot_points_final)
         break
     }
     
