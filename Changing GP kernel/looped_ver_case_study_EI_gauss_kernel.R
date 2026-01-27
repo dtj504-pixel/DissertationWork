@@ -215,7 +215,7 @@ all_rounds$Round <- 1
 # ITERATIVE ROUNDS
 
 # Set to 30 as now requires 25 rousds to converge
-max_rounds <- 30
+max_rounds <- 7
 round_num <- 1
 
 for (iteration in 2:max_rounds) {

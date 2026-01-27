@@ -31,9 +31,25 @@ where $$\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \f
 
 ## Experimenting with the kernel
 
-The assumption of the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth [@williams2006gaussian]. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel \[@williams2006gaussian\]. If the new point does not fit the very smooth assumption from the Gaussian kernel, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion [@williams2006gaussian]. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen [@williams2006gaussian]. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel [@williams2006gaussian].
+The assumption that the Gaussian kernel makes of infinite differentiability can be too strong for real-world processes as it is very smooth [@williams2006gaussian]. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel [@williams2006gaussian]. If the new point does not fit the very smooth assumption from the Gaussian kernel, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion [@williams2006gaussian]. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen [@williams2006gaussian]. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel [@williams2006gaussian].
 
-My experiments appear to back up this theory - RUN THEM AGAIN AND GET HEATMAPS TO SHOW,ETC.
+My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. Any areas with a probability less than `1e-04` of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.
+
+![Figure 1: Exponential kernel](images/case_study8_exp_kernel_7_rounds.png)
+
+![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds-2.png)
+
+![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds-3.png)
+
+Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, `looped_ver_case_study8_mult_point_EI.R` converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
+
+![Figure 4: case_study8.R with EI at seven rounds](images/ei_looped_exp_kernel_round_7.png)
+
+![Figure 5: case_study8.R with EI using Gauss kernel at seven rounds](images/looped_ei_gauss_kernel_7_rounds.png)
+
+![Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel](images/looped_EI_matern_5_2_non_converge.png)
+
+RUN COD FOR EI VERS AND SAY SIMIALR FOR AEI AND KG (DOUBLE CHECK FIRST).
 
 ## Experimenting with the mean
 
