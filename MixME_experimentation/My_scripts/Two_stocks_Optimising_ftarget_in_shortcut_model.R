@@ -645,6 +645,9 @@ for (iteration in 1:max_rounds) {
     # Check if candidates exhausted - get loop to end when none left
     if (nrow(cand) == 0) {
         cat("No unevaluated candidates with positive KG. Stopping at round", iteration, "\n")
+        pot_points_final <- dat[possible, ]
+        cat("\nOptimal parameters:\n")
+        print(pot_points_final)
         break
     }
     
