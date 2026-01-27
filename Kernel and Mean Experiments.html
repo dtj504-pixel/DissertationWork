@@ -21,7 +21,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-</style>
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
 
 
 <script src="Kernel and Mean Experiments_files/libs/clipboard/clipboard.min.js"></script>
@@ -100,20 +120,42 @@ window.Quarto = {
 </header>
 
 
-<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the case_study8.R document would have an effect on the values it determined as the optimal point. This was due to the fact that the exponential kernel currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation&nbsp;1</a>) was not as smooth as the Gaussian kernel (shown in <span class="citation" data-cites="eq">(<a href="#ref-eq" role="doc-biblioref"><strong>eq?</strong></a>)</span>-). This was pointed out and questioned by y supervisor as in many cases similar to ours it is common to use a Gaussian kernel. - FIND CITATION(S)</p>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation&nbsp;1</a>) was not as smooth as the Gaussian kernel (general form shown in <a href="#eq-GaussianKernel" class="quarto-xref">Equation&nbsp;2</a>. This was pointed out and questioned by my supervisor the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <p><span id="eq-originalkernel"><span class="math display">\[
 r_i(\phi,\phi',\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1'|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2'|}{\delta_{i,2}}\right)
 \tag{1}\]</span></span></p>
-<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <a href="#eq-gpmean" class="quarto-xref">Equation&nbsp;2</a> - EXTRACT FROM MIKE’S PAPER) for the Gaussian process we are assuming that we know a lot about the objective function (which is what we are modeling with our Gaussian Process). - FIND CITATION Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make many assumptions about our objective function. - FIND CITATION</p>
+<p><span id="eq-GaussianKernel"><span class="math display">\[
+r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
+\tag{2}\]</span></span></p>
+<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <a href="#eq-gpmean" class="quarto-xref">Equation&nbsp;3</a>) for the Gaussian process we are assuming that we know a lot about the objective function (which is what we are modeling with our Gaussian Process). - FIND CITATION Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make many assumptions about our objective function. - FIND CITATION</p>
 <p><span id="eq-gpmean"><span class="math display">\[
 \begin{split}
 m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1))^2+ \\
 \beta_{1,3}(ln(\phi_1+0.1))^3+\beta_{1,4}(\phi_2ln(\phi_1+0.1))+\beta_{1,5}\phi_2
 \end{split}
-\tag{2}\]</span></span></p>
+\tag{3}\]</span></span></p>
 <p>where <span class="math display">\[\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}\]</span></p>
+<section id="experimenting-with-the-kernel" class="level2">
+<h2 class="anchored" data-anchor-id="experimenting-with-the-kernel">Experimenting with the kernel</h2>
+<p>The assumption of the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. This can result in a variance explosion when we sample a new point. - GET CITATION The GP will have created a very smooth surface due to the very smooth assumption in the Gaussian kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. If the new point does not fit the very smooth assumption from the Gaussian kernel, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing.- GET CITATION This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen.- GET CITATION It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p>My experiments appear to back up this theory - RUN THEM AGAIN AND GET HEATMAPS TO SHOW,ETC.</p>
+</section>
+<section id="experimenting-with-the-mean" class="level2">
+<h2 class="anchored" data-anchor-id="experimenting-with-the-mean">Experimenting with the mean</h2>
+<section id="references" class="level3 unnumbered">
 
-</main>
+
+</section>
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-williams2006gaussian" class="csl-entry" role="listitem">
+Williams, Christopher KI, and Carl Edward Rasmussen. 2006. <em>Gaussian Processes for Machine Learning</em>. Vol. 2. 3. MIT press Cambridge, MA.
+</div>
+</div></section></div></main>
 <!-- /main column -->
 <script id="quarto-html-after-body" type="application/javascript">
   window.document.addEventListener("DOMContentLoaded", function (event) {
