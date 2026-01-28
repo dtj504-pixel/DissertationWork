@@ -184,13 +184,13 @@ m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/case_study8_gauss_kernel_7_rounds-2.png" class="img-fluid figure-img"></p>
+<p><img src="images/case_study8_gauss_kernel_7_rounds.png" class="img-fluid figure-img"></p>
 <figcaption>Figure 2: Gaussian kernel</figcaption>
 </figure>
 </div>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/case_study_matern5_2_kernel_7_rounds-3.png" class="img-fluid figure-img"></p>
+<p><img src="images/case_study_matern5_2_kernel_7_rounds.png" class="img-fluid figure-img"></p>
 <figcaption>Figure 3: Matern 5/2 kernel</figcaption>
 </figure>
 </div>
@@ -226,6 +226,31 @@ Listing&nbsp;1: Setting the GP Mean to Zero
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode R code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>gp_cat <span class="ot">&lt;-</span> <span class="fu">km</span>(<span class="sc">~</span><span class="dv">0</span>,<span class="at">design=</span>runs[,<span class="fu">c</span>(<span class="st">"Ftarget"</span>,<span class="st">"Btrigger"</span>)],<span class="at">estim.method=</span><span class="st">"MLE"</span>,</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">response =</span> res_cat,<span class="at">nugget=</span><span class="fl">1e-12</span><span class="sc">*</span><span class="fu">var</span>(res_cat),<span class="at">covtype =</span> <span class="st">"exp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+</figure>
+</div>
+<p>We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in <span class="citation" data-cites="OriginalPaper">(<a href="#ref-OriginalPaper" role="doc-biblioref"><strong>OriginalPaper?</strong></a>)</span>.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/mean_zero_first_roudn_only.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/mean_zero_all_rounds.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/looped_kg_mean_zero_first_round_after_7_rounds.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round at the seventh round</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/looped_kg_mean_zero_every_round_7_rounds.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round</figcaption>
 </figure>
 </div>
 <section id="references" class="level3 unnumbered">
