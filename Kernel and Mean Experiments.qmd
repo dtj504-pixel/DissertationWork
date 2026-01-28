@@ -37,9 +37,9 @@ My experiments appear to back up this theory. Using the exponential kernel, in o
 
 ![Figure 1: Exponential kernel](images/case_study8_exp_kernel_7_rounds.png)
 
-![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds-2.png)
+![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds.png)
 
-![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds-3.png)
+![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds.png)
 
 Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, `looped_ver_case_study8_mult_point_EI.R` converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
 
@@ -50,5 +50,12 @@ Similar results occur when we run the method once it has been augmented by an ac
 ![Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel](images/looped_EI_matern_5_2_non_converge.png)
 
 ## Experimenting with the mean
+
+Setting the mean of the GP to zero as in @lst-mean_zero is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations. - GET CITATION My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.
+
+``` {#lst-mean_zero .R lst-cap="Setting the GP Mean to Zero"}
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
+response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+```
 
 ### References
