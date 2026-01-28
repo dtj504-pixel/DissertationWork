@@ -112,10 +112,10 @@ res_cat <- log(runs$C_long)
 
 # The ~ simply starts the definition fo the formula, the . means all variables in the design and the ^2 means include interaction terms
 # So we have a formula with Intercept, Ftarget, Btrigger and Ftarget*Btrigger
-gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 res_risk <- log(runs$risk3_long)
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
+gp_risk <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 
 # Gets the Gaussian Process to produce a prediciton for risk at every point in gridd 
 # gridd is the rescaled grid of Ftrgt and Btrigger

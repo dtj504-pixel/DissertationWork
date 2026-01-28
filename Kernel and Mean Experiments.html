@@ -122,14 +122,14 @@ window.Quarto = {
 
 <section id="introduction" class="level1">
 <h1>Introduction</h1>
-<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation&nbsp;1</a>) was not as smooth as the Gaussian kernel (general form shown in <a href="#eq-GaussianKernel" class="quarto-xref">Equation&nbsp;2</a>. This was pointed out and questioned by my supervisor the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation&nbsp;1</a>) was not as smooth as the Gaussian kernel (general form shown in <a href="#eq-GaussianKernel" class="quarto-xref">Equation&nbsp;2</a>. This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <p><span id="eq-originalkernel"><span class="math display">\[
 r_i(\phi,\phi',\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1'|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2'|}{\delta_{i,2}}\right)
 \tag{1}\]</span></span></p>
 <p><span id="eq-GaussianKernel"><span class="math display">\[
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
 \tag{2}\]</span></span></p>
-<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <a href="#eq-gpmean" class="quarto-xref">Equation&nbsp;3</a>) for the Gaussian process we are assuming that we know a lot about the objective function <span class="math inline">\(f\)</span> (which is what we are modeling with our Gaussian Process) <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make many assumptions about our objective function <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <a href="#eq-gpmean" class="quarto-xref">Equation&nbsp;3</a>) for the Gaussian Process (GP) we are assuming that we know a lot about the objective function <span class="math inline">\(f\)</span> (which is what we are modeling with our GP) <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <p><span id="eq-gpmean"><span class="math display">\[
 \begin{split}
 m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1))^2+ \\
@@ -139,11 +139,11 @@ m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1
 <p>where <span class="math display">\[\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}\]</span></p>
 <section id="experimenting-with-the-kernel" class="level2">
 <h2 class="anchored" data-anchor-id="experimenting-with-the-kernel">Experimenting with the kernel</h2>
-<p>The assumption that the Gaussian kernel makes of infinite differentiability can be too strong for real-world processes as it is very smooth <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. If the new point does not fit the very smooth assumption from the Gaussian kernel, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
-<p>My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with <span class="math inline">\(\nu = \frac{5}{2}\)</span> it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. So, higher values on the scale on the right are better. Any areas with a probability less than <code>1e-04</code> of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.</p>
+<p>The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p>My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with <span class="math inline">\(\nu = \frac{5}{2}\)</span> it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. Any areas with a probability less than <code>1e-04</code> of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
-<p><img src="images/CORRECT_case_study8_exp_kernel_7_rounds.png" class="img-fluid figure-img"></p>
+<p><img src="images/case_study8_exp_kernel_7_rounds.png" class="img-fluid figure-img"></p>
 <figcaption>Figure 1: Exponential kernel</figcaption>
 </figure>
 </div>
@@ -159,7 +159,25 @@ m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1
 <figcaption>Figure 3: Matern 5/2 kernel</figcaption>
 </figure>
 </div>
-<p>RUN COD FOR EI VERS AND SAY SIMIALR FOR AEI AND KG (DOUBLE CHECK FIRST).</p>
+<p>Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, <code>looped_ver_case_study8_mult_point_EI.R</code> converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/ei_looped_exp_kernel_round_7.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 4: case_study8.R with EI at seven rounds</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/looped_ei_gauss_kernel_7_rounds.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 5: case_study8.R with EI using Gauss kernel at seven rounds</figcaption>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="images/looped_EI_matern_5_2_non_converge.png" class="img-fluid figure-img"></p>
+<figcaption>Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel</figcaption>
+</figure>
+</div>
 </section>
 <section id="experimenting-with-the-mean" class="level2">
 <h2 class="anchored" data-anchor-id="experimenting-with-the-mean">Experimenting with the mean</h2>

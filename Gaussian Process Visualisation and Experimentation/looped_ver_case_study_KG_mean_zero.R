@@ -242,7 +242,7 @@ all_rounds <- round1
 all_rounds$Round <- 1
 
 # ITERATIVE ROUNDS
-max_rounds <- 20
+max_rounds <- 7
 round_num <- 1
 
 #TODO: Can I rename the variables ion each round so I can clearly see the progression?
