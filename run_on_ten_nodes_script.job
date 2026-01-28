@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=MixME_MultiNode             
+#SBATCH --partition=nodes               
+#SBATCH --time=0-00:30:00               
+#SBATCH --ntasks=1                      
+#SBATCH --cpus-per-task=96               
+#SBATCH --mem=100G                        
+#SBATCH --array=1-10%2                    # This creates 10 separate jobs
+#SBATCH --account=math-covid19-2020       
+#SBATCH --mail-type=END,FAIL            
+#SBATCH --mail-user=dtj504@york.ac.uk   
+#SBATCH --output=%x-%A_%a.log            # %A is Master Job ID, %a is Array Index
+#SBATCH --error=%x-%A_%a.err             # Separate error files for each of the 10 nodes
+
+# Abort if any command fails
+set -e
+
+# Purge any previously loaded modules
+module purge
+
+# Load R module - verified this version by running command
+module load R/4.5.2-gfbf-2025b
+
+# Commands to run
+# Your R script can now "see" which array number it is (1 through 10)
+Rscript ./MixME_experimentation/My_scripts/Two_stocks_Optimising_ftarget_in_shortcut_model.R
