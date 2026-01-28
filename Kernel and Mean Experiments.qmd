@@ -58,7 +58,7 @@ gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
 response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 ```
 
-We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@OriginalPaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@OriginalPaper][@williams2006gaussian].
+We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
 
 ![Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round](images/mean_zero_first_roudn_only.png)
 

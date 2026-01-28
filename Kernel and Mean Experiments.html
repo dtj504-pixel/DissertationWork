@@ -216,7 +216,7 @@ m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1
 </section>
 <section id="experimenting-with-the-mean" class="level2">
 <h2 class="anchored" data-anchor-id="experimenting-with-the-mean">Experimenting with the mean</h2>
-<p>Setting the mean of the GP to zero as in <a href="#lst-mean_zero" class="quarto-xref">Listing&nbsp;1</a> is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations. - GET CITATION My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.</p>
+<p>Setting the mean of the GP to zero as in <a href="#lst-mean_zero" class="quarto-xref">Listing&nbsp;1</a> is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.</p>
 <div id="lst-mean_zero" class="R listing quarto-float quarto-figure quarto-figure-left anchored">
 <figure class="quarto-float quarto-float-lst figure">
 <figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mean_zero-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
@@ -228,7 +228,7 @@ Listing&nbsp;1: Setting the GP Mean to Zero
 </div>
 </figure>
 </div>
-<p>We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in <span class="citation" data-cites="OriginalPaper">(<a href="#ref-OriginalPaper" role="doc-biblioref"><strong>OriginalPaper?</strong></a>)</span>.</p>
+<p>We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>, <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="images/mean_zero_first_roudn_only.png" class="img-fluid figure-img"></p>
@@ -261,6 +261,9 @@ Listing&nbsp;1: Setting the GP Mean to Zero
 </section>
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-Originalpaper" class="csl-entry" role="listitem">
+Spence, Michael A. 2025. <span>“Using History Matching to Speed up Management Strategy Evaluation Grid Searches.”</span> <em>Canadian Journal of Fisheries and Aquatic Sciences</em> 82: 1–14. <a href="https://doi.org/10.1139/cjfas-2024-0191">https://doi.org/10.1139/cjfas-2024-0191</a>.
+</div>
 <div id="ref-williams2006gaussian" class="csl-entry" role="listitem">
 Williams, Christopher KI, and Carl Edward Rasmussen. 2006. <em>Gaussian Processes for Machine Learning</em>. Vol. 2. 3. MIT press Cambridge, MA.
 </div>
