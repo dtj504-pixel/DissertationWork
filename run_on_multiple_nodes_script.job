@@ -5,7 +5,7 @@
 #SBATCH --ntasks=1                      
 #SBATCH --cpus-per-task=96               
 #SBATCH --mem=100G                        
-#SBATCH --array=1-1000%2                    # This creates 10 separate jobs
+#SBATCH --array=1-1000%10                    # This creates 10 separate jobs
 #SBATCH --account=math-covid19-2020       
 #SBATCH --mail-type=END,FAIL            
 #SBATCH --mail-user=dtj504@york.ac.uk   
