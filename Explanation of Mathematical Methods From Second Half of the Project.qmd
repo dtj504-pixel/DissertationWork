@@ -1,0 +1,51 @@
+---
+title: "Explanation of Mathematical Methods Behind the Second Half of the Project"
+author: "Emma Bowen"
+format: html 
+editor: visual
+bibliography: second_half_references.bib
+---
+
+# Introduction
+
+What mathematical methods will I explain in this document that have not been explained in [Explanation of Mathematical Methods from First Half of the Project](https://github.com/dtj504-pixel/DissertationWork/blob/main/Explanation%20of%20Mathematical%20Methods%20From%20First%20Half%20of%20the%20Project.qmd)?
+
+-   The risk function
+
+-   The basics of the MixME model (including fleet dynamics briefly) - BREAK DOWN A BIT MORE LATER
+
+# Context
+
+The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process where the aim is to find the Ftarget for each stock that has low risk but maximises total catch in the year 2039. This was the goal I set because MixME is designed to run projections into the future, and looking at catch in the last year of our projection (2039) will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2019-2039 was kept consistent with examples on the MixME wiki following guidelines from ICES to define short- and long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2] .
+
+I focused on the datasets from the [fixed fishing mortality management strategy example](https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy) (`mixedfishery_MixME_om`) and the [exploring simulation outputs example](https://github.com/CefasRepRes/MixME/wiki/Exploring-simulation-outputs) (`mixedfishery_MixME_input`) which are both on the MixME wiki [@MixMEwiki]. However, for the second dataset `mixedfishery_MixME_input` I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation but ... - FIND THE ISSUE HERE - THERE WERE SOME CORNERES CUT.
+
+Both of these datasets only have two stocks (cod and haddock) and both have two fleets [@MixMEwiki]. WHERE ARE THE STOCKS FROM (North Sea and Celtic Sea but FIND CITATION). This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{had}$ and $F_{cod}$ are the fishing mortalities for cod and haddock. However, we do now take into account fleet dynamics which we will briefly touch on later.
+
+The code for these processes is `Optimising_ftarget_in_MixME_mult_points_parallel.R` and `Two_stocks_Optimising_ftarget_in_shortcut_model.R` respectively.
+
+Due to the nature of the data, we have been forced to model risk in a different way to keep compute time low. - JUSTIFICATION This will also be fully explained later but for now we will note that we have a risk threshold that should not be exceeded.
+
+The process for the first half of the project adapted to our new situation is outlined again. We take a Bayesian History Matching (BHM) approach. Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. Then, for each round we do the following:
+
+-   We set up or update the Gaussian Processes (GPs) to model the risk for each stock and the GP to model the catch
+
+-   We can then use the risk as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have risk below the threshold
+
+-   We use the GP which is modelling the total catch to get the value for the total catch at every point in the sample space, which will have some uncertainty
+
+-   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best total catch)
+
+-   We use the Knowledge Gradient (KG) acquisition function to select $n-1$ plausible points to sample in the next round, as per the discussion in [Deciding which acquisition function is best](https://github.com/dtj504-pixel/DissertationWork/blob/main/Deciding%20which%20acquisition%20function%20is%20best.qmd)
+
+We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the risk below the threshold.
+
+## The risk function
+
+## The basics of the MixME model
+
+# Further areas for Development
+
+## Doing a proper risk calculation
+
+Precautionary is a requirement for many jurisdictions. - GET CITATION
