@@ -16,6 +16,8 @@ What mathematical methods will I explain in this document that have not been exp
 
 # Context
 
+### **Checked code: I am summing the catch for every year, checking min SSB over 2030-2039**
+
 The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process where the aim is to find the Ftarget for each stock that has low risk but maximises total catch in the year 2039. This was the goal I set because MixME is designed to run projections into the future, and looking at catch in the last year of our projection (2039) will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2019-2039 was kept consistent with examples on the MixME wiki following guidelines from ICES to define short- and long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2] .
 
 I focused on the datasets from the [fixed fishing mortality management strategy example](https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy) (`mixedfishery_MixME_om`) and the [exploring simulation outputs example](https://github.com/CefasRepRes/MixME/wiki/Exploring-simulation-outputs) (`mixedfishery_MixME_input`) which are both on the MixME wiki [@MixMEwiki]. However, for the second dataset `mixedfishery_MixME_input` I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation but ... - FIND THE ISSUE HERE - THERE WERE SOME CORNERES CUT.

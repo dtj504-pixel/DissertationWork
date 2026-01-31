@@ -346,14 +346,23 @@ doOne <- function(run_id,input_data){
     total_catch <- catch_cod + catch_had
     
     ## // Extract the ssb at the end of the simulation for both stocks //
-    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
-    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+    # Picking up long term SSB values to see if they dip below Blim at any point
+    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2030:2039)])
+    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2030:2039)])
+
+    # Getting minimums to model with GPs
+    ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
+    ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
+
+    # Safety Ctahc for if the simulation failed or produced all NAs
+    if(is.infinite(ssb_cod_min) | is.na(ssb_cod_min)) ssb_cod_min <- 0
+    if(is.infinite(ssb_had_min) | is.na(ssb_had_min)) ssb_had_min <- 0
 
     # Remove large result object to preserve memory
-    rm(res)   
-    
+    rm(res)
+
     # Set up variable to return
-    to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,SSBCod = ssb_cod_data,SSBHad = ssb_had_data,TotalCatch = total_catch)
+    to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,SSBCod = ssb_cod_min,SSBHad = ssb_had_min,TotalCatch = total_catch)
     
     # Return the result
     return(to_return)
@@ -385,7 +394,8 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
 
   # Loop over candidate points
   for (i in seq_len(m)) {
-    # set to 0 for any unsafe points - here has become probability that ssb is =< Blim is high
+    # set to 0 for any unsafe points - here has become probability that ssb is =< Blim is > 0.05 in the years 2030-2039
+    # i.e. the run is not precautionary in these years
     if (pssb_cod[i] > 0.05 || pssb_had[i] > 0.05) {
       kg[i] <- 0
       next
@@ -470,7 +480,7 @@ next_points <- rbind(point_1, warmup_points)
 next_points
 
 # Set max runs (kept low for testing) and initial round number
-max_rounds <- 30
+max_rounds <- 3
 round_num <- 1
 
 # Intiliase runs for safety
@@ -480,10 +490,9 @@ runs <- NULL
 # START LOOP
 
 for (iteration in 1:max_rounds) {
-  
-    # CHANGED: Provide six rows of points to run (due to nature of varlist function)
+
     points_to_run <- varlist(
-    # The "Grid" - counts from 1 to 6
+    # The "Grid" - counts from 1 to nrow(next_points)
     run_id = list(type = "grid", value = 1:nrow(next_points)),
     
     # The "Frozen" Data - the table of pairs available to all workers which we can pick by run_id
@@ -528,15 +537,15 @@ for (iteration in 1:max_rounds) {
 
     # Taking log of the catch so GP models are more stable
     log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-    ssb_cod <- runs$SSBCod
-    ssb_had <- runs$SSBHad
+    ssb_cod_min <- runs$SSBCod
+    ssb_had_min <- runs$SSBHad
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
     # TODO: remove when risk calculations fixed
-    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
-    gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_cod,nugget=1e-12*var(ssb_cod)+1e-15,covtype = "exp")
-    gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_had,nugget=1e-12*var(ssb_had)+1e-15,covtype = "exp")
+    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(log_total_catch)+1e-15,covtype = "exp")
+    gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,covtype = "exp")
+    gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,covtype = "exp")
     
     print("GPs done")
     
