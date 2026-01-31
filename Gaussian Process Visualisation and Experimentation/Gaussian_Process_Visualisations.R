@@ -97,7 +97,7 @@ rglwidget()
 
 
 # 3D view of Catch GP mean and sd plot
-# repeat of the abive, except with the GP changed to the catch GP
+# repeat of the above, except with the GP changed to the catch GP
 library(DiceView)
 library(rgl)
 
