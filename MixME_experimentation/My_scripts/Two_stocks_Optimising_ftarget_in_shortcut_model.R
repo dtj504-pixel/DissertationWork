@@ -100,6 +100,7 @@ ICES_HCR <- function (stk, args, hcrpars, tracking) {
   ## Extract the parameters and propogate to each simulation
   Ftrgt <- propagate(FLPar(hcrpars["Ftrgt"]), ni)
   Btrigger <- propagate(FLPar(hcrpars["Btrigger"]), ni)
+  # The Blims we put into hcrpars are propagated here 
   Blim <- propagate(FLPar(hcrpars["Blim"]), ni)
   
   ## calculate F multiplier
@@ -286,8 +287,9 @@ obj_func <- function(f_cod, f_had, input) {
     input$ctrl_obj$isys@args$isysmethod$had <- forecast_fun
     
     # SET PARAMETERS for the HCR
+    # code from https://doi.org/10.17895/ices.advice.5891 and haddock from https://doi.org/10.17895/ices.advice.5897 
     input$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = list(
-        cod = c("Ftrgt" = f_cod, "Btrigger" = 5800,  "Blim" = 4200),
+        cod = c("Ftrgt" = f_cod, "Btrigger" = 150000,  "Blim" = 107000),
         had = c("Ftrgt" = f_had, "Btrigger" = 12822, "Blim" = 9227)
     )))
     
@@ -492,7 +494,7 @@ next_points
 
 
 # Set max runs (kept low for testing) and initial round number
-max_rounds <- 30
+max_rounds <- 3
 round_num <- 1
 
 # Intiliase runs for safety
