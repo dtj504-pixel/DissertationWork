@@ -149,7 +149,6 @@ possible1 <- (apply(cbind((1-pcat1) , prisk1),1,min) >  eps)
 # getting catch out of log(catch) for each point in gridd
 med_cat1 <- exp(pred_cat1_g$mean)
 
-
 # Below produces heat maps for round 1 
 
 image2D(matrix(med_cat1,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")

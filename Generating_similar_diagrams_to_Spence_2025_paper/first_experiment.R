@@ -7,33 +7,58 @@
 #   risk1_full =c(0.01035,0.01025,0.01015,0.01015,0.0101,0.01005,0.01005,0.01,0.00995,0.0099,0.0099,0.0104,0.01035,0.01035,0.01015,0.01015,0.0101,0.0101,0.01005,0.01005,0.00995,0.01,0.01065,0.0105,0.01035,0.01035,0.0102,0.01015,0.0101,0.0101,0.01005,0.01005,0.01005,0.01075,0.01065,0.0105,0.01035,0.01035,0.01025,0.01015,0.01015,0.0101,0.01005,0.0101,0.01095,0.0108,0.01065,0.0105,0.01035,0.01035,0.01025,0.01015,0.01015,0.0101,0.0101,0.01125,0.01105,0.01075,0.01065,0.0105,0.0104,0.01035,0.01025,0.0102,0.01015,0.01015,0.01145,0.0113,0.01095,0.01075,0.01065,0.0105,0.0104,0.01035,0.01025,0.01015,0.0102,0.01165,0.0115,0.0112,0.0109,0.01075,0.01065,0.0105,0.0104,0.01035,0.01025,0.01035,0.0118,0.0117,0.01135,0.0111,0.0108,0.01075,0.01065,0.0105,0.0104,0.01035,0.01035,0.012,0.0118,0.0117,0.01135,0.01105,0.0108,0.0107,0.01065,0.0105,0.01035,0.0104,0.0123,0.012,0.0117,0.0116,0.0113,0.01105,0.0108,0.0107,0.01065,0.0104,0.0105,0.0125,0.0123,0.01185,0.0117,0.0114,0.0112,0.01095,0.0108,0.01065,0.0105,0.01065,0.0128,0.0124,0.012,0.0118,0.0117,0.01135,0.01115,0.01095,0.0108,0.01065,0.01065,0.01335,0.0128,0.0124,0.01195,0.01175,0.01165,0.0114,0.0111,0.01095,0.0107,0.0108,0.01375,0.01305,0.0126,0.01215,0.0119,0.01175,0.01155,0.01135,0.0111,0.0108,0.01085,0.01435,0.01365,0.013,0.01255,0.0121,0.0118,0.01175,0.01145,0.0113,0.01085,0.0111,0.01505,0.01435,0.01345,0.0129,0.0126,0.0122,0.01195,0.0118,0.01145,0.0111,0.0112,0.01595,0.01535,0.0144,0.01365,0.01315,0.01265,0.01225,0.0121,0.01185,0.0113,0.01155,0.01825,0.01695,0.0157,0.0146,0.01395,0.01345,0.013,0.01245,0.0122,0.0115,0.01175,0.02055,0.0187,0.0174,0.0162,0.01515,0.0142,0.0136,0.01325,0.0126,0.01175,0.01225,0.023,0.02145,0.0195,0.0183,0.0166,0.01555,0.0147,0.01365,0.0132,0.0122,0.0126,0.02655,0.0243,0.02165,0.02035,0.01905,0.0173,0.0159,0.0149,0.01365,0.0127,0.0131,0.03135,0.02835,0.0257,0.0232,0.02135,0.01945,0.0173,0.0162,0.01445,0.01305,0.01375,0.03595,0.03275,0.02965,0.0266,0.02455,0.0224,0.02,0.01775,0.01615,0.01385,0.0143,0.04305,0.0394,0.0356,0.03165,0.0288,0.02615,0.02275,0.02035,0.01795,0.0144,0.01565,0.05125,0.04695,0.04195,0.03715,0.0325,0.02935,0.0263,0.02325,0.02055,0.01565,0.0178,0.06055,0.0556,0.0498,0.04385,0.0387,0.0333,0.0299,0.02595,0.0229,0.0176,0.0201,0.0693,0.0646,0.05805,0.05135,0.04465,0.0387,0.03355,0.03,0.02545,0.0194,0.0221,0.0838,0.07655,0.06795,0.0602,0.05215,0.0439,0.03785,0.03375,0.02885,0.02175,0.0249,0.098,0.08945,0.07985,0.06965,0.061,0.05115,0.0439,0.0381,0.0328,0.0244,0.02835,0.1138,0.10325,0.0922,0.08155,0.0709,0.0597,0.05085,0.0434,0.0374,0.02765,0.03245,0.1311,0.11815,0.1061,0.09305,0.08055,0.0686,0.05815,0.0497,0.04275,0.03125,0.03625,0.1511,0.1359,0.12035,0.10545,0.0924,0.07835,0.06595,0.05555,0.0471,0.0347,0.0406,0.1708,0.15385,0.1352,0.1193,0.1038,0.0897,0.07535,0.0632,0.0526,0.0394,0.04605,0.1919,0.17235,0.1528,0.13285,0.11585,0.1,0.08535,0.07135,0.0599,0.0438,0.05095,0.21485,0.19175,0.16985,0.1475,0.1277,0.11085,0.09605,0.08165,0.068,0.049,0.05735,0.23525,0.21115,0.1869,0.1634,0.1423,0.12235,0.10575,0.09195,0.07625,0.05485,0.06385,0.25645,0.22975,0.2028,0.1787,0.1558,0.13495,0.1151,0.1004,0.08545,0.0613,0.072,0.2779,0.25085,0.22095,0.19525,0.17,0.1477,0.12705,0.1107,0.09435,0.06765,0.0799,0.30175,0.27355,0.24105,0.2126,0.18495,0.1607,0.1399,0.1203,0.10375,0.0743,0.088,0.3241,0.2949,0.26,0.2288,0.2007,0.1747,0.1507,0.1303,0.1143,0.08145,0.0981)
 # )
 
-# ## Unsure what this part does
+# ## MAKING PLOTS FROM PRECOMPUTED DATA
+# # load libraries
 # library(plot3D)
+# # set up to save as EPS
 # setEPS()
+# # provide file name and size
 # postscript("full_grid.eps",width=5.5,height=5)
+# # create a grid of six plots
 # par(mfrow=c(2,3))
+# # set outer margins
 # par(oma=c(1,1,1,3))
+# # set up plot margins for this plot
 # par(mar=c(2,4,0,0))
+# # first plot: median catch v Ftarget (taken straight from precomputed data)
 # plot(dat$Ftrgt,(dat$catch_median_long),log="y",pch=16,ylab="Median yield",xlab=expression(F[target]),axes=F)
+# # draws the axis on the left
 # axis(2)
+# # makes a box around the plot
 # box()
+# # again, set up plot margins but slightly different this time
 # par(mar=c(2,2,0,0))
+# # second plot: median catch v Btrigger (taken straight from precomputed data)
 # plot(dat$Btrigger,(dat$catch_median_long),log="y",pch=16,ylab="Median yield",xlab=expression(B[trigger]),axes=F)
+# # makes a box around the plot
 # box()
+# # set amrgins for the third plot
 # par(mar=c(2,4.5,0,0))
+# # third plot: heatmap of median catch v Ftarget and Btrigger (taken straight from precomputed data)
 # image2D(matrix(dat$catch_median_long,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab=expression(B[trigger]),ylab=expression(F[target]),axes=F)
+# # draws the axis on the left
 # axis(2)
-
+# # add margins for next plot
 # par(mar=c(4,4,0,0))
+# # plot risk v Ftarget (taken straight from precomputed data)
 # plot(dat$Ftrgt,dat$risk1_full,log="y",pch=16,ylab="Risk",xlab=expression(F[target]))
+# # draw a line across the plot at risk = 0.05
 # abline(h=0.05,lty=2)
+# # set margins for next plot
 # par(mar=c(4,2,0,0))
+# # plot risk v Btrigger (taken straight from precomputed data)
 # plot(dat$Btrigger,dat$risk1_full,log="y",xlab=expression(B[trigger]),pch=16,ylab="",axes=F)
+# # draw axis on the bottom
 # axis(1)
+# # make a box around the plot
 # box()
+# # draw a line across the plot at risk = 0.05
 # abline(h=0.05,lty=2)
+# # add margins for the last plot
 # par(mar=c(4,4.5,0,0))
+# # heatmap of risk v Ftarget and Btrigger (taken straight from precomputed data)
 # image2D(matrix(dat$risk1_full,nrow=11),y=sort(unique(dat$Ftrgt)),breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),x=sort(unique(dat$Btrigger)),xlab=expression(B[trigger]),ylab=expression(F[target]))
+# # save file and close
 # dev.off()
 
 
@@ -210,28 +235,53 @@ dev.off()
 
 
 
-# #### Mike said this part doesn't do the plots I am focusing on right now
-# setEPS()
-# cairo_ps("round1.eps",width=5.5,height=5)
-# par(mfrow=c(2,2))
-# par(oma=c(0,0,0,0))
-# par(mar=c(4,4.5,2,3))
-# plot(round1[,2:1],pch=16,main="a)",ylab=expression(F[target]),xlab=expression(B[trigger]))
-# #plot(runs$Ftrgt[1:20],runs$catch_median_long[1:20],log="y",xlab=expression(F[target]),ylab="Median long-term catch",main="b)",pch=16)
-# #plot(runs$Ftrgt[1:20],runs$risk1_full[1:20],xlab=expression(F[target]),ylab="Risk",main="c)",pch=16)
-# #abline(h=0.05,col="black")
+# #### MAPS FROM RUNS AND HEATMAPS
 
+# # set up eps file
+# setEPS()
+# # gives eps file anme and dimensions
+# cairo_ps("round1.eps",width=5.5,height=5)
+# # create a grid of four plots
+# par(mfrow=c(2,2))
+# # set outer margins
+# par(oma=c(0,0,0,0))
+# # set plot margins for this plot
+# par(mar=c(4,4.5,2,3))
+# # shows a map of th Ftarget and Btrigger combinations that are possible
+# plot(round1[,2:1],pch=16,main="a)",ylab=expression(F[target]),xlab=expression(B[trigger]))
+# # plot ftarget versus catch
+# plot(runs$Ftrgt[1:20],runs$catch_median_long[1:20],log="y",xlab=expression(F[target]),ylab="Median long-term catch",main="b)",pch=16)
+# # plot ftarget versus risk
+# plot(runs$Ftrgt[1:20],runs$risk1_full[1:20],xlab=expression(F[target]),ylab="Risk",main="c)",pch=16)
+# # line shwoing risk < 0.05
+# abline(h=0.05,col="black")
+
+# # MAPS SAFE POINTS
+
+# # take the predictions of the risk GP into matrix form
 # tmp <- matrix(prisk1,nrow=11)
+# # rounds up any values below 1e-12 to 1e-12 to avoid issues with log scale
 # tmp1 <- ifelse(tmp < 1e-12,1e-12,tmp)
+# # draw the risk heatmap
 # image2D(tmp1,y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab=expression(B[trigger]),ylab=expression(F[target]),breaks=c(0,0.0001,0.05,0.5,0.9,1),main="b)")
 
+# # MAPS POINTS WHERE CATCH COULD BE HIGHER THAN CURRENT BEST
 
+# # takes the 1-pcat for every point into matrix form
 # tmp <- matrix(1-pcat1,nrow=11)
+# # rounds up any values below 1e-12 to 1e-12 to avoid issues with log scale
 # tmp1 <- ifelse(tmp < 1e-12,1e-12,tmp)
+# # draw the heatmap showing points where catch could be higher than current best
 # image2D(tmp1,y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab=expression(B[trigger]),ylab=expression(F[target]),breaks=c(0,0.0001,0.05,0.5,0.9,1),main="c)")
 
+# # MAPS WHERE IT IS BOTH SAFE AND WHERE CATCH COULD BE HIGHER THAN CURRENT BEST
 
+# # takes the product of the two matrices above into matrix form
 # tmp <- matrix(possible * (1-pcat1),nrow=11)
+# # rounds up any values below 1e-12 to 1e-12 to avoid issues with log scale
 # tmp1 <- ifelse(tmp < 1e-12,1e-12,tmp)
+# # draw the heatmap showing points that are both safe and could have higher catch than current best
 # image2D(tmp1,y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab=expression(B[trigger]),ylab=expression(F[target]),breaks=c(0,0.0001,0.05,0.5,0.9,1),main="d)")
+
+# # save and close file
 # dev.off()
