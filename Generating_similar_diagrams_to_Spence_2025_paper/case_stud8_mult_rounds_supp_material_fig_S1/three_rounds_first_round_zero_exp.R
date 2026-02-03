@@ -185,6 +185,8 @@ pred_cat1_g <- predict(gp_cat, newdata = gridd, type = "SK")
 med_risk1 <- exp(pred_risk1_g$mean)
 med_cat1 <- exp(pred_cat1_g$mean)
 
+# Probability that risk <= 0.05
+prisk1 <- pnorm(log(0.05), pred_risk1_g$mean, pred_risk1_g$sd + 1e-12)
 
 # ============================================================================
 # IDENTIFY PROMISING REGIONS
