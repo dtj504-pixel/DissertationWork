@@ -155,7 +155,7 @@ runs <- rescale_Her(dat_run, dat = dat1)
 # Build emulator for log(catch)
 res_cat <- log(runs$C_long)
 gp_cat <- km(
-  ~ .^2, 
+  ~0, 
   design = runs[, c("Ftarget", "Btrigger")],
   estim.method = "MLE",
   response = res_cat,
@@ -166,7 +166,7 @@ gp_cat <- km(
 # Build emulator for log(risk)
 res_risk <- log(runs$risk_long)
 gp_risk <- km(
-  ~ .^2,
+  ~0,
   design = runs[, c("Ftarget", "Btrigger")],
   estim.method = "MLE",
   response = res_risk,
@@ -252,6 +252,211 @@ print(unrescale_Her(best_so_far, dat = dat1))
 cat("\nBest safe catch:", best_catch_so_far, "\n")
 cat("Number of promising unevaluated points:", nrow(pot_points), "\n")
 
+
+# ============================================================================
+# SECOND ROUND
+# ============================================================================
+
+# Check if we have enough potential points
+if(nrow(pot_points) == 0) {
+  cat("No more promising points to evaluate. Stopping.\n")
+} else {
+  # Sample up to 8 points (or fewer if not enough available)
+  n_sample <- min(8, nrow(pot_points))
+  nums <- sample(nrow(pot_points), n_sample)
+  new_points <- signif(unrescale_Her(pot_points[nums,], dat1), 2)
+  names(new_points) <- c("Ftarget", "Btrigger")  # FIXED: was "Ftrgt"
+  
+  # Add to old data set
+  round2 <- rbind(round1, new_points)
+  
+  # Remove duplicates that might have been created by rounding
+  round2 <- unique(round2)
+  
+  # Joining with full dataset and rescaling again
+  dat_run <- left_join(round2, dat, by = c("Ftarget" = "Ftrgt", "Btrigger" = "Btrigger"))
+  names(dat_run) <- c("Ftarget", "Btrigger", "C_long", "risk_long")
+  runs <- rescale_Her(dat_run, dat = dat1)
+  
+  res_cat <- log(runs$C_long)
+  gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),
+               design=runs[,c("Ftarget","Btrigger")],
+               estim.method="MLE",
+               response = res_cat,
+               nugget=1e-12*var(res_cat),
+               covtype = "exp")
+  
+  res_risk <- log(runs$risk_long)
+  gp_risk <- km(~.^2,
+                design=runs[,c("Ftarget","Btrigger")],
+                estim.method="MLE",
+                response = res_risk,
+                nugget=1e-12*var(res_risk),
+                covtype = "exp")
+  
+  pred_risk2_g <- predict(gp_risk, newdata=gridd, type="SK")
+  med_risk2 <- exp(pred_risk2_g$mean)
+  
+  image2D(matrix(med_risk2,nrow=11),
+          breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt")
+  
+  prisk2 <- pnorm(log(0.05), pred_risk2_g$mean, pred_risk2_g$sd+1e-12)
+  image2D(matrix(prisk2,nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt",
+          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  
+  pred_cat2_g <- predict(gp_cat, newdata=gridd, type="SK")
+  
+  # Check if there are any safe points
+  safe_points <- runs$risk_long < 0.05
+  if(sum(safe_points) > 0) {
+    max2 <- max(runs$C_long[safe_points])
+    pcat2 <- pnorm(log(max2), pred_cat2_g$mean, pred_cat2_g$sd+1e-12)
+  } else {
+    cat("Warning: No safe points (risk < 0.05) in Round 2\n")
+    # Use the best catch overall as a fallback
+    max2 <- max(runs$C_long)
+    pcat2 <- pnorm(log(max2), pred_cat2_g$mean, pred_cat2_g$sd+1e-12)
+  }
+  
+  possible2 <- (apply(cbind((1-pcat2), prisk2), 1, min) > eps)
+  med_cat2 <- exp(pred_cat2_g$mean)
+  
+  image2D(matrix(med_cat2,nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt")
+  image2D(matrix(1-pcat2,nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt",
+          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  image2D(matrix(possible2 * (1-pcat2),nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt",
+          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  
+  pot_points <- gridd[possible2,]
+  
+  if(sum(safe_points) > 0) {
+    best_so_far <- runs[safe_points,][which.max(runs$C_long[safe_points]), c("Ftarget","Btrigger")]
+  } else {
+    best_so_far <- runs[which.max(runs$C_long), c("Ftarget","Btrigger")]
+  }
+  
+  tmp <- setdiff(pot_points, runs[,1:2])
+  pot_points <- tmp
+}
+
+# ============================================================================
+# THIRD ROUND
+# ===========================================================================
+
+# Round 3 - where is the condition to stop if there is only one point left in each round
+
+# Check if we have enough potential points
+if(nrow(pot_points) == 0) {
+  cat("No more promising points to evaluate. Stopping.\n")
+} else {
+  # Sample up to 8 points (or fewer if not enough available)
+  n_sample <- min(8, nrow(pot_points))
+  nums <- sample(nrow(pot_points), n_sample)
+  new_points <- signif(unrescale_Her(pot_points[nums,], dat1), 2)
+  names(new_points) <- c("Ftarget", "Btrigger")  # FIXED: was "Ftrgt"
+  
+  # Add to old data set
+  round3 <- rbind(round2, new_points)
+  
+  # Remove duplicates that might have been created by rounding
+  round3 <- unique(round3)
+  
+  # Joining with full dataset and rescaling again
+  dat_run <- left_join(round3, dat, by = c("Ftarget" = "Ftrgt", "Btrigger" = "Btrigger"))
+  names(dat_run) <- c("Ftarget", "Btrigger", "C_long", "risk_long")
+  runs <- rescale_Her(dat_run, dat = dat1)
+  
+  res_cat <- log(runs$C_long)
+  gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),
+               design=runs[,c("Ftarget","Btrigger")],
+               estim.method="MLE",
+               response = res_cat,
+               nugget=1e-12*var(res_cat),
+               covtype = "exp")
+  
+  res_risk <- log(runs$risk_long)
+  gp_risk <- km(~.^2,
+                design=runs[,c("Ftarget","Btrigger")],
+                estim.method="MLE",
+                response = res_risk,
+                nugget=1e-12*var(res_risk),
+                covtype = "exp")
+  
+  pred_risk3_g <- predict(gp_risk, newdata=gridd, type="SK")
+  med_risk3 <- exp(pred_risk3_g$mean)
+  
+  image2D(matrix(med_risk3,nrow=11),
+          breaks=c(0,0.01,0.025,0.05,0.1,0.2,0.4),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt")
+  
+  prisk3 <- pnorm(log(0.05), pred_risk3_g$mean, pred_risk3_g$sd+1e-12)
+  image2D(matrix(prisk3,nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt",
+          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  
+  pred_cat3_g <- predict(gp_cat, newdata=gridd, type="SK")
+  
+  # Check if there are any safe points
+  safe_points <- runs$risk_long < 0.05
+  if(sum(safe_points) > 0) {
+    max3 <- max(runs$C_long[safe_points])
+    pcat3 <- pnorm(log(max3), pred_cat3_g$mean, pred_cat3_g$sd+1e-12)
+  } else {
+    cat("Warning: No safe points (risk < 0.05) in Round 3\n")
+    # Use the best catch overall as a fallback
+    max3 <- max(runs$C_long)
+    pcat3 <- pnorm(log(max3), pred_cat3_g$mean, pred_cat3_g$sd+1e-12)
+  }
+  
+  possible3 <- (apply(cbind((1-pcat3), prisk3), 1, min) > eps)
+  med_cat3 <- exp(pred_cat3_g$mean)
+  
+  image2D(matrix(med_cat3,nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt")
+  image2D(matrix(1-pcat3,nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt",
+          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  image2D(matrix(possible3 * (1-pcat3),nrow=11),
+          y=sort(unique(dat$Ftrgt)),
+          x=sort(unique(dat$Btrigger)),
+          xlab="Btrigger",ylab="Ftrgt",
+          breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+  
+  pot_points <- gridd[possible3,]
+  
+  if(sum(safe_points) > 0) {
+    best_so_far <- runs[safe_points,][which.max(runs$C_long[safe_points]), c("Ftarget","Btrigger")]
+  } else {
+    best_so_far <- runs[which.max(runs$C_long), c("Ftarget","Btrigger")]
+  }
+  
+  tmp <- setdiff(pot_points, runs[,1:2])
+  pot_points <- tmp
+}
+
 # ============================================================================
 # CREATE 1D SLICES FOR DETAILED VISUALIZATION
 # ============================================================================
@@ -280,27 +485,27 @@ mask_vary_B <- abs(gridd$Ftarget - best_so_far$Ftarget) < 1e-9
 
 # Calculate prediction bounds for catch (logged response)
 qs_cat_F <- get_bounds(
-  pred_cat1_g$mean[mask_vary_F], 
-  pred_cat1_g$sd[mask_vary_F], 
+  pred_cat3_g$mean[mask_vary_F], 
+  pred_cat3_g$sd[mask_vary_F], 
   is_log = TRUE
 )
 
 qs_cat_B <- get_bounds(
-  pred_cat1_g$mean[mask_vary_B], 
-  pred_cat1_g$sd[mask_vary_B], 
+  pred_cat3_g$mean[mask_vary_B], 
+  pred_cat3_g$sd[mask_vary_B], 
   is_log = TRUE
 )
 
 # Calculate prediction bounds for risk (logged response)
 qs_risk_F <- get_bounds(
-  pred_risk1_g$mean[mask_vary_F], 
-  pred_risk1_g$sd[mask_vary_F], 
+  pred_risk3_g$mean[mask_vary_F], 
+  pred_risk3_g$sd[mask_vary_F], 
   is_log = TRUE
 )
 
 qs_risk_B <- get_bounds(
-  pred_risk1_g$mean[mask_vary_B], 
-  pred_risk1_g$sd[mask_vary_B], 
+  pred_risk3_g$mean[mask_vary_B], 
+  pred_risk3_g$sd[mask_vary_B], 
   is_log = TRUE
 )
 
@@ -309,6 +514,7 @@ x_vals_F <- sort(unique(gridd$Ftarget))  # Varying F
 x_vals_B <- sort(unique(gridd$Btrigger)) # Varying B
 
 # Unscale for interpretable plots
+# dat1 is the data frame of unique Ftargte and Btrigger values
 x_vals_F_orig <- x_vals_F * diff(range(dat1$Ftarget)) + min(dat1$Ftarget)
 x_vals_B_orig <- x_vals_B * diff(range(dat1$Btrigger)) + min(dat1$Btrigger)
 
@@ -318,7 +524,7 @@ x_vals_B_orig <- x_vals_B * diff(range(dat1$Btrigger)) + min(dat1$Btrigger)
 
 # Save high-quality EPS file
 setEPS()
-cairo_ps("case_study8_round1_exponential.eps", width = 10, height = 10)
+cairo_ps("case_study8_round3_exponential_first_round_zero.eps", width = 10, height = 10)
 
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
