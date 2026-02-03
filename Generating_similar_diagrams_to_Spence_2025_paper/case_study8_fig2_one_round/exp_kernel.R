@@ -1,79 +1,47 @@
-# Figure 2 from paper Spence (2025)
+#     demonstrate a Gaussian process
+##### plots
 
-##### CASE STUDY 8 PART
-
-# load libraries
 library(DiceKriging)
 library(mgcv)
-
-# create our sample space
 dat_all <- data.frame(x=seq(0,2,0.01),y=0)
-# create our objective function
 y_fun <- function(x){-2*x^2 + 3*x + 2}
 
-# give our desired certainty level
 cert <- 0.9999
 
-# start with five data points ot train the model
 num_round <- 5
-
-# make sure these five points are evenly space
-# may be some rounding involved as well as it says floor
 xs <- SpenceTools::specific_floor(seq(0.2,1.8,length.out=num_round),digits=2)
-# evaluate obj func at the intial five points
 dat1 <- data.frame(x=xs,y=y_fun(xs))
-# find the best point so far
 best1 <- max(dat1$y)
-
-# set up the gp
 gp_1 <- km(~1,design=as.matrix(dat1$x),estim.method="MLE",response = dat1$y,covtype = "matern3_2",nugget=1e-8*var(dat1$y))
 
-# use the gp to get a prediciton for every point in the sample space
-pred_1_gp <- predict(gp_1,newdata=as.matrix(dat_all$x),type="SK")
-# stores the mean as our y value
-dat_all$y <- pred_1_gp$mean
 
-# find the mena, 90% confidence interval and then the 99.99% upper bound
+pred_1_gp <- predict(gp_1,newdata=as.matrix(dat_all$x),type="SK")
+dat_all$y <- pred_1_gp$mean
 qs1 <- as.numeric(dat_all$y) +cbind(qnorm(0.05,0,pred_1_gp$sd),0,qnorm(0.95,0,pred_1_gp$sd),qnorm(cert,0,pred_1_gp$sd))
 
 
-
 ##### simulate a 4 of possible runs
-
-# pick how many potential functions to simualte
 nsim <- 4
-# simulate the above number of potential functions
 sim_val <- simulate(gp_1,nsim = nsim,newdata=as.matrix(dat_all$x),cond=T)
 
-# exclude data by removing anything where the 99.99% bound is not above best catch so far
 exclude <-dat_all$x[which(qs1[,4]<(best1 - 1e-8))]
 
-# find all plausible points, select five, evaluate obj func for them
 tmp <- which(qs1[,4] > best1 + 1e-8)
 x2 <- dat_all$x[tmp[floor(seq(1,length(tmp),length.out=num_round))]]
 y2 <- y_fun(x2)
 
 #points(x2,y2,pch=18)
-# add the new data
 dat2 <- rbind(dat1,data.frame(x=x2,y=y2))
-# find the new best
 best2 <- max(dat2$y)
-# make the new GP
 gp_2 <- km(~1,design=as.matrix(dat2$x),estim.method="MLE",response = dat2$y,covtype = "matern3_2",nugget=1e-8*var(dat2$y))
 
-# safeguard to keep data speararet for plotting later
 dat_all2 <- dat_all
 
-# predict from new gp
 pred_2_gp <- predict(gp_2,newdata=as.matrix(dat_all2$x),type="SK")
-# put mean into y column for plotting
 dat_all2$y <- pred_2_gp$mean
-# find teh parts we want to plot
 qs2 <- as.numeric(dat_all2$y) +cbind(qnorm(0.05,0,pred_2_gp$sd),0,qnorm(0.95,0,pred_2_gp$sd),qnorm(cert,0,pred_2_gp$sd))
-# exclude data by removing anything where the 99.99% bound is not above best catch so far
-exclude2 <-dat_all2$x[which(qs2[,4]<(best2 - 1e-8))]
 
-# REPEAT FOR ROUND 3
+exclude2 <-dat_all2$x[which(qs2[,4]<(best2 - 1e-8))]
 
 tmp <- which(qs2[,4] > best2 + 1e-8)
 
@@ -92,12 +60,6 @@ dat_all3$y <- pred_3_gp$mean
 qs3 <- as.numeric(dat_all3$y) +cbind(qnorm(0.05,0,pred_3_gp$sd),0,qnorm(0.95,0,pred_3_gp$sd),qnorm(cert,0,pred_3_gp$sd))
 
 exclude3 <-dat_all2$x[which(qs3[,4]<(best3 - 1e-8))]
-
-
-# THE ABOVE IS LIKE CASE STUDY 8 - just need to replace correctly as before
-
-
-# PLOTTING
 
 library(grDevices)
 cairo_ps("toy_1.eps",width=5.5,height=5)
@@ -151,11 +113,7 @@ mtext(expression(paste(f(theta))),2,outer=T,line=0)
 dev.off()
 
 
-
-
-#### comparing GP kernels - THIS IS SUPP MATERIAL FIG S1 (already done)
-
-# could run this just to get dashed lien instead and to double check
+#### comparing GP kernels
 num_round <- 5
 xs <- SpenceTools::specific_floor(seq(0.2,1.8,length.out=num_round),digits=2)
 dat1 <- data.frame(x=xs,y=y_fun(xs))
