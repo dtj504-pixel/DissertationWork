@@ -175,7 +175,7 @@ exclude2 <- unique(c(exclude2, risky_points))
 # PLOTTING
 # ============================================================================
 
-cairo_ps("fisheries_gp_sequential_design.eps", width = 5.5, height = 5)
+cairo_ps("catch_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
 par(mar = c(3, 3, 0, 0))
@@ -183,42 +183,42 @@ cex_arg <- 1.3
 
 # Plot a) Initial data points
 plot(dat1$x, dat1$catch, 
-     xlim = c(0.1, 0.5), 
-     ylim = c(min(dat_slice$catch_median_long), max(dat_slice$catch_median_long)),
+     xlim = c(0.05, 0.5), 
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
      pch = 16, xaxs = "i", xlab = "", ylab = "", cex = cex_arg)
-text(0.12, max(dat_slice$catch_median_long) * 0.98, labels = "a)")
+text(0.07, max(qs1) * 0.98, labels = "a)")
 
 # Plot b) Simulated realizations
 plot(dat1$x, dat1$catch,
-     xlim = c(0.1, 0.5),
-     ylim = c(min(dat_slice$catch_median_long), max(qs1)),
+     xlim = c(0.05, 0.5),
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 for(i in 1:nsim) {
   lines(dat_all$x, sim_val[i, ])
 }
-text(0.12, max(qs1) * 0.98, labels = "b)")
+text(0.07, max(qs1) * 0.98, labels = "b)")
 
 # Plot c) GP with uncertainty and exclusion
 plot(dat1$x, dat1$catch,
-     xlim = c(0.1, 0.5),
-     ylim = c(min(dat_slice$catch_median_long), max(qs1)),
+     xlim = c(0.05, 0.5),
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 SpenceTools::uncertain_plot(dat_all$x, t(qs1[, 1:3]), add = TRUE, lwd = 1, lty = 2)
 lines(dat_all$x, qs1[, 4], lty = 3)
 abline(h = best1)
 points(exclude, rep(min(dat_slice$catch_median_long), length(exclude)), pch = 4)
-text(0.12, max(qs1) * 0.98, labels = "c)")
+text(0.07, max(qs1) * 0.98, labels = "c)")
 
 # Plot d) After Round 2
 plot(dat2$x, dat2$catch,
-     xlim = c(0.1, 0.5),
-     ylim = c(min(dat_slice$catch_median_long), max(qs1)),
+     xlim = c(0.05, 0.5),
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 SpenceTools::uncertain_plot(dat_all$x, t(qs2[, 1:3]), add = TRUE, lwd = 1, lty = 2)
 lines(dat_all$x, qs2[, 4], lty = 3)
 abline(h = best2)
-points(exclude2, rep(min(dat_slice$catch_median_long), length(exclude2)), pch = 4)
-text(0.12, max(qs1) * 0.98, labels = "d)")
+points(exclude2, rep(min(dat_slice$catch_median_long)-20000, length(exclude2)), pch = 4)
+text(0.07, max(qs1) * 0.98, labels = "d)")
 
 mtext("Ftarget", 1, outer = TRUE, line = 0)
 mtext("Catch", 2, outer = TRUE, line = 0)
