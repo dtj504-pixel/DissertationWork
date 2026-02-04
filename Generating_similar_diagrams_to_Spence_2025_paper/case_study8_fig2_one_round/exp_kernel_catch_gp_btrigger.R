@@ -25,15 +25,15 @@ dat <- data.frame(
 # ============================================================================
 
 # We'll fix Btrigger at a middle value and create a 1D slice varying Ftarget
-fixed_Btrigger <- 170000  # This is a middle value
+fixed_Ftarget <- 0.35  # This is a middle value
 
 # Filter data to this slice
-dat_slice <- dat[dat$Btrigger == fixed_Btrigger, ]
+dat_slice <- dat[dat$Ftrgt == fixed_Ftarget, ]
 
 # Objective function for this slice
-catch_fun <- function(Ftarget) {
+catch_fun <- function(Btrig) {
   # Find the catch value for this Ftarget at our fixed Btrigger
-  idx <- which(dat_slice$Ftrgt == Ftarget)
+  idx <- which(dat_slice$Btrigger == Btrig)
   if(length(idx) > 0) {
     return(dat_slice$catch_median_long[idx])
   } else {
@@ -41,9 +41,9 @@ catch_fun <- function(Ftarget) {
   }
 }
 
-risk_fun <- function(Ftarget) {
-  # Find the risk value for this Ftarget at our fixed Btrigger
-  idx <- which(dat_slice$Ftrgt == Ftarget)
+risk_fun <- function(Btrig) {
+  # Find the risk value for this Btrig at our fixed Ftarget
+  idx <- which(dat_slice$Btrigger == Btrig)
   if(length(idx) > 0) {
     return(dat_slice$risk1_full[idx])
   } else {
@@ -53,7 +53,7 @@ risk_fun <- function(Ftarget) {
 
 # Create dense evaluation grid for plotting
 dat_all <- data.frame(
-  x = seq(0.1, 0.5, 0.01),
+  x = seq(110000, 210000, 10000),
   catch = NA,
   risk = NA
 )
@@ -77,7 +77,7 @@ num_round <- 5
 set.seed(18)
 
 # Initial design points
-xs <- sort(sample(unique(dat_slice$Ftrgt), num_round))
+xs <- sort(sample(unique(dat_slice$Btrigger), num_round))
 dat1 <- data.frame(
   x = xs,
   catch = sapply(xs, catch_fun),
@@ -152,7 +152,7 @@ if(sum(safe_points2) > 0) {
   best2 <- best1
 }
 
-gp_2 <- km(~.^2, 
+gp_2 <- km(~1,
            design = as.matrix(dat2$x),
            estim.method = "MLE",
            response = log(dat2$catch),
@@ -175,12 +175,9 @@ exclude2 <- unique(c(exclude2, risky_points))
 # PLOTTING
 # ============================================================================
 
-# NUMBER OF EXCLUDED POINTS IS OK - Btrigger only goes up in 10000 chunks
-
-
 # Catch GP and Ftarget plots
 
-cairo_ps("catch_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
+cairo_ps("catch_and_btrigger_gp_sequential_design.eps", width = 5.5, height = 5)
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
 par(mar = c(3, 3, 0, 0))
@@ -188,48 +185,48 @@ cex_arg <- 1.3
 
 # Plot a) Initial data points
 plot(dat1$x, dat1$catch, 
-     xlim = c(0.05, 0.55), 
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
+     xlim = c(105000, 215000), 
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
      pch = 16, xaxs = "i", xlab = "", ylab = "", cex = cex_arg)
-text(0.07, max(qs1) * 0.98, labels = "a)")
+text(110000, max(qs1)+5000, labels = "a)")
 
 # Plot b) Simulated realizations
 plot(dat1$x, dat1$catch,
-     xlim = c(0.05, 0.55),
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
+     xlim = c(105000, 215000),
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 for(i in 1:nsim) {
   lines(dat_all$x, sim_val[i, ])
 }
-text(0.07, max(qs1) * 0.98, labels = "b)")
+text(110000, max(qs1)+5000, labels = "b)")
 
 # Plot c) GP with uncertainty and exclusion
 plot(dat1$x, dat1$catch,
-     xlim = c(0.05, 0.55),
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
+     xlim = c(105000, 215000),
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 SpenceTools::uncertain_plot(dat_all$x, t(qs1[, 1:3]), add = TRUE, lwd = 1, lty = 2)
 lines(dat_all$x, qs1[, 4], lty = 3)
 abline(h = best1)
 points(exclude, rep(min(dat_slice$catch_median_long)-20000, length(exclude)), pch = 4)
-text(0.07, max(qs1) * 0.98, labels = "c)")
+text(110000, max(qs1)+5000, labels = "c)")
 
 # Plot d) After Round 2
 plot(dat2$x, dat2$catch,
-     xlim = c(0.05, 0.55),
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
+     xlim = c(105000, 215000),
+     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 SpenceTools::uncertain_plot(dat_all$x, t(qs2[, 1:3]), add = TRUE, lwd = 1, lty = 2)
 lines(dat_all$x, qs2[, 4], lty = 3)
 abline(h = best2)
 points(exclude2, rep(min(dat_slice$catch_median_long)-20000, length(exclude2)), pch = 4)
-text(0.07, max(qs1) * 0.98, labels = "d)")
+text(110000, max(qs1)+5000, labels = "d)")
 
-mtext("Ftarget", 1, outer = TRUE, line = 0)
+mtext("Btrigger", 1, outer = TRUE, line = 0)
 mtext("Catch", 2, outer = TRUE, line = 0)
 dev.off()
 
-cat("\nPlot saved: catch_and_ftarget_gp_sequential_design.eps\n")
+cat("\nPlot saved: catch_and_btrigger_gp_sequential_design.eps\n")
 cat("Fixed Btrigger =", fixed_Btrigger, "\n")
 cat("Round 1: Best safe catch =", best1, "\n")
 cat("Round 2: Best safe catch =", best2, "\n")
