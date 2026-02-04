@@ -115,7 +115,7 @@ qs1 <- cbind(
 # Identify excluded points (where upper bound < best so far)
 exclude <- dat_all$x[which(qs1[, 4] < (best1 - 1e-8))]
 
-# Also exclude points with high risk
+# Also exclude points with high risk - can just grab here
 risky_points <- dat_all$x[dat_all$risk >= 0.05]
 exclude <- unique(c(exclude, risky_points))
 
