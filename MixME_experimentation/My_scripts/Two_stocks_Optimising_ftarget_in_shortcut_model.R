@@ -345,7 +345,7 @@ doOne <- function(run_id,input_data){
     # Calculate total catch
     total_catch <- catch_cod + catch_had
     
-    ## // Extract the ssb at the end of the simulation for both stocks //
+    ## // Extract the min ssb at the last ten years of the simulation for both stocks //
     # Picking up long term SSB values to see if they dip below Blim at any point
     ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2030:2039)])
     ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2030:2039)])
@@ -480,7 +480,7 @@ next_points <- rbind(point_1, warmup_points)
 next_points
 
 # Set max runs (kept low for testing) and initial round number
-max_rounds <- 3
+max_rounds <- 30
 round_num <- 1
 
 # Intiliase runs for safety

@@ -101,37 +101,24 @@ doOne <- function(run_id,input_data) {
   # Calculate total catch
   total_catch <- catch_cod + catch_had
   
-  ## // Calculate the risk for both stocks //
-  
-  # Define Blims here for safety
-  Blim_cod <- 107000
-  Blim_had <- 9227
-  
-  # Extract SSB directly - still focusing on the end of the simualtion in 2039
-  ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2039)])
-  ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2039)])
+  ## // Extract the min ssb at the last ten years of the simulation for both stocks //
+    # Picking up long term SSB values to see if they dip below Blim at any point
+    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2030:2039)])
+    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2030:2039)])
+
+    # Getting minimums to model with GPs
+    ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
+    ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
+
+    # Safety Ctahc for if the simulation failed or produced all NAs
+    if(is.infinite(ssb_cod_min) | is.na(ssb_cod_min)) ssb_cod_min <- 0
+    if(is.infinite(ssb_had_min) | is.na(ssb_had_min)) ssb_had_min <- 0
   
   # free up memory now that we have the data we need from res
   rm(res)   
   
-  # Calculate risk for cod using new linear statistic to avoud sudden jumps resulting in variance explosions
-  # but still scaled to between -1 and 1 to keep the GP stable (ok as know Blims are not 0 here)
-  if (is.na(ssb_cod_data)) {
-    # Maximum penalty as -1 means we have crashed to SSB = 0
-     risk_cod <- -1 
-  } else {
-     risk_cod <- (ssb_cod_data - Blim_cod) / Blim_cod
-  }
-  
-  if (is.na(ssb_had_data)) {
-    # Maximum penalty as -1 means we have crashed to SSB = 0
-     risk_had <- -1
-  } else {
-     risk_had <- (ssb_had_data - Blim_had) / Blim_had
-  }
-  
   # Set up variable to return
-  to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,RiskCod = risk_cod,RiskHad = risk_had,TotalCatch = total_catch)
+  to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,SSBCod = ssb_cod_min,SSBHad = ssb_had_min,TotalCatch = total_catch)
   
   # Return the result
   return(to_return)
@@ -162,9 +149,9 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   
   # Loop over candidate points
   for (i in seq_len(m)) {
-    # set knowledge gradient to 0 for any unsafe points - here has become prisks that are too high
-    # TODO: Improve by removing any points in that are implausible when evaluating? or beforehand?
-    if (prisk_cod[i] > eps || prisk_had[i] > eps) {
+    # set to 0 for any unsafe points - here has become probability that ssb is =< Blim is > 0.05 in the years 2030-2039
+    # i.e. the run is not precautionary in these years
+    if (pssb_cod[i] > 0.05 || pssb_had[i] > 0.05) {
       kg[i] <- 0
       next
     }
@@ -305,7 +292,7 @@ next_points
 
 
 # Set max runs and initial round number
-max_rounds <- 30
+max_rounds <- 3
 round_num <- 1
 
 # Intiliase runs for safety
@@ -336,7 +323,7 @@ for (iteration in 1:max_rounds) {
     # Bind them with the other columns (excluding the original 'value' column to avoid duplicating)
     data_frame_result <- cbind(as.data.frame(vals), data_frame_initial[, c("error", "warning", "time")])
 
-    names(data_frame_result) <- c("Fcod","Fhad","RiskCod","RiskHad","TotalCatch","error","warning","time")
+    names(data_frame_result) <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch","error","warning","time")
 
 
     # Set up data frame to store data from current run - only keeping values that I want
@@ -344,15 +331,15 @@ for (iteration in 1:max_rounds) {
     dat_run <- data.frame(
     Fcod = c(data_frame_result$Fcod),
     Fhad = c(data_frame_result$Fhad),
-    TotalCatch = c(data_frame_result$TotalCatch),
-    RiskCod = c(data_frame_result$RiskCod),
-    RiskHad = c(data_frame_result$RiskHad)
+    SSBCod = c(data_frame_result$SSBCod),
+    SSBHad = c(data_frame_result$SSBHad),
+    TotalCatch = c(data_frame_result$TotalCatch)
     )
 
     dat_run
 
     # Adding names to reference in GPs and for readability
-    names(dat_run) <- c("Fcod","Fhad","TotalCatch","RiskCod","RiskHad")
+    names(dat_run) <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch")
 
 
     # Runs variable to count all runs so far and all their associated data
@@ -362,43 +349,29 @@ for (iteration in 1:max_rounds) {
 
     # Taking log of the catch so GP models are more stable
     log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-
-    # --- FIX FOR FLAT DATA --- as we only have one iteration
-    risk_cod_input <- runs$RiskCod
-    risk_had_input <- runs$RiskHad
+    ssb_cod_min <- runs$SSBCod
+    ssb_had_min <- runs$SSBHad
     
-    # If variance is 0 (all zeros), add tiny random noise so Kriging doesn't crash - fix until risk calculated properly
-    if(var(risk_cod_input, na.rm = TRUE) == 0) {
-        risk_cod_input <- risk_cod_input + rnorm(length(risk_cod_input), mean=0, sd=1e-9)
-    }
-    
-    if(var(risk_had_input, na.rm = TRUE) == 0) {
-        risk_had_input <- risk_had_input + rnorm(length(risk_had_input), mean=0, sd=1e-9)
-    }
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
     gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
-    gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
-    gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
+    gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,covtype = "exp")
+    gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,covtype = "exp")
     
     print("GPs done")
     
     # Find the remaining plausible points using BHM
-    pred_risk_cod <- predict(gp_cod_risk, newdata = dat, type = "SK")
-    pred_risk_had <- predict(gp_had_risk, newdata = dat, type = "SK")
+    pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
+    pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
     
-    # Define the Risk Constraint Thresholds
-    risk_threshold_cod <- -1000 / Blim_cod  # approx -0.009
-    risk_threshold_had <- -1000 / Blim_had    # approx -0.108
-    
-    # Get probability that risk =< -log(1000) for both cod and haddock
-    prisk_cod <- pnorm(risk_threshold_cod, pred_risk_cod$mean, pred_risk_cod$sd + 1e-12)
-    prisk_had <- pnorm(risk_threshold_had, pred_risk_had$mean, pred_risk_had$sd + 1e-12)
-    
+    # Get the probability that sbb =< Blim for both cod and haddock - want this to be low!
+    pssb_cod <- pnorm(Blim_cod, pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
+    pssb_had <- pnorm(Blim_had, pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
+
     # Filter for valid runs
-    valid_runs <- runs$TotalCatch[runs$RiskCod > risk_threshold_cod & runs$RiskHad > risk_threshold_had]
+    valid_runs <- runs$TotalCatch[runs$SSBCod > Blim_cod & runs$SSBHad > Blim_had]
     
     print("valid_runs is")
     print(valid_runs)
@@ -418,8 +391,9 @@ for (iteration in 1:max_rounds) {
     
     # Set epsilon for plausibility threshold
     eps <- 1e-4
-    # Determine plausible points where min(1 - pcat, prisk) > eps
-    possible <- pmin( (1 - pcat), (1 - prisk_cod), (1 - prisk_had), 1 ) > eps
+    # Determine plausible points where possibility of catch being greater than current max is > eps
+    # and where probability that ssb<Blim for cod and haddock is less than 0.05
+    possible <- (1 - pcat) > eps & pmax(pssb_cod, pssb_had) < 0.05
 
     # Visualises region that has risk < threshold and better catch than best evaluated so far
     # TODO: Check I am naming this the correct way around
@@ -484,14 +458,14 @@ for (iteration in 1:max_rounds) {
     rm(result) 
     
     # Remove the Kriging models (they can be heavy too)
-    rm(gp_log_cat, gp_cod_risk, gp_had_risk)
+    rm(gp_log_cat, gp_cod_ssb, gp_had_ssb)
     
     # Remove the prediction vectors to be safe
-    rm(pred_risk_cod, pred_risk_had, pred_log_cat)
+    rm(pred_ssb_cod, pred_ssb_had, pred_log_cat)
 
     # KEEP ONLY WANTED COLUMNS IN runs
     # Define the columns we actually care about, otherwise we can't do rbind to runs properly next iteration
-    important_cols <- c("Fcod", "Fhad", "TotalCatch", "RiskCod", "RiskHad")
+    important_cols <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch")
     
     # Only keep those columns before binding
     runs <- runs[, important_cols]
