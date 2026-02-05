@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#SBATCH --job-name=MixME_MultiNode             
+#SBATCH --job-name=Optimising_ftarget_in_MixME_mult_points_parallel
 #SBATCH --partition=nodes               
 #SBATCH --time=0-00:30:00               
 #SBATCH --ntasks=1                      
