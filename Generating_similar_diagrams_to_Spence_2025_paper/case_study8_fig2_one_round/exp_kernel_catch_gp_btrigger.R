@@ -152,7 +152,7 @@ if(sum(safe_points2) > 0) {
   best2 <- best1
 }
 
-gp_2 <- km(~1,
+gp_2 <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),
            design = as.matrix(dat2$x),
            estim.method = "MLE",
            response = log(dat2$catch),
