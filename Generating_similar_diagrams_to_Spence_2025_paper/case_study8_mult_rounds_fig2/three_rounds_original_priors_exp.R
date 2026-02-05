@@ -79,7 +79,8 @@ set.seed(18)
 # Initial design points
 xs <- sort(sample(unique(dat_slice$Ftrgt), num_round))
 dat1 <- data.frame(
-  x = xs,
+  Ftarget = xs,
+  Btrigger = fixed_Btrigger,
   catch = sapply(xs, catch_fun),
   risk = sapply(xs, risk_fun)
 )
@@ -92,9 +93,15 @@ if(sum(safe_points) > 0) {
   best1 <- -Inf
 }
 
+training_gp_1 <- data.frame(
+    Ftarget = dat1$Ftarget,
+    Btrigger = dat1$Btrigger,
+    catch = dat1$catch
+)
+
 # Fit GP on log(catch)
 gp_1 <- km(~.^2, 
-           design = as.matrix(dat1$x), 
+           design = training_gp_1, 
            estim.method = "MLE", 
            response = log(dat1$catch),
            covtype = "exp", 
@@ -142,7 +149,7 @@ y2_risk <- sapply(x2, risk_fun)
 
 dat2 <- rbind(
   dat1,
-  data.frame(x = x2, catch = y2_catch, risk = y2_risk)
+  data.frame(Ftarget = x2, Btrigger = fixed_Btrigger, catch = y2_catch, risk = y2_risk)
 )
 
 safe_points2 <- dat2$risk < 0.05
@@ -152,14 +159,27 @@ if(sum(safe_points2) > 0) {
   best2 <- best1
 }
 
+training_gp_2 <- data.frame(
+    Ftarget = dat2$Ftarget,
+    Btrigger = dat2$Btrigger,
+    catch = dat2$catch
+)
+
 gp_2 <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)), 
-           design = as.matrix(dat2$x),
+           design = training_gp_2,
            estim.method = "MLE",
            response = log(dat2$catch),
            covtype = "exp",
            nugget = 1e-12 * var(log(dat2$catch)))
 
-pred_2_gp <- predict(gp_2, newdata = as.matrix(dat_all$x), type = "SK")
+# gathering correct data frame for prediction
+pred_data <- data.frame(
+  Ftarget = dat_all$x,
+  Btrigger = rep(fixed_Btrigger, nrow(dat_all))
+)
+
+
+pred_2_gp <- predict(gp_2, newdata = pred_data, type = "SK")
 
 qs2 <- cbind(
   lower = exp(pred_2_gp$mean + qnorm(0.05, 0, pred_2_gp$sd)),
@@ -180,7 +200,7 @@ exclude2 <- unique(c(exclude2, risky_points))
 
 # Catch GP and Ftarget plots
 
-cairo_ps("catch_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
+cairo_ps("original_priors_catch_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
 par(mar = c(3, 3, 0, 0))
@@ -215,7 +235,7 @@ points(exclude, rep(min(dat_slice$catch_median_long)-20000, length(exclude)), pc
 text(0.07, max(qs1) * 0.98, labels = "c)")
 
 # Plot d) After Round 2
-plot(dat2$x, dat2$catch,
+plot(dat2$Ftarget, dat2$catch,
      xlim = c(0.05, 0.55),
      ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
