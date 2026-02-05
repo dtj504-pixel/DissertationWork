@@ -92,45 +92,68 @@ if(sum(safe_points) > 0) {
   best1 <- -Inf
 }
 
-# Fit GP on log(catch)
+# Fit GP on risk
 gp_1 <- km(~.^2, 
            design = as.matrix(dat1$x), 
            estim.method = "MLE", 
-           response = log(dat1$catch),
+           response = dat1$risk,
            covtype = "exp", 
-           nugget = 1e-12 * var(log(dat1$catch)))
+           nugget = 1e-12 * var(dat1$risk))
 
-# Predict
+# Predict risk for plotting
 pred_1_gp <- predict(gp_1, newdata = as.matrix(dat_all$x), type = "SK")
-dat_all$pred_catch <- exp(pred_1_gp$mean)
+dat_all$pred_risk <- pred_1_gp$mean
 
 # Calculate bounds (on log scale then transform)
 qs1 <- cbind(
-  lower = exp(pred_1_gp$mean + qnorm(0.05, 0, pred_1_gp$sd)),
-  mean = exp(pred_1_gp$mean),
-  upper = exp(pred_1_gp$mean + qnorm(0.95, 0, pred_1_gp$sd)),
-  upper_cert = exp(pred_1_gp$mean + qnorm(cert, 0, pred_1_gp$sd))
+  lower = pred_1_gp$mean + qnorm(0.05, 0, pred_1_gp$sd),
+  mean = pred_1_gp$mean,
+  upper = pred_1_gp$mean + qnorm(0.95, 0, pred_1_gp$sd),
+  upper_cert = pred_1_gp$mean + qnorm(cert, 0, pred_1_gp$sd)
 )
 
-# Identify excluded points (where upper bound < best so far)
-exclude <- dat_all$x[which(qs1[, 4] < (best1 - 1e-8))]
+# Predict catch for finding which points to sample next round
 
-# Also exclude points with high risk - can just grab here
+
+gp_catch1 <- km(~.^2,
+                 design = as.matrix(dat1$x),
+                 estim.method = "MLE",
+                 response = log(dat1$catch),
+                 covtype = "exp",
+                 nugget = 1e-12 * var(log(dat1$catch)))
+
+pred_catch1_gp <- predict(gp_catch1, newdata = as.matrix(dat_all$x), type = "SK")
+
+qscatch1 <- cbind(
+  lower = exp(pred_catch1_gp$mean + qnorm(0.05, 0, pred_catch1_gp$sd)),
+  mean = exp(pred_catch1_gp$mean),
+  upper = exp(pred_catch1_gp$mean + qnorm(0.95, 0, pred_catch1_gp$sd)),
+  upper_cert = exp(pred_catch1_gp$mean + qnorm(cert, 0, pred_catch1_gp$sd))
+)
+
+
+# Identify excluded points (where upper bound < best so far)
+exclude <- dat_all$x[which(qscatch1[, 4] < (best1 - 1e-8))]
+
+# Also exclude points with high risk
 risky_points <- dat_all$x[dat_all$risk >= 0.05]
 exclude <- unique(c(exclude, risky_points))
 
 # Simulate possible realizations
 nsim <- 4
 sim_val <- simulate(gp_1, nsim = nsim, newdata = as.matrix(dat_all$x), cond = TRUE)
-# Transform from log scale
-sim_val <- exp(sim_val)
 
 # ============================================================================
 # SEQUENTIAL DESIGN - ROUND 2
 # ============================================================================
 
+
+
+# NEED TO FIGURE OUT HOW TO SORT OUT FOR RISK - MAY NEED TO MODEL BOTH CATCH AND RISK HERE FOR SAKE OF SELECTING POINTS
+
+
 # Select new points from non-excluded region
-tmp <- which(qs1[, 4] > best1 + 1e-8 & dat_all$risk < 0.05)
+tmp <- which(qscatch1[, 4] > best1 + 1e-8 & dat_all$risk < 0.05)
 if(length(tmp) >= num_round) {
   x2 <- dat_all$x[tmp[floor(seq(1, length(tmp), length.out = num_round))]]
 } else {
@@ -152,24 +175,46 @@ if(sum(safe_points2) > 0) {
   best2 <- best1
 }
 
+# risk in round 2 for plotting
+
 gp_2 <- km(~1,
            design = as.matrix(dat2$x),
            estim.method = "MLE",
-           response = log(dat2$catch),
+           response = dat2$risk,
            covtype = "exp",
-           nugget = 1e-12 * var(log(dat2$catch)))
+           nugget = 1e-12 * var(dat2$risk))
 
 pred_2_gp <- predict(gp_2, newdata = as.matrix(dat_all$x), type = "SK")
 
 qs2 <- cbind(
-  lower = exp(pred_2_gp$mean + qnorm(0.05, 0, pred_2_gp$sd)),
-  mean = exp(pred_2_gp$mean),
-  upper = exp(pred_2_gp$mean + qnorm(0.95, 0, pred_2_gp$sd)),
-  upper_cert = exp(pred_2_gp$mean + qnorm(cert, 0, pred_2_gp$sd))
+  lower = pred_2_gp$mean + qnorm(0.05, 0, pred_2_gp$sd),
+  mean = pred_2_gp$mean,
+  upper = pred_2_gp$mean + qnorm(0.95, 0, pred_2_gp$sd),
+  upper_cert = pred_2_gp$mean + qnorm(cert, 0, pred_2_gp$sd)
 )
 
-exclude2 <- dat_all$x[which(qs2[, 4] < (best2 - 1e-8))]
+# catch gp to find excluded points after round 2
+gp_catch2 <- km(~.^2,
+                 design = as.matrix(dat2$x),
+                 estim.method = "MLE",
+                 response = log(dat2$catch),
+                 covtype = "exp",
+                 nugget = 1e-12 * var(log(dat2$catch)))
+
+pred_catch2_gp <- predict(gp_catch2, newdata = as.matrix(dat_all$x), type = "SK")
+
+qscatch2 <- cbind(
+  lower = exp(pred_catch2_gp$mean + qnorm(0.05, 0, pred_catch2_gp$sd)),
+  mean = exp(pred_catch2_gp$mean),
+  upper = exp(pred_catch2_gp$mean + qnorm(0.95, 0, pred_catch2_gp$sd)),
+  upper_cert = exp(pred_catch2_gp$mean + qnorm(cert, 0, pred_catch2_gp$sd))
+)
+
+
+exclude2 <- dat_all$x[which(qscatch2[, 4] < (best2 - 1e-8))]
 exclude2 <- unique(c(exclude2, risky_points))
+
+
 
 # ============================================================================
 # PLOTTING
@@ -177,56 +222,54 @@ exclude2 <- unique(c(exclude2, risky_points))
 
 # Catch GP and Ftarget plots
 
-cairo_ps("catch_and_btrigger_gp_sequential_design.eps", width = 5.5, height = 5)
+cairo_ps("risk_and_btrigger_gp_sequential_design.eps", width = 5.5, height = 5)
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
 par(mar = c(3, 3, 0, 0))
-cex_arg <- 1.3
+cex_arg <- 1
 
 # Plot a) Initial data points
-plot(dat1$x, dat1$catch, 
+plot(dat1$x, dat1$risk, 
      xlim = c(105000, 215000), 
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
+     ylim = c(-0.05,0.5),
      pch = 16, xaxs = "i", xlab = "", ylab = "", cex = cex_arg)
-text(110000, max(qs1)+8000, labels = "a)")
+text(110000, 0.48, labels = "a)")
 
 # Plot b) Simulated realizations
-plot(dat1$x, dat1$catch,
-     xlim = c(105000, 215000),
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
+plot(dat1$x, dat1$risk,
+     xlim = c(105000, 215000), 
+     ylim = c(-0.05,0.5),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 for(i in 1:nsim) {
   lines(dat_all$x, sim_val[i, ])
 }
-text(110000, max(qs1)+8000, labels = "b)")
+text(110000, 0.48, labels = "b)")
 
 # Plot c) GP with uncertainty and exclusion
-plot(dat1$x, dat1$catch,
-     xlim = c(105000, 215000),
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
+plot(dat1$x, dat1$risk,
+     xlim = c(105000, 215000), 
+     ylim = c(-0.05,0.5),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 SpenceTools::uncertain_plot(dat_all$x, t(qs1[, 1:3]), add = TRUE, lwd = 1, lty = 2)
 lines(dat_all$x, qs1[, 4], lty = 3)
 abline(h = best1)
-points(exclude, rep(min(dat_slice$catch_median_long)-20000, length(exclude)), pch = 4)
-text(110000, max(qs1)+8000, labels = "c)")
+points(exclude, rep(-0.05, length(exclude)), pch = 4)
+text(110000, 0.48, labels = "c)")
 
 # Plot d) After Round 2
-plot(dat2$x, dat2$catch,
-     xlim = c(105000, 215000),
-     ylim = c(min(dat_slice$catch_median_long)-20000, max(qs1)+10000),
+plot(dat2$x, dat2$risk,
+     xlim = c(105000, 215000), 
+     ylim = c(-0.05,0.5),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 SpenceTools::uncertain_plot(dat_all$x, t(qs2[, 1:3]), add = TRUE, lwd = 1, lty = 2)
 lines(dat_all$x, qs2[, 4], lty = 3)
 abline(h = best2)
-points(exclude2, rep(min(dat_slice$catch_median_long)-20000, length(exclude2)), pch = 4)
-text(110000, max(qs1)+8000, labels = "d)")
+points(exclude2, rep(-0.05, length(exclude2)), pch = 4)
+text(110000, 0.48, labels = "d)")
 
 mtext("Btrigger", 1, outer = TRUE, line = 0)
-mtext("Catch", 2, outer = TRUE, line = 0)
+mtext("Risk", 2, outer = TRUE, line = 0)
 dev.off()
 
-cat("\nPlot saved: catch_and_btrigger_gp_sequential_design.eps\n")
+cat("\nPlot saved: risk_and_ftarget_gp_sequential_design.eps\n")
 cat("Fixed Btrigger =", fixed_Btrigger, "\n")
-cat("Round 1: Best safe catch =", best1, "\n")
-cat("Round 2: Best safe catch =", best2, "\n")
