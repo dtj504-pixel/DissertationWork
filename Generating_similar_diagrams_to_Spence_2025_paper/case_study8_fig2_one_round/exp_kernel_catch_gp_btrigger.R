@@ -391,7 +391,7 @@ risk_fun_full <- function(Ftarget, Btrigger) {
 
 # Define visualization slice
 fixed_Ftarget <- 0.35
-dat_slice <- dat[dat$Ftarget == fixed_Ftarget, ]
+dat_slice <- dat[dat$Ftrgt == fixed_Ftarget, ]
 
 # Create prediction grid for the slice
 dat_all <- data.frame(
@@ -416,7 +416,7 @@ nsim <- 4
 
 # Get Round 1 data (using simple formula GP)
 # We need to refit with simple formula to match the reference
-gp_1_simple <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)), 
+gp_1_simple <- km(~.^2, 
                   design = runs[1:8, c("Ftarget", "Btrigger")], 
                   estim.method = "MLE", 
                   response = log(runs$C_long[1:8]),
@@ -485,14 +485,14 @@ dat1_round1_original <- unrescale_Her(dat1_round1, dat1)
 
 
 # Plot a) Initial data points
-plot(dat1_round1_original$Ftarget, dat1_round1_original$C_long, 
+plot(dat1_round1_original$Btrigger, dat1_round1_original$C_long, 
      xlim = c(105000, 215000), 
      ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      pch = 16, xaxs = "i", xlab = "", ylab = "", cex = cex_arg)
 text(110000, max(qs1) + 8000, labels = "a)")
 
 # Plot b) Simulated realizations
-plot(dat1_round1_original$Ftarget, dat1_round1_original$C_long,
+plot(dat1_round1_original$Btrigger, dat1_round1_original$C_long,
      xlim = c(105000, 215000),
      ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
@@ -502,7 +502,7 @@ for(i in 1:nsim) {
 text(110000, max(qs1) + 8000, labels = "b)")
 
 # Plot c) GP with uncertainty (Round 1)
-plot(dat1_round1_original$Ftarget, dat1_round1_original$C_long,
+plot(dat1_round1_original$Btrigger, dat1_round1_original$C_long,
      xlim = c(105000, 215000),
      ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
@@ -521,7 +521,7 @@ text(110000, max(qs1) + 8000, labels = "c)")
 
 # Plot d) After Round 2
 dat2_original <- unrescale_Her(runs, dat1)
-plot(dat2_original$Ftarget, dat2_original$C_long,
+plot(dat2_original$Btrigger, dat2_original$C_long,
      xlim = c(105000, 215000),
      ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
