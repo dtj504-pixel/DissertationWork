@@ -17,6 +17,8 @@ library(foreach)
 library(parallel)
 library(plot3D)
 
+print("This is Two_stocks_Optimising_ftarget_in_shortcut_model")
+
 ## === Define a custom harvest control rule ===
 ICES_HCR <- function (stk, args, hcrpars, tracking) {
   
@@ -485,6 +487,9 @@ round_num <- 1
 
 # Intiliase runs for safety
 runs <- NULL
+
+
+# Splitting up first roudn to stick to same prioirs in GPs as case_study8.R?
 
 
 # START LOOP
