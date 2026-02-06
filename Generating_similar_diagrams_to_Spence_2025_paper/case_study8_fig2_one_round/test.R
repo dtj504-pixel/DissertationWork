@@ -419,7 +419,7 @@ nsim <- 4
 
 # Get Round 1 data (using simple formula GP)
 # We need to refit with simple formula to match the reference
-gp_1_simple <- km(~ Ftarget + Btrigger + I(Ftarget * Btrigger), 
+gp_1_simple <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)), 
                   design = runs[1:8, c("Ftarget", "Btrigger")], 
                   estim.method = "MLE", 
                   response = log(runs$C_long[1:8]),
