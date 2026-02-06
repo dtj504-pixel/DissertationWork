@@ -421,6 +421,9 @@ nsim <- 4
 
 # Get Round 1 data (using simple formula GP)
 # We need to refit with simple formula to match the reference
+
+# Redoing the GP simply because I overwrote gp_cat n the iteration and it is more difficult to undo
+# as it would require very carefully renaming variables, etc.
 gp_1_simple <- km(~.^2, 
                   design = runs[1:8, c("Ftarget", "Btrigger")], 
                   estim.method = "MLE", 
