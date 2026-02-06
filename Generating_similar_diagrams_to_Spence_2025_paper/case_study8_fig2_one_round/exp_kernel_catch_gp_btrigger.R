@@ -541,6 +541,6 @@ abline(h = best2)
 points(exclude2, rep(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, length(exclude2)), pch = 4)
 text(110000, max(qs1) + 8000, labels = "d)")
 
-mtext("Ftarget", 1, outer = TRUE, line = 0)
+mtext("Btrigger", 1, outer = TRUE, line = 0)
 mtext("Catch", 2, outer = TRUE, line = 0)
 dev.off()

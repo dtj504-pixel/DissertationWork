@@ -484,7 +484,7 @@ exclude2 <- unique(c(exclude2, risky_points))
 # PLOTTING
 # ============================================================================
 
-cairo_ps("catch_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
+cairo_ps("risk_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
 par(mar = c(3, 3, 0, 0))
@@ -549,5 +549,5 @@ points(exclude2, rep(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, len
 text(0.07, 0.48, labels = "d)")
 
 mtext("Ftarget", 1, outer = TRUE, line = 0)
-mtext("Catch", 2, outer = TRUE, line = 0)
+mtext("Risk", 2, outer = TRUE, line = 0)
 dev.off()

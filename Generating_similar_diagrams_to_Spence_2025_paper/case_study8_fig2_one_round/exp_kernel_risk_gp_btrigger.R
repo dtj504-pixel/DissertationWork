@@ -73,7 +73,7 @@ dat_all$risk <- approx(dat_all$x, dat_all$risk, dat_all$x, rule = 2)$y
 # ============================================================================
 
 cert <- 0.9999
-num_round <- 5
+num_round <- 8
 set.seed(18)
 
 # Initial design points
@@ -271,5 +271,5 @@ mtext("Btrigger", 1, outer = TRUE, line = 0)
 mtext("Risk", 2, outer = TRUE, line = 0)
 dev.off()
 
-cat("\nPlot saved: risk_and_ftarget_gp_sequential_design.eps\n")
+cat("\nPlot saved: risk_and_btrigger_gp_sequential_design.eps\n")
 cat("Fixed Btrigger =", fixed_Btrigger, "\n")
