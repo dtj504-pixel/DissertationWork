@@ -419,7 +419,7 @@ nsim <- 4
 
 # Get Round 1 data (using simple formula GP)
 # We need to refit with simple formula to match the reference
-gp_1_simple <- km(~ Ftarget + Btrigger + I(Ftarget * Btrigger), 
+gp_1_simple <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + I(Btrigger) + I(Btrigger * log(Ftarget+0.1)), 
                   design = runs[1:8, c("Ftarget", "Btrigger")], 
                   estim.method = "MLE", 
                   response = log(runs$C_long[1:8]),
@@ -480,7 +480,7 @@ cairo_ps("catch_and_ftarget_gp_sequential_design.eps", width = 5.5, height = 5)
 par(mfrow = c(2, 2))
 par(oma = c(2, 2, 1, 1))
 par(mar = c(3, 3, 0, 0))
-cex_arg <- 1
+cex_arg <- 1.3
 
 # Get Round 1 training points that are on or near the slice
 dat1_round1 <- runs[1:8, ]
@@ -489,24 +489,24 @@ dat1_round1_original <- unrescale_Her(dat1_round1, dat1)
 # Plot a) Initial data points
 plot(dat1_round1_original$Ftarget, dat1_round1_original$C_long, 
      xlim = c(0.05, 0.55), 
-     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)),
+     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      pch = 16, xaxs = "i", xlab = "", ylab = "", cex = cex_arg)
-text(0.07, max(qs1) * 0.98, labels = "a)")
+text(0.07, max(qs1) + 8000, labels = "a)")
 
 # Plot b) Simulated realizations
 plot(dat1_round1_original$Ftarget, dat1_round1_original$C_long,
      xlim = c(0.05, 0.55),
-     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)),
+     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 for(i in 1:nsim) {
   lines(dat_all$x, sim_val[i, ])
 }
-text(0.07, max(qs1) * 0.98, labels = "b)")
+text(0.07, max(qs1) + 8000, labels = "b)")
 
 # Plot c) GP with uncertainty (Round 1)
 plot(dat1_round1_original$Ftarget, dat1_round1_original$C_long,
      xlim = c(0.05, 0.55),
-     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)),
+     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 
 if(requireNamespace("SpenceTools", quietly = TRUE)) {
@@ -519,13 +519,13 @@ if(requireNamespace("SpenceTools", quietly = TRUE)) {
 lines(dat_all$x, qs1[, 4], lty = 3)
 abline(h = best1)
 points(exclude, rep(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, length(exclude)), pch = 4)
-text(0.07, max(qs1) * 0.98, labels = "c)")
+text(0.07, max(qs1) + 8000, labels = "c)")
 
 # Plot d) After Round 2
 dat2_original <- unrescale_Her(runs, dat1)
 plot(dat2_original$Ftarget, dat2_original$C_long,
      xlim = c(0.05, 0.55),
-     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)),
+     ylim = c(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, max(qs1)+10000),
      xaxs = "i", pch = 16, xlab = "", ylab = "", cex = cex_arg)
 
 if(requireNamespace("SpenceTools", quietly = TRUE)) {
@@ -538,7 +538,7 @@ if(requireNamespace("SpenceTools", quietly = TRUE)) {
 lines(dat_all$x, qs2[, 4], lty = 3)
 abline(h = best2)
 points(exclude2, rep(min(dat_slice$catch_median_long, na.rm = TRUE) - 20000, length(exclude2)), pch = 4)
-text(0.07, max(qs1) * 0.98, labels = "d)")
+text(0.07, max(qs1) + 8000, labels = "d)")
 
 mtext("Ftarget", 1, outer = TRUE, line = 0)
 mtext("Catch", 2, outer = TRUE, line = 0)
