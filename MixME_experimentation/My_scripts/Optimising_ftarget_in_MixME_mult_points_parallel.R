@@ -98,8 +98,8 @@ doOne <- function(run_id,input_data) {
   res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
   
   # Get Catch directly from the 'tracking' object
-  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2030:2039)], na.rm = TRUE)
+  catch_had <- sum(res$tracking$had$stk["C.om", ac(2030:2039)], na.rm = TRUE)
   # Calculate total catch
   total_catch <- catch_cod + catch_had
   

@@ -12,27 +12,29 @@ What mathematical methods will I explain in this document that have not been exp
 
 -   The risk function
 
--   The basics of the MixME model (including fleet dynamics briefly) - BREAK DOWN A BIT MORE LATER
+-   The basics of the MixME model - BREAK DOWN A BIT MORE LATER
 
 # Context
 
 ### **Checked code: I am summing the catch for every year, checking min SSB over 2030-2039**
 
-The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process where the aim is to find the Ftarget for each stock that has low risk but maximises total catch in the year 2039. This was the goal I set because MixME is designed to run projections into the future, and looking at catch in the last year of our projection (2039) will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2019-2039 was kept consistent with examples on the MixME wiki following guidelines from ICES to define short- and long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2] .
+The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch over all years of the projection will minimise the chance that a simulation where a stock fails is chosen \[@MixME\],[@MixMEwiki]. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2]. It also follows ICES guidelines to only calculate yield and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
 
-I focused on the datasets from the [fixed fishing mortality management strategy example](https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy) (`mixedfishery_MixME_om`) and the [exploring simulation outputs example](https://github.com/CefasRepRes/MixME/wiki/Exploring-simulation-outputs) (`mixedfishery_MixME_input`) which are both on the MixME wiki [@MixMEwiki]. However, for the second dataset `mixedfishery_MixME_input` I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation but ... - FIND THE ISSUE HERE - THERE WERE SOME CORNERES CUT.
+I focused on the datasets from the [fixed fishing mortality management strategy example](https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy) (`mixedfishery_MixME_om`) and the [exploring simulation outputs example](https://github.com/CefasRepRes/MixME/wiki/Exploring-simulation-outputs) (`mixedfishery_MixME_input`) which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset `mixedfishery_MixME_input` I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation and so is deterministic. The code for these datasets is `Optimising_ftarget_in_MixME_mult_points_parallel.R` and `Two_stocks_Optimising_ftarget_in_shortcut_model.R` respectively.
 
-Both of these datasets only have two stocks (cod and haddock) and both have two fleets [@MixMEwiki]. WHERE ARE THE STOCKS FROM (North Sea and Celtic Sea but FIND CITATION). This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{had}$ and $F_{cod}$ are the fishing mortalities for cod and haddock. However, we do now take into account fleet dynamics which we will briefly touch on later.
+Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. I was told by a colleague at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESCodFactsheet],[@ICESCodFactsheet] . This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively.
 
-The code for these processes is `Optimising_ftarget_in_MixME_mult_points_parallel.R` and `Two_stocks_Optimising_ftarget_in_shortcut_model.R` respectively.
+Explain modeling of SSB and justify move. - TODO EXPLAIN HOE DUE OT DETERMNISTIC\< THIS IS THE SASME AS TEH ICES GUIDELINES  - in risk calc document
 
-Due to the nature of the data, we have been forced to model risk in a different way to keep compute time low. - JUSTIFICATION This will also be fully explained later but for now we will note that we have a risk threshold that should not be exceeded.
+For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as it only has one iteration and the noise is pre-calculated. These conditions simplify the simulation but unfortunately mean that we cannot calculate $P(SSB < B_{lim})$ by checking across multiple iterations to see how many times this has occurred. Instead, we have extracted $\textrm{min}(SSB)$ for each sampled point from the years 2030-2039 in the simulation and then modelled these as a GP. This allows us to predict possible $\textrm{min}(SSB)$ values at each point in the design space and see how many of these predictions fall below $B_{lim}$ to calculate $P(\textrm{min}(SSB) < B_{lim})$. This method of calculation meets the ICES precautionary standards in our simulation because it is deterministic. - CITATIONS FOR THIS PARAGRAPH - DON\@T FOGRGET TEH ONE FOR USING ONLY LAST TEN YEARS
+
+EXPLAIN WHY CHANGING GP TO ONLY SQUARED MEAN for catch.
 
 The process for the first half of the project adapted to our new situation is outlined again. We take a Bayesian History Matching (BHM) approach. Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. Then, for each round we do the following:
 
--   We set up or update the Gaussian Processes (GPs) to model the risk for each stock and the GP to model the catch
+-   We set up or update the Gaussian Processes (GPs) to model the minimum SSB from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
--   We can then use the risk as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have risk below the threshold
+-   We can then use the Blim as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have SSB above Blim for all of the last ten years of the simulation (2030-2039)
 
 -   We use the GP which is modelling the total catch to get the value for the total catch at every point in the sample space, which will have some uncertainty
 
@@ -40,7 +42,7 @@ The process for the first half of the project adapted to our new situation is ou
 
 -   We use the Knowledge Gradient (KG) acquisition function to select $n-1$ plausible points to sample in the next round, as per the discussion in [Deciding which acquisition function is best](https://github.com/dtj504-pixel/DissertationWork/blob/main/Deciding%20which%20acquisition%20function%20is%20best.qmd)
 
-We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the risk below the threshold.
+We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$.
 
 ## The risk function
 

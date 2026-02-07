@@ -342,8 +342,8 @@ doOne <- function(run_id,input_data){
     res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, input = input)
     
     # Get Catch directly from the 'tracking' object
-    catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
-    catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+    catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2030:2039)], na.rm = TRUE)
+    catch_had <- sum(res$tracking$had$stk["C.om", ac(2030:2039)], na.rm = TRUE)
     # Calculate total catch
     total_catch <- catch_cod + catch_had
     
@@ -356,7 +356,7 @@ doOne <- function(run_id,input_data){
     ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
     ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
 
-    # Safety Ctahc for if the simulation failed or produced all NAs
+    # Safety Catch for if the simulation failed or produced all NAs
     if(is.infinite(ssb_cod_min) | is.na(ssb_cod_min)) ssb_cod_min <- 0
     if(is.infinite(ssb_had_min) | is.na(ssb_had_min)) ssb_had_min <- 0
 
