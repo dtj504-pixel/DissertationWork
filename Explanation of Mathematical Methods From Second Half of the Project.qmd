@@ -10,7 +10,7 @@ bibliography: second_half_references.bib
 
 What mathematical methods will I explain in this document that have not been explained in [Explanation of Mathematical Methods from First Half of the Project](https://github.com/dtj504-pixel/DissertationWork/blob/main/Explanation%20of%20Mathematical%20Methods%20From%20First%20Half%20of%20the%20Project.qmd)?
 
--   The risk function
+-   Calculating the risk
 
 -   The basics of the MixME model - BREAK DOWN A BIT MORE LATER
 
@@ -22,9 +22,9 @@ I focused on the datasets from the Fixed fishing mortality management strategy e
 
 Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. I was told by a colleague at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESCodFactsheet],[@ICESCodFactsheet]. This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively.
 
-For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but unfortunately mean that we cannot use the standard ICES definition of risk to calculate $Risk = P(SSB < B_{lim})$ [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we extract $\textrm{min}(SSB)$ for each sampled point from the years 2030-2039 in the simulation and then model these as a GP [@Originalpaper][@ICES2019WKGMSE2]. This allows us to predict possible $\textrm{min}(SSB)$ values at each point in the design space and see how many of these predictions fall below $B_{lim}$ to calculate $P(\textrm{min}(SSB) < B_{lim})$ [@Originalpaper]. This method of calculation satisfies the ICES precautionary standard [@ICES2019WKGMSE2]. By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the simulation and so we implicitly guarantee that the maximum annual risk remains below the 5% threshold.
+For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but unfortunately mean that we cannot use the standard ICES definition of risk to calculate $Risk = P(SSB < B_{lim})$ [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we extract $\textrm{min}(SSB)$ for each sampled point from the years 2030-2039 in the simulation and then model these as a GP [@Originalpaper][@ICES2019WKGMSE2]. This allows us to predict possible $\textrm{min}(SSB)$ values at each point in the design space and see how many of these predictions fall below $B_{lim}$ to calculate $P(\textrm{min}(SSB) < B_{lim})$ [@Originalpaper]. This method of calculation satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
 
-Due to the change in stocks being modelled, I have decided to keep the GP prior modelled by the `~.^2` function in R for each round of the optimisation process. Despite the more complicated prior used in later rounds in `case_study8.R` being designed to approximate yield curves, it could turn out to be too prescriptive for haddock [@Originalpaper]. - STILL ENED TO JUSTIFY TOO PRESCRIPTIVE Leaving the GP more general could be argued to be more effective for letting it explore the space itself even if it takes more time to find the optimal point. - CITATIONS FOR THIS PARAGRAPH
+Due to the change in stocks being modelled, I have decided to keep the GP prior modelled by the `~.^2` function in R for every round of the optimisation process. Despite the more complicated prior used in later rounds in `case_study8.R` being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME], [@Ulrich201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points [@williams2006gaussian].
 
 The process for the first half of the project adapted to our new situation is outlined again. We take a Bayesian History Matching (BHM) approach. Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. Then, for each round we do the following:
 
@@ -42,10 +42,16 @@ We repeat this process until there is only one plausible point left and then we 
 
 ## The risk function
 
+In contrast to the first half of the project, we now calculate the risk using the SSB. We have described it above briefly but will go into more detail here.
+
+By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the simulation and so we implicitly guarantee that the maximum annual risk remains below the 5% threshold.
+
 ## The basics of the MixME model
 
 # Further areas for Development
 
 ## Doing a proper risk calculation
+
+We would need multiple iterations for this.
 
 Precautionary is a requirement for many jurisdictions. - GET CITATION
