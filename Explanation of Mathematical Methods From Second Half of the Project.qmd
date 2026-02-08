@@ -24,15 +24,15 @@ Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEw
 
 For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but unfortunately mean that we cannot use the standard ICES definition of risk to calculate $Risk = P(SSB < B_{lim})$ [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we extract $\textrm{min}(SSB)$ for each sampled point from the years 2030-2039 in the simulation and then model these as a GP [@Originalpaper][@ICES2019WKGMSE2]. This allows us to predict possible $\textrm{min}(SSB)$ values at each point in the design space and see how many of these predictions fall below $B_{lim}$ to calculate $P(\textrm{min}(SSB) < B_{lim})$ [@Originalpaper]. This method of calculation satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
 
-Due to the change in stocks being modelled, I have decided to keep the GP prior modelled by the `~.^2` function in R for every round of the optimisation process. Despite the more complicated prior used in later rounds in `case_study8.R` being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME], [@Ulrich201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points [@williams2006gaussian].
+Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled by the `~.^2` function in R for every round of the optimisation process. Despite the more complicated prior used in later rounds in `case_study8.R` being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME], [@Ulrich201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points [@williams2006gaussian].
 
 The process for the first half of the project adapted to our new situation is outlined again. We take a Bayesian History Matching (BHM) approach. Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. Then, for each round we do the following:
 
--   We set up or update the Gaussian Processes (GPs) to model the minimum SSB from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
+-   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
--   We can then use the Blim as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have SSB above Blim for all of the last ten years of the simulation (2030-2039)
+-   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $SSB$ above $B_{lim}$ for all of the last ten years of the simulation (2030-2039)
 
--   We use the GP which is modelling the total catch to get the value for the total catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling the total catch to predict the value for the total catch at every point in the sample space, which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best total catch)
 
@@ -40,9 +40,78 @@ The process for the first half of the project adapted to our new situation is ou
 
 We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$.
 
-## The risk function
+## Calculating the risk
 
-In contrast to the first half of the project, we now calculate the risk using the SSB. We have described it above briefly but will go into more detail here.
+In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here.
+
+We should quickly note before our calculations that our new sample space is as below:
+
+``` r
+# Define Sample Space as discrete with 0.02 increments
+dat <- data.frame(expand.grid(
+  Fcod = seq(0.0, 0.6, by=0.02),
+  Fhad = seq(0.0, 0.6, by=0.02)
+))
+```
+
+which is acceptable due to standard fishing mortality ranges for these stocks given across the literature. - FIND CITATIONS
+
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]:
+
+``` r
+## // Extract the min ssb at the last ten years of the simulation for both stocks //
+    # Picking up long term SSB values to see if they dip below Blim at any point
+    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2030:2039)])
+    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2030:2039)])
+
+    # Getting minimum ssb during this time for each stock to model with GPs
+    ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
+    ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
+```
+
+We then put these results into a GP for each stock:
+
+``` r
+gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",
+                 response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,
+                 covtype = "exp")
+gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",
+                 response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,
+                 covtype = "exp")
+```
+
+These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification [@williams2006gaussian]. They have also kept the same estimation method, nugget and kernel.
+
+Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space:
+
+``` r
+pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
+pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
+```
+
+We then calculate $Risk = P(SSB < B_{lim})$ for each stock:
+
+``` r
+# Get the probability that sbb =< Blim for cod and haddock
+pssb_cod <- pnorm(Blim_cod, pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
+pssb_had <- pnorm(Blim_had, pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
+```
+
+Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future:
+
+``` r
+# Loop over candidate points
+  for (i in seq_len(m)) {
+    # set to 0 for any unsafe points - here has become probability that 
+    # ssb < Blim is > 0.05in the years 2030-2039 
+    # i.e. the run is not precautionary in these years
+    if (pssb_cod[i] > 0.05 || pssb_had[i] > 0.05) {
+      kg[i] <- 0
+      next
+    }
+```
+
+We can say `ssb < Blim` here instead of `ssb =< Blim` because we are sampling from a continuous normal distribution and so they are equivalent.
 
 By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the simulation and so we implicitly guarantee that the maximum annual risk remains below the 5% threshold.
 

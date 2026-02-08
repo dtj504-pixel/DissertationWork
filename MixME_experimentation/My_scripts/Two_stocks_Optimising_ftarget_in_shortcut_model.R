@@ -396,7 +396,7 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
 
   # Loop over candidate points
   for (i in seq_len(m)) {
-    # set to 0 for any unsafe points - here has become probability that ssb is =< Blim is > 0.05 in the years 2030-2039
+    # set to 0 for any unsafe points - here has become probability that ssb is < Blim is > 0.05 in the years 2030-2039
     # i.e. the run is not precautionary in these years
     if (pssb_cod[i] > 0.05 || pssb_had[i] > 0.05) {
       kg[i] <- 0

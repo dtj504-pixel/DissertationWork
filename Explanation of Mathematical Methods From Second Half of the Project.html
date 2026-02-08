@@ -21,6 +21,41 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 /* CSS for citations */
 div.csl-bib-body { }
 div.csl-entry {
@@ -124,28 +159,72 @@ window.Quarto = {
 <h1>Introduction</h1>
 <p>What mathematical methods will I explain in this document that have not been explained in <a href="https://github.com/dtj504-pixel/DissertationWork/blob/main/Explanation%20of%20Mathematical%20Methods%20From%20First%20Half%20of%20the%20Project.qmd">Explanation of Mathematical Methods from First Half of the Project</a>?</p>
 <ul>
-<li><p>The risk function</p></li>
+<li><p>Calculating the risk</p></li>
 <li><p>The basics of the MixME model - BREAK DOWN A BIT MORE LATER</p></li>
 </ul>
 </section>
 <section id="context" class="level1">
 <h1>Context</h1>
 <p>The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch over all years of the projection will minimise the chance that a simulation where a stock fails is chosen <span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>,<span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019</a>)</span>. It also follows ICES guidelines to only calculate yield and risk for the last ten years for long-term projection, to allow time for a recovery period <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019</a>)</span>.</p>
-<p>I focused on the datasets from the <a href="https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy">fixed fishing mortality management strategy example</a> (<code>mixedfishery_MixME_om</code>) and the <a href="https://github.com/CefasRepRes/MixME/wiki/Exploring-simulation-outputs">exploring simulation outputs example</a> (<code>mixedfishery_MixME_input</code>) which are both in the MixME documentation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. However, for the second dataset <code>mixedfishery_MixME_input</code> I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation and so is deterministic. The code for these datasets is <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> and <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> respectively.</p>
-<p>Both of these datasets have two stocks (cod and haddock) and two fleets <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. I was told by a colleague at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span> . This allows me to use the same methods as in the first half of the project by replacing <span class="math inline">\(F_{target}\)</span> with <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(B_{trigger}\)</span> with <span class="math inline">\(F_{had}\)</span>, where <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> are the fishing mortalities for cod and haddock respectively.</p>
-<p>For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>. These conditions simplify the simulation but unfortunately mean that we cannot calculate <span class="math inline">\(P(SSB &lt; B_{lim})\)</span> by checking across multiple iterations to see how many times this has occurred. Instead, we have extracted <span class="math inline">\(\textrm{min}(SSB)\)</span> for each sampled point from the years 2030-2039 in the simulation and then modelled these as a GP. This allows us to predict possible <span class="math inline">\(\textrm{min}(SSB)\)</span> values at each point in the design space and see how many of these predictions fall below <span class="math inline">\(B_{lim}\)</span> to calculate <span class="math inline">\(P(\textrm{min}(SSB) &lt; B_{lim})\)</span>. This method of calculation meets the ICES precautionary standards in our simulation because it is deterministic. - CITATIONS FOR THIS PARAGRAPH - DON’T FOGRGET TEH ONE FOR USING ONLY LAST TEN YEARS</p>
-<p>Due to the change in stocks being modelled, I have decided to keep the GP prior modelled by the <code>~.^2</code> function in R for each round of the optimisation process. Despite the more complicated prior used in later rounds in <code>case_study8.R</code> being designed to approximate yield curves, it could turn out to be too prescriptive for haddock <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref"><strong>Originalpaper?</strong></a>)</span>. - STILL ENED TO JUSTIFY TOO PRESCRIPTIVE Leaving the GP more general could be argued to be more effective for letting it explore the space itself even if it takes more time to find the optimal point. - CITATIONS FOR THIS PARAGRAPH</p>
+<p>I focused on the datasets from the Fixed fishing mortality management strategy example (<code>mixedfishery_MixME_om</code>) and the Exploring simulation outputs example (<code>mixedfishery_MixME_input</code>) which are both in the MixME documentation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. However, for the second dataset <code>mixedfishery_MixME_input</code> I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation and so is deterministic. The code for these datasets is <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> and <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> respectively.</p>
+<p>Both of these datasets have two stocks (cod and haddock) and two fleets <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. I was told by a colleague at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>. This allows me to use the same methods as in the first half of the project by replacing <span class="math inline">\(F_{target}\)</span> with <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(B_{trigger}\)</span> with <span class="math inline">\(F_{had}\)</span>, where <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> are the fishing mortalities for cod and haddock respectively.</p>
+<p>For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>. These conditions simplify the simulation but unfortunately mean that we cannot use the standard ICES definition of risk to calculate <span class="math inline">\(Risk = P(SSB &lt; B_{lim})\)</span> <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019</a>)</span>. Instead, we extract <span class="math inline">\(\textrm{min}(SSB)\)</span> for each sampled point from the years 2030-2039 in the simulation and then model these as a GP [<span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref"><strong>Originalpaper?</strong></a>)</span>]<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019</a>)</span>. This allows us to predict possible <span class="math inline">\(\textrm{min}(SSB)\)</span> values at each point in the design space and see how many of these predictions fall below <span class="math inline">\(B_{lim}\)</span> to calculate <span class="math inline">\(P(\textrm{min}(SSB) &lt; B_{lim})\)</span> <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref"><strong>Originalpaper?</strong></a>)</span>. This method of calculation satisfies the ICES precautionary standard <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019</a>)</span>.</p>
+<p>Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled by the <code>~.^2</code> function in R for every round of the optimisation process. Despite the more complicated prior used in later rounds in <code>case_study8.R</code> being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref"><strong>Originalpaper?</strong></a>)</span>,<span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>, <span class="citation" data-cites="Ulrich201238">(<a href="#ref-Ulrich201238" role="doc-biblioref"><strong>Ulrich201238?</strong></a>)</span>. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <p>The process for the first half of the project adapted to our new situation is outlined again. We take a Bayesian History Matching (BHM) approach. Firstly, to get some initial data, we randomly sample our first set of <span class="math inline">\(n-1\)</span> points, where <span class="math inline">\(n\)</span> is the number of cores the system we are on has. Then, for each round we do the following:</p>
 <ul>
-<li><p>We set up or update the Gaussian Processes (GPs) to model the minimum SSB from 2030-2039 for each stock and the GP to model the total catch from 2030-2039</p></li>
-<li><p>We can then use the Blim as a threshold so that we only consider the values of <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> that have SSB above Blim for all of the last ten years of the simulation (2030-2039)</p></li>
-<li><p>We use the GP which is modelling the total catch to get the value for the total catch at every point in the sample space, which will have some uncertainty</p></li>
+<li><p>We set up or update the Gaussian Processes (GPs) to model the <span class="math inline">\(\textrm{min}(SSB)\)</span> from 2030-2039 for each stock and the GP to model the total catch from 2030-2039</p></li>
+<li><p>We can then use the <span class="math inline">\(B_{lim}\)</span> for each stock as a threshold so that we only consider the values of <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> that have <span class="math inline">\(SSB\)</span> above <span class="math inline">\(B_{lim}\)</span> for all of the last ten years of the simulation (2030-2039)</p></li>
+<li><p>We use the GP which is modelling the total catch to predict the value for the total catch at every point in the sample space, which will have some uncertainty</p></li>
 <li><p>We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best total catch)</p></li>
 <li><p>We use the Knowledge Gradient (KG) acquisition function to select <span class="math inline">\(n-1\)</span> plausible points to sample in the next round, as per the discussion in <a href="https://github.com/dtj504-pixel/DissertationWork/blob/main/Deciding%20which%20acquisition%20function%20is%20best.qmd">Deciding which acquisition function is best</a></p></li>
 </ul>
 <p>We repeat this process until there is only one plausible point left and then we will accept this as being the <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> that maximise the catch whilst keeping the <span class="math inline">\(SSB\)</span> above <span class="math inline">\(B_{lim}\)</span>.</p>
-<section id="the-risk-function" class="level2">
-<h2 class="anchored" data-anchor-id="the-risk-function">The risk function</h2>
+<section id="calculating-the-risk" class="level2">
+<h2 class="anchored" data-anchor-id="calculating-the-risk">Calculating the risk</h2>
+<p>In contrast to the first half of the project, we now calculate the risk using the <span class="math inline">\(SSB\)</span>. We have described it above briefly but will go into more detail here.</p>
+<p>We should quickly note before our calculations that our new sample space is as below:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define Sample Space as discrete with 0.02 increments</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>dat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">expand.grid</span>(</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fcod =</span> <span class="fu">seq</span>(<span class="fl">0.0</span>, <span class="fl">0.6</span>, <span class="at">by=</span><span class="fl">0.02</span>),</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fhad =</span> <span class="fu">seq</span>(<span class="fl">0.0</span>, <span class="fl">0.6</span>, <span class="at">by=</span><span class="fl">0.02</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>which is acceptable due to standard fishing mortality ranges for these stocks given across the literature. - FIND CITATIONS</p>
+<p>Firstly, we extract the <span class="math inline">\(\textrm{min}(SSB)\)</span> for each stock from the result of the simulation we have run using the tracking object <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="do">## // Extract the min ssb at the last ten years of the simulation for both stocks //</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Picking up long term SSB values to see if they dip below Blim at any point</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    ssb_cod_data <span class="ot">&lt;-</span> <span class="fu">c</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>cod<span class="sc">$</span>stk[<span class="st">"SB.om"</span>, <span class="fu">ac</span>(<span class="dv">2030</span><span class="sc">:</span><span class="dv">2039</span>)])</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    ssb_had_data <span class="ot">&lt;-</span> <span class="fu">c</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>had<span class="sc">$</span>stk[<span class="st">"SB.om"</span>, <span class="fu">ac</span>(<span class="dv">2030</span><span class="sc">:</span><span class="dv">2039</span>)])</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Getting minimum ssb during this time for each stock to model with GPs</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    ssb_cod_min <span class="ot">&lt;-</span> <span class="fu">min</span>(ssb_cod_data, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    ssb_had_min <span class="ot">&lt;-</span> <span class="fu">min</span>(ssb_had_data, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We then put these results into a GP for each stock:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>gp_cod_ssb <span class="ot">&lt;-</span> <span class="fu">km</span>(<span class="sc">~</span>.<span class="sc">^</span><span class="dv">2</span>,<span class="at">design=</span>runs[,<span class="fu">c</span>(<span class="st">"Fcod"</span>,<span class="st">"Fhad"</span>)],<span class="at">estim.method=</span><span class="st">"MLE"</span>,</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                 <span class="at">response =</span> ssb_cod_min,<span class="at">nugget=</span><span class="fl">1e-12</span><span class="sc">*</span><span class="fu">var</span>(ssb_cod_min)<span class="sc">+</span><span class="fl">1e-15</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>                 <span class="at">covtype =</span> <span class="st">"exp"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>gp_had_ssb <span class="ot">&lt;-</span> <span class="fu">km</span>(<span class="sc">~</span>.<span class="sc">^</span><span class="dv">2</span>,<span class="at">design=</span>runs[,<span class="fu">c</span>(<span class="st">"Fcod"</span>,<span class="st">"Fhad"</span>)],<span class="at">estim.method=</span><span class="st">"MLE"</span>,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>                 <span class="at">response =</span> ssb_had_min,<span class="at">nugget=</span><span class="fl">1e-12</span><span class="sc">*</span><span class="fu">var</span>(ssb_had_min)<span class="sc">+</span><span class="fl">1e-15</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                 <span class="at">covtype =</span> <span class="st">"exp"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>These GPs have remained modelled by the <code>.^2</code> function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. They have also kept the same estimation method, nugget and kernel.</p>
+<p>Next, we predict the <span class="math inline">\(\textrm{min}(SSB)\)</span> for every point in the sample space:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pred_ssb_cod <span class="ot">&lt;-</span> <span class="fu">predict</span>(gp_cod_ssb, <span class="at">newdata =</span> dat, <span class="at">type =</span> <span class="st">"SK"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>pred_ssb_had <span class="ot">&lt;-</span> <span class="fu">predict</span>(gp_had_ssb, <span class="at">newdata =</span> dat, <span class="at">type =</span> <span class="st">"SK"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We then calculate <span class="math inline">\(Risk = P(SSB &lt; B_{lim})\)</span> for each stock:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get the probability that sbb =&lt; Blim for cod and haddock</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>pssb_cod <span class="ot">&lt;-</span> <span class="fu">pnorm</span>(Blim_cod, pred_ssb_cod<span class="sc">$</span>mean, pred_ssb_cod<span class="sc">$</span>sd <span class="sc">+</span> <span class="fl">1e-12</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>pssb_had <span class="ot">&lt;-</span> <span class="fu">pnorm</span>(Blim_had, pred_ssb_had<span class="sc">$</span>mean, pred_ssb_had<span class="sc">$</span>sd <span class="sc">+</span> <span class="fl">1e-12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop over candidate points</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(m)) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># set to 0 for any unsafe points - here has become probability that </span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="co"># ssb &lt; Blim is &gt; 0.05in the years 2030-2039 </span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="co"># i.e. the run is not precautionary in these years</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (pssb_cod[i] <span class="sc">&gt;</span> <span class="fl">0.05</span> <span class="sc">||</span> pssb_had[i] <span class="sc">&gt;</span> <span class="fl">0.05</span>) {</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>      kg[i] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">next</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We can say <code>ssb &lt; Blim</code> here instead of <code>ssb =&lt; Blim</code> because we are sampling from a continuous normal distribution and so they are equivalent.</p>
+<p>By ensuring that <span class="math inline">\(P(\textrm{min}(SSB) &lt; B_{lim}) &lt; 0.05\)</span> we ensure that <span class="math inline">\(P(SSB &lt; B_{lim})&lt;0.05\)</span> for every year in the simulation and so we implicitly guarantee that the maximum annual risk remains below the 5% threshold.</p>
 </section>
 <section id="the-basics-of-the-mixme-model" class="level2">
 <h2 class="anchored" data-anchor-id="the-basics-of-the-mixme-model">The basics of the MixME model</h2>
@@ -155,6 +234,7 @@ window.Quarto = {
 <h1>Further areas for Development</h1>
 <section id="doing-a-proper-risk-calculation" class="level2">
 <h2 class="anchored" data-anchor-id="doing-a-proper-risk-calculation">Doing a proper risk calculation</h2>
+<p>We would need multiple iterations for this.</p>
 <p>Precautionary is a requirement for many jurisdictions. - GET CITATION</p>
 
 </section>
@@ -175,6 +255,9 @@ Pace, Matthew, José Oliveira, Simon Fischer, and Paul Dolder. 2025a. <span>“M
 </div>
 <div id="ref-MixMESupp" class="csl-entry" role="listitem">
 ———. 2025b. <span>“"Supplementary Material a: Conditioning a Multi-Stock, Multi-Fleet Operating Model for Celtic Sea Cod, Haddock and Whiting",”</span> February. <a href="https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.70005&amp;file=mee370005-sup-0001-Supinfo1.pdf">https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.70005&amp;file=mee370005-sup-0001-Supinfo1.pdf</a>.
+</div>
+<div id="ref-williams2006gaussian" class="csl-entry" role="listitem">
+Williams, Christopher KI, and Carl Edward Rasmussen. 2006. <em>Gaussian Processes for Machine Learning</em>. Vol. 2. 3. MIT press Cambridge, MA.
 </div>
 </div></section></div></main>
 <!-- /main column -->
