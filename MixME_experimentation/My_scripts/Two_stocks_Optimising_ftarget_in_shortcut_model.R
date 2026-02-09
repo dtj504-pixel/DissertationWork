@@ -280,7 +280,7 @@ obj_func <- function(f_cod, f_had, input) {
     input$ctrl_obj$est@args$fitList <- NULL
     input$ctrl_obj$est@args$fwdList <- NULL
     
-    # INJECT CUSTOM FUNCTIONS into the model
+    # Change HCR method to be ICES_HCR
     input$ctrl_obj$hcr@args$hcrmethod$cod <- ICES_HCR
     input$ctrl_obj$hcr@args$hcrmethod$had <- ICES_HCR
     
@@ -489,7 +489,7 @@ round_num <- 1
 runs <- NULL
 
 
-# Splitting up first roudn to stick to same prioirs in GPs as case_study8.R?
+# Splitting up first round to stick to same priors in GPs as case_study8.R?
 
 
 # START LOOP
