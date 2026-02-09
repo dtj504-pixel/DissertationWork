@@ -24,6 +24,8 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   # Create the main MixME input object
   # This bundles together all the components needed to run the MSE
   # Set management type to fixedF
+
+  # THERE'S A PARALLEL SETTING HERE?
   input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem, management_lag = 0, management_type = "fixedF", parallel = FALSE)
   
   # Set up the observation error model
@@ -269,8 +271,8 @@ dat <- data.frame(expand.grid(
 # // SETUP FOR LOOP //
 
 # Define Blims
-  Blim_cod <- 107000
-  Blim_had <- 9227
+Blim_cod <- 107000
+Blim_had <- 9227
 
 # Set an intial F target for both stocks so the first loop has something to work with
 # Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy

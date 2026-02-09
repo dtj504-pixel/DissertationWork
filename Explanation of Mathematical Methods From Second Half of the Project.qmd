@@ -14,6 +14,8 @@ What mathematical methods will I explain in this document that have not been exp
 
 -   The basics of the MixME model - BREAK DOWN A BIT MORE LATER
 
+-   Parallelisation
+
 # Context
 
 The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch over all years of the projection will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2]. It also follows ICES guidelines to only calculate yield and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
@@ -128,15 +130,57 @@ Going to write down everything and then remove areas Gustav said I don't need to
 
 I have two slightly different pieces of code. Think the one I have put first uses less methods.
 
+EXPLAIN why I start what the f_cod and f_had that I do
+
 Optimising_ftarget_in_MixME_mult_points_parallel
 
--   
+-   Creating mixedfishery_MixME_om
+
+-   Creating stk_oem
+
+-   Management lag
+
+-   Management type
+
+-   obj_func
+
+-   Check for advcie failure
+
+-   Check for effort optimisation failure
+
+-   tracking object
+
+-   Check quota uptake
+
+-   Check maximum overshoot
+
+-   HCR parameters and setup
+
+-   doOne
+
+-   result object? mostly use tracking object from this
+
+-   calculateQuotashare
+
+-   stfMixME
+
+-   Intial projection for the year 2020
+
+-   FCB matrix
+
+-   FLasher::fwdControl
+
+-   FLasher::fwd
+
+-   Cleaning up result object
 
 Two_stocks_Optimising_ftarget_in_shortcut_model:
 
 -   ICES_HCR function (including setting HCR parameters)
 
 -   forecast_fun
+
+-   Intial projection for the year 2020?
 
 -   Set Forecast arguments on line 298 - think this is averaging parameters so don't need
 
