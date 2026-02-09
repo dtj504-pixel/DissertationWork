@@ -58,7 +58,7 @@ dat <- data.frame(expand.grid(
 
 This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki].
 
-We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2019CodBlim]:
+We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]:
 
 ``` r
 Blim_cod <- 107000
@@ -130,7 +130,11 @@ Going to write down everything and then remove areas Gustav said I don't need to
 
 I have two slightly different pieces of code. Think the one I have put first uses less methods.
 
-EXPLAIN why I start what the f_cod and f_had that I do
+EXPLAIN why I start with the f_cod and f_had that I do
+
+### Starting $F_{cod}$ and $F_{had}$ 
+
+We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES202HaddockBlim].
 
 Optimising_ftarget_in_MixME_mult_points_parallel
 
