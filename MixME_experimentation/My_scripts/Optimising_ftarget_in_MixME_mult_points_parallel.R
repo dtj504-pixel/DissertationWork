@@ -16,7 +16,7 @@ library(foreach)
 library(parallel)
 library(plot3D)
 
-print(" This is Optimising_ftarget_in_MixME_mult_points_parallel")
+print("This is Optimising_ftarget_in_MixME_mult_points_parallel")
 
 
 obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {

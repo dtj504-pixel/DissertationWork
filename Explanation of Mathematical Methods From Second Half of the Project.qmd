@@ -128,19 +128,35 @@ By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB <
 
 Going to write down everything and then remove areas Gustav said I don't need to worry about.
 
-I have two slightly different pieces of code. Think the one I have put first uses less methods.
-
-EXPLAIN why I start with the f_cod and f_had that I do
-
 ### Starting $F_{cod}$ and $F_{had}$ 
 
 We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES202HaddockBlim].
 
+### Creating the Operating model
+
+We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. In both of our files, this is loaded in with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it gives as a result the catch (in terms of landings and discards) from each fleet and the survivors from that year. Recruitment is done at the beginning of each time step [@MixMEwiki].
+
+MOST OF THE BELOW SHOULD BE IN THE WIKI EXAMPLE
+
+We use this in the makeMixME function to make the MixME model. We also use it to determine the quota share of the catch for each fleet in the calculateQuotashare function. WE also use it ot project the fishery forwards in the stfMixME function.
+
+We also use it to set and arbitrary effort target for each fleet in 2020, as we only care about the values at the beginning of 2020. We also use it to make the FCB matrix which shows which fleets catch which stocks.
+
+We use it in the FLasher::fwd projection were we simulate one year of fishing to get the starting conditions right.
+
+After this, we update it with the projected population numbers for the end of 2020.
+
+WE use it with FLSTocks to make the make the observation error model, stk_oem.
+
+WHERE DO WE USE THIS?
+
+### Creating the Observation Error Model
+
+We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet [@mixMEwiki].
+
+WHERE DO WE USE THIS?
+
 Optimising_ftarget_in_MixME_mult_points_parallel
-
--   Creating mixedfishery_MixME_om
-
--   Creating stk_oem
 
 -   Management lag
 
