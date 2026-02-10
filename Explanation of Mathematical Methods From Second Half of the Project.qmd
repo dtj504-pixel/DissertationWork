@@ -16,6 +16,8 @@ What mathematical methods will I explain in this document that have not been exp
 
 -   Parallelisation
 
+HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary
+
 # Context
 
 The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch over all years of the projection will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2]. It also follows ICES guidelines to only calculate yield and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
@@ -148,15 +150,18 @@ The steps for fully assembling the operating model for input into the MixME mode
 
 4.  Generate an observation error model
 
-MOST OF THE BELOW SHOULD BE IN THE WIKI EXAMPLE
-
 #### Estimate historic quota-share for the two fleets
 
-Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the `calculateQuotashare` function.
+Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the `calculateQuotashare` function [@MixMEwiki].
+
+``` R
+out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, 
+       flts = mixedfishery_MixME_om$flts, verbose = TRUE)
+```
 
 #### Project stock n years into the future
 
-To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended. These are:
+To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended [@MixMEwiki]. These are:
 
 1.  All stock parameters, landings and discards mean individual weights and landed fraction
 
@@ -164,31 +169,80 @@ To carry out our 20 year projection, we need to extend the stock and fishery str
 
 3.  Quota-share
 
-We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function.
+We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function [@MixMEwiki].
+
+``` R
+out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
+       wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
+```
 
 #### Calculate numbers of both stock in initial year
 
-To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package.
+To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package [@MixMEwiki].
 
-We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target).  - ? FIND OUT MORE
+``` R
+# initial projection year
+iy = 2020
 
-BELOW ARE NOT EXPLAINE DIN DETAIL ON WIKI
+# set an arbitrary effort-based target for each fleet as we only want the
+# values at the beginning of 2020
+ctrlArgs <- lapply(1:length(mixedfishery_MixME_om$flts), function(x) {
+  list(year = iy,quant = "effort",fishery = names(mixedfishery_MixME_om$flts)[x],value = 1)
+})
 
-We also use it to make the FCB matrix which shows which fleets catch which stocks. - NOT EXPLAINED ON WIKI
+# This matrix maps which fleets catch which stocks
+ctrlArgs$FCB <- makeFCB(biols = mixedfishery_MixME_om$stks, flts = mixedfishery_MixME_om$flts)
 
-We use it in the FLasher::fwd projection were we simulate one year of fishing to get the starting conditions right. - NOT EXPLAINED ON WIKI
+# Generate effort-based FLasher::fwd forecast control
+flasher_ctrl <- do.call(FLasher::fwdControl, ctrlArgs)
 
-After this, we update it with the projected population numbers for the end of 2020. - NOT EXPLAINED ON WIKI
+# Simulate one year of fishing to get starting conditions right
+omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks, fishery = mixedfishery_MixME_om$flts, control = flasher_ctrl)
 
-We then use this in the makeMixME function to make the MixME model, which can then be run to create our projections into the future.  - EXPLAINED LATER ON WIKI
+#Update the operating model with projected population numbers
+mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
+mixedfishery_MixME_om$stks$cod@n[,ac(iy)] <- omfwd$biols$cod@n[,ac(iy)]
 
-### Creating the Observation Error Model
+```
 
-We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet [@mixMEwiki].
+We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target) [@MixMEwiki].  - ? FIND OUT MORE
 
-USE OM HERE TOO
+#### Creating the Observation Error Model
 
-WHERE DO WE USE THIS?
+This is another important component of the MixME model [@MixMEwiki]. We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet (which we obtained earlier from the `mixedfishery_MixME_om` object) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki]. - MAY NEED TO REFERENCE MORE COMPLICATED TUTORIAL FOR FULL EXPLANATION OF THIS
+
+``` R
+# Create a list of FLStock objects from the FLBiol objects in 
+# the operating model
+stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
+  
+  # for each fleet, find which catch element corresponds to the current stock
+  catch <- sapply(mixedfishery_MixME_om$flts, function(y) which(names(y) 
+           %in% name(x)))
+  
+  # get catches form each fleet and convert to FLStock
+  xx <- as.FLStock(x, mixedfishery_MixME_om$flts, full = FALSE, catch = catch)
+  
+  # specifies fishing mortality is measured as instantaneous 
+  # fishing mortality rate
+  units(xx@harvest) <- "f"
+  
+  # remove excess data as we don't observe stock biomass or stock 
+  # numbers-at-age directly in reality forces us to simulate 
+  # these using only the available data
+  stock.n(xx)[] <- NA
+  stock(xx)[]   <- NA
+  
+  # return the converted object
+  return(xx)
+}))
+```
+
+### Build the MixME input object
+
+We then use this in the `makeMixME` function to make the MixME model, which can then be run to create our projections into the future.
+
+We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model.
 
 Optimising_ftarget_in_MixME_mult_points_parallel
 
