@@ -130,31 +130,63 @@ Going to write down everything and then remove areas Gustav said I don't need to
 
 ### Starting $F_{cod}$ and $F_{had}$ 
 
-We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES202HaddockBlim].
+We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES2020HaddockBlim].
 
 ### Creating the Operating model
 
-We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability**.**
+We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and form Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki]**. - DISCUSS CATCHABILITY?**
 
-In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it gives as a result the catch (in terms of landings and discards) from each fleet and the survivors from that year - FIND THIS AGAIN. Recruitment is done at the beginning of each time step [@MixMEwiki].
+In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki].
+
+The steps for fully assembling the operating model for input into the MixME model are:
+
+1.  Estimate historic quota-share for the two fleets
+
+2.  Project stock n years into the future
+
+3.  Calculate numbers of both stocks in initial year
+
+4.  Generate an observation error model
 
 MOST OF THE BELOW SHOULD BE IN THE WIKI EXAMPLE
 
-We use this in the makeMixME function to make the MixME model. We also use it to determine the quota share of the catch for each fleet in the calculateQuotashare function. WE also use it ot project the fishery forwards in the stfMixME function.
+#### Estimate historic quota-share for the two fleets
 
-We also use it to set and arbitrary effort target for each fleet in 2020, as we only care about the values at the beginning of 2020. We also use it to make the FCB matrix which shows which fleets catch which stocks.
+Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the `calculateQuotashare` function.
 
-We use it in the FLasher::fwd projection were we simulate one year of fishing to get the starting conditions right.
+#### Project stock n years into the future
 
-After this, we update it with the projected population numbers for the end of 2020.
+To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended. These are:
 
-WE use it with FLSTocks to make the make the observation error model, stk_oem.
+1.  All stock parameters, landings and discards mean individual weights and landed fraction
 
-WHERE DO WE USE THIS?
+2.  Catchability and catch selection
+
+3.  Quota-share
+
+We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function.
+
+#### Calculate numbers of both stock in initial year
+
+To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package.
+
+We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target).  - ? FIND OUT MORE
+
+BELOW ARE NOT EXPLAINE DIN DETAIL ON WIKI
+
+We also use it to make the FCB matrix which shows which fleets catch which stocks. - NOT EXPLAINED ON WIKI
+
+We use it in the FLasher::fwd projection were we simulate one year of fishing to get the starting conditions right. - NOT EXPLAINED ON WIKI
+
+After this, we update it with the projected population numbers for the end of 2020. - NOT EXPLAINED ON WIKI
+
+We then use this in the makeMixME function to make the MixME model, which can then be run to create our projections into the future.  - EXPLAINED LATER ON WIKI
 
 ### Creating the Observation Error Model
 
 We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet [@mixMEwiki].
+
+USE OM HERE TOO
 
 WHERE DO WE USE THIS?
 
