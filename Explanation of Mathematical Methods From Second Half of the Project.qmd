@@ -134,7 +134,9 @@ We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values giv
 
 ### Creating the Operating model
 
-We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. In both of our files, this is loaded in with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it gives as a result the catch (in terms of landings and discards) from each fleet and the survivors from that year. Recruitment is done at the beginning of each time step [@MixMEwiki].
+We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability**.**
+
+In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it gives as a result the catch (in terms of landings and discards) from each fleet and the survivors from that year - FIND THIS AGAIN. Recruitment is done at the beginning of each time step [@MixMEwiki].
 
 MOST OF THE BELOW SHOULD BE IN THE WIKI EXAMPLE
 
