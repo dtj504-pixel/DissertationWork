@@ -289,16 +289,24 @@ It can be seen above that we have updated the arguments for when catches occur, 
 
 The `tracking` object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. It also contains simulation performance and diagnostics statistics, which is what we will focus on here [@MixMEwiki].
 
+We firstly check for management advice failure [@MixMEwiki]:
+
 ``` R
 ## Check for advice failure
 apply(res$tracking$iterfail, 1, mean)
+```
 
+Then we can also check for effort optimisation failure and the message given if there was any failure [@MixMEwiki]:
+
+``` R
 ## Check for effort optimisation failure
 res$tracking$optim
 
 ## Check for effort optimisation message
 res$tracking$message
+```
 
+``` R
 ## Check quota uptake for cod and haddock
 res$tracking$uptake["cod",,,1]
 res$tracking$uptake["had",,,1]
