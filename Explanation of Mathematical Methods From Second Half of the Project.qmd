@@ -130,7 +130,7 @@ By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB <
 
 Going to write down everything and then remove areas Gustav said I don't need to worry about.
 
-### Starting $F_{cod}$ and $F_{had}$ 
+### Starting $F_{cod}$ and $F_{had}$
 
 We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES2020HaddockBlim].
 
@@ -154,7 +154,7 @@ The steps for fully assembling the operating model for input into the MixME mode
 
 Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the `calculateQuotashare` function [@MixMEwiki].
 
-``` R
+``` r
 out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, 
        flts = mixedfishery_MixME_om$flts, verbose = TRUE)
 ```
@@ -171,7 +171,7 @@ To carry out our 20 year projection, we need to extend the stock and fishery str
 
 We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function [@MixMEwiki].
 
-``` R
+``` r
 out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
        wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
 ```
@@ -180,48 +180,53 @@ out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
 
 To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package [@MixMEwiki].
 
-``` R
+``` r
 # initial projection year
 iy = 2020
 
 # set an arbitrary effort-based target for each fleet as we only want the
 # values at the beginning of 2020
 ctrlArgs <- lapply(1:length(mixedfishery_MixME_om$flts), function(x) {
-  list(year = iy,quant = "effort",fishery = names(mixedfishery_MixME_om$flts)[x],value = 1)
+            list(year = iy,quant = "effort",
+            fishery = names(mixedfishery_MixME_om$flts)[x],value = 1)
 })
 
 # This matrix maps which fleets catch which stocks
-ctrlArgs$FCB <- makeFCB(biols = mixedfishery_MixME_om$stks, flts = mixedfishery_MixME_om$flts)
+ctrlArgs$FCB <- makeFCB(biols = mixedfishery_MixME_om$stks,
+                        flts = mixedfishery_MixME_om$flts)
 
 # Generate effort-based FLasher::fwd forecast control
 flasher_ctrl <- do.call(FLasher::fwdControl, ctrlArgs)
 
 # Simulate one year of fishing to get starting conditions right
-omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks, fishery = mixedfishery_MixME_om$flts, control = flasher_ctrl)
+omfwd <- FLasher::fwd(object = mixedfishery_MixME_om$stks,
+                      fishery = mixedfishery_MixME_om$flts,
+                      control = flasher_ctrl)
 
 #Update the operating model with projected population numbers
 mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
 mixedfishery_MixME_om$stks$cod@n[,ac(iy)] <- omfwd$biols$cod@n[,ac(iy)]
-
 ```
 
-We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target) [@MixMEwiki].  - ? FIND OUT MORE
+We set an arbitrary forecast target here because the 2020 numbers aThe re calculated from existing numbers (rather than a defined target) [@MixMEwiki]. - ? FIND OUT MORE
 
 #### Creating the Observation Error Model
 
 This is another important component of the MixME model [@MixMEwiki]. We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet (which we obtained earlier from the `mixedfishery_MixME_om` object) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki]. - MAY NEED TO REFERENCE MORE COMPLICATED TUTORIAL FOR FULL EXPLANATION OF THIS
 
-``` R
+``` r
 # Create a list of FLStock objects from the FLBiol objects in 
 # the operating model
 stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
   
-  # for each fleet, find which catch element corresponds to the current stock
-  catch <- sapply(mixedfishery_MixME_om$flts, function(y) which(names(y) 
-           %in% name(x)))
+  # for each fleet, find which catch element corresponds 
+  # to the current stock
+  catch <- sapply(mixedfishery_MixME_om$flts, function(y) 
+           which(names(y) %in% name(x)))
   
   # get catches form each fleet and convert to FLStock
-  xx <- as.FLStock(x, mixedfishery_MixME_om$flts, full = FALSE, catch = catch)
+  xx <- as.FLStock(x, mixedfishery_MixME_om$flts, 
+                   full = FALSE, catch = catch)
   
   # specifies fishing mortality is measured as instantaneous 
   # fishing mortality rate
@@ -240,27 +245,31 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 ### Build the MixME input object
 
-We then use this in the `makeMixME` function to make the MixME input object, which can then be used to run the simulation. We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively [@MixMEwiki]. The last argument  - NOT DESCRIBED YET
+We then use this in the `makeMixME` function to make the MixME input object, which can then be used to run the simulation. We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively [@MixMEwiki]. The last argument - NOT DESCRIBED YET
 
-``` R
-  input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem, management_lag = 0, management_type = "fixedF", parallel = FALSE)
+``` r
+  input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem,
+                     management_lag = 0, management_type = "fixedF",
+                     parallel = FALSE)
 ```
 
 ### Running the simulation
 
-Lastly, we update some of the management and simulation settings and run the simulation [@MixMEwiki].
+We update some of the management and simulation settings and then run the simulation [@MixMEwiki].
 
-``` R
+``` r
 # Cod and haddock catches occur at the start of the year so timing=0
 input$oem@args$catch_timing$cod <- 0
 input$oem@args$catch_timing$had <- 0
 
-# Define the age range for calculating average fishing mortality (Fbar) for both stocks
+# Define the age range for calculating average fishing mortality 
+# (Fbar) for both stocks
 input$oem@observations$stk$cod@range[c("minfbar","maxfbar")] <- c(2,4)
 input$oem@observations$stk$had@range[c("minfbar","maxfbar")] <- c(3,5)
 
 
-# Set the target fishing mortality for both stocks as the next point decided by the algorithm
+# Set the target fishing mortality for both stocks as 
+# the next point decided by the algorithm
 input$ctrl_obj$hcr@args$ftrg$cod <- f_cod
 input$ctrl_obj$hcr@args$ftrg$had <- f_had
 
@@ -270,40 +279,71 @@ input$args$frange$had <- c("minfbar" = 3, "maxfbar" = 5)
 
 
 #RUN MIXME SIMULATION
-res <- runMixME(om  = input$om, oem = input$oem, ctrl_obj = input$ctrl_obj, args = input$args)
+res <- runMixME(om  = input$om, oem = input$oem, 
+                ctrl_obj = input$ctrl_obj, args = input$args)
 ```
 
-It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation. - MAYBE SIMILAR ON WIKI
+It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation [@MixMEwiki].
+
+### Analysing results of the simulation
+
+The `tracking` object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. It also contains simulation performance and diagnostics statistics, which is what we will focus on here [@MixMEwiki].
+
+``` R
+## Check for advice failure
+apply(res$tracking$iterfail, 1, mean)
+
+## Check for effort optimisation failure
+res$tracking$optim
+
+## Check for effort optimisation message
+res$tracking$message
+
+## Check quota uptake for cod and haddock
+res$tracking$uptake["cod",,,1]
+res$tracking$uptake["had",,,1]
+
+## Check maximum overshoot of the quota by fleets
+max(res$tracking$overquota, na.rm = TRUE)
+
+## Define Blim for each stock - required for way 
+#calculating risk right now
+hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
+
+# Update the control object with the new HCR parameters
+res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
+```
 
 Optimising_ftarget_in_MixME_mult_points_parallel
 
 -   obj_func
 
-    ``` R
+    ``` r
     # TODO: Remove checks? Helpful but not needed
-      
+
       ## Check for advice failure
       apply(res$tracking$iterfail, 1, mean)
-      
+
       ## Check for effort optimisation failure
       res$tracking$optim
-      
+
       ## Check for effort optimisation message
       res$tracking$message
-      
+
       ## Check quota uptake for cod and haddock
       res$tracking$uptake["cod",,,1]
       res$tracking$uptake["had",,,1]
-      
+
       ## Check maximum overshoot of the quota by fleets
       max(res$tracking$overquota, na.rm = TRUE)
-      
-      ## Define Blim for each stock - required for way calculating risk right now
-      hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))  # https://doi.org/10.17895/ices.advice.5897
-      
+
+      ## Define Blim for each stock - required for way 
+      #calculating risk right now
+      hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
+
       # Update the control object with the new HCR parameters
       res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
-      
+
       return(res)
     ```
 
@@ -318,12 +358,6 @@ Optimising_ftarget_in_MixME_mult_points_parallel
 -   Check maximum overshoot
 
 -   HCR parameters and setup
-
--   doOne
-
--   result object? mostly use tracking object from this
-
--   Cleaning up result object
 
 Two_stocks_Optimising_ftarget_in_shortcut_model:
 
@@ -341,7 +375,13 @@ Two_stocks_Optimising_ftarget_in_shortcut_model:
 
 -   Explain how the data for this simulation is all the inputs from the previous one
 
--   Remove the simulation result at the end of loop and in doOne
+Parallelisation
+
+-   doOne
+
+-   Removing the res object
+
+-   doMcapply, etc.
 
 # Further areas for Development
 

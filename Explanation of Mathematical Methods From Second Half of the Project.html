@@ -161,7 +161,9 @@ window.Quarto = {
 <ul>
 <li><p>Calculating the risk</p></li>
 <li><p>The basics of the MixME model - BREAK DOWN A BIT MORE LATER</p></li>
+<li><p>Parallelisation</p></li>
 </ul>
+<p>HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary</p>
 </section>
 <section id="context" class="level1">
 <h1>Context</h1>
@@ -189,7 +191,7 @@ window.Quarto = {
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Fhad =</span> <span class="fu">seq</span>(<span class="fl">0.0</span>, <span class="fl">0.6</span>, <span class="at">by=</span><span class="fl">0.02</span>)</span>
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>This range ensures that we are able to model stock collapse for cod by modelling values above <span class="math inline">\(F_{lim}\)</span> and that we can model stock recovery for cod by including very low values <span class="citation" data-cites="ICES2019CodAdvice">(<a href="#ref-ICES2019CodAdvice" role="doc-biblioref">ICES 2019c</a>)</span>. It also allows us to model unsafe fishing for haddock by modelling values above <span class="math inline">\(F_{MSY}\)</span> <span class="citation" data-cites="ICES2019HaddockAdvice">(<a href="#ref-ICES2019HaddockAdvice" role="doc-biblioref">ICES 2019b</a>)</span>. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
-<p>We also have a <span class="math inline">\(B_{lim}\)</span> for each stock, taken from ICES advice <span class="citation" data-cites="ICES2020HaddockBlim">(<a href="#ref-ICES2020HaddockBlim" role="doc-biblioref">ICES 2020</a>)</span>,<span class="citation" data-cites="ICES2019CodBlim">(<a href="#ref-ICES2019CodBlim" role="doc-biblioref">ICES 2019d</a>)</span>:</p>
+<p>We also have a <span class="math inline">\(B_{lim}\)</span> for each stock, taken from ICES advice <span class="citation" data-cites="ICES2020HaddockBlim">(<a href="#ref-ICES2020HaddockBlim" role="doc-biblioref">ICES 2020b</a>)</span>,<span class="citation" data-cites="ICES2020CodBlim">(<a href="#ref-ICES2020CodBlim" role="doc-biblioref">ICES 2020a</a>)</span>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>Blim_cod <span class="ot">&lt;-</span> <span class="dv">107000</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>Blim_had <span class="ot">&lt;-</span> <span class="dv">9227</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Firstly, we extract the <span class="math inline">\(\textrm{min}(SSB)\)</span> for each stock from the result of the simulation we have run using the tracking object <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>:</p>
@@ -232,21 +234,185 @@ window.Quarto = {
 <section id="the-basics-of-the-mixme-model" class="level2">
 <h2 class="anchored" data-anchor-id="the-basics-of-the-mixme-model">The basics of the MixME model</h2>
 <p>Going to write down everything and then remove areas Gustav said I don’t need to worry about.</p>
-<p>I have two slightly different pieces of code. Think the one I have put first uses less methods.</p>
+<section id="starting-f_cod-and-f_had" class="level3">
+<h3 class="anchored" data-anchor-id="starting-f_cod-and-f_had">Starting <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span></h3>
+<p>We started with <span class="math inline">\(F_{cod} = 0.28\)</span> and <span class="math inline">\(F_{had} = 0.353\)</span> based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN’T SEE 0.28 ANYWHERE - ,<span class="citation" data-cites="ICES2020HaddockBlim">(<a href="#ref-ICES2020HaddockBlim" role="doc-biblioref">ICES 2020b</a>)</span>.</p>
+</section>
+<section id="creating-the-operating-model" class="level3">
+<h3 class="anchored" data-anchor-id="creating-the-operating-model">Creating the Operating model</h3>
+<p>We first create the operating model <code>mixedfishery_MixME_om</code> which contains the true data for the stocks and fleets in the dataset <span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>. We have data for North Sea Cod from 1963-2019 and form Celtic Sea Haddock from 1993-2019 <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span><strong>. - DISCUSS CATCHABILITY?</strong></p>
+<p>In both of our files, this is loaded with the dataset <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>The steps for fully assembling the operating model for input into the MixME model are:</p>
+<ol type="1">
+<li><p>Estimate historic quota-share for the two fleets</p></li>
+<li><p>Project stock n years into the future</p></li>
+<li><p>Calculate numbers of both stocks in initial year</p></li>
+<li><p>Generate an observation error model</p></li>
+</ol>
+<section id="estimate-historic-quota-share-for-the-two-fleets" class="level4">
+<h4 class="anchored" data-anchor-id="estimate-historic-quota-share-for-the-two-fleets">Estimate historic quota-share for the two fleets</h4>
+<p>Firstly, we use <code>mixedfishery_MixME_om</code> to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the <code>calculateQuotashare</code> function <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">calculateQuotashare</span>(<span class="at">stks =</span> mixedfishery_MixME_om<span class="sc">$</span>stks, </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">flts =</span> mixedfishery_MixME_om<span class="sc">$</span>flts, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="project-stock-n-years-into-the-future" class="level4">
+<h4 class="anchored" data-anchor-id="project-stock-n-years-into-the-future">Project stock n years into the future</h4>
+<p>To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. These are:</p>
+<ol type="1">
+<li><p>All stock parameters, landings and discards mean individual weights and landed fraction</p></li>
+<li><p>Catchability and catch selection</p></li>
+<li><p>Quota-share</p></li>
+</ol>
+<p>We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the <code>stfMixME</code> function <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">stfMixME</span>(mixedfishery_MixME_om, <span class="at">method =</span> <span class="st">"yearMeans"</span>, <span class="at">nyears =</span> <span class="dv">20</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">wts.nyears =</span> <span class="dv">3</span>, <span class="at">sel.nyears =</span> <span class="dv">3</span>, <span class="at">qs.nyears =</span> <span class="dv">3</span>, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="calculate-numbers-of-both-stock-in-initial-year" class="level4">
+<h4 class="anchored" data-anchor-id="calculate-numbers-of-both-stock-in-initial-year">Calculate numbers of both stock in initial year</h4>
+<p>To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># initial projection year</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>iy <span class="ot">=</span> <span class="dv">2020</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># set an arbitrary effort-based target for each fleet as we only want the</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co"># values at the beginning of 2020</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>ctrlArgs <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(mixedfishery_MixME_om<span class="sc">$</span>flts), <span class="cf">function</span>(x) {</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>            <span class="fu">list</span>(<span class="at">year =</span> iy,<span class="at">quant =</span> <span class="st">"effort"</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">fishery =</span> <span class="fu">names</span>(mixedfishery_MixME_om<span class="sc">$</span>flts)[x],<span class="at">value =</span> <span class="dv">1</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co"># This matrix maps which fleets catch which stocks</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>ctrlArgs<span class="sc">$</span>FCB <span class="ot">&lt;-</span> <span class="fu">makeFCB</span>(<span class="at">biols =</span> mixedfishery_MixME_om<span class="sc">$</span>stks,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>                        <span class="at">flts =</span> mixedfishery_MixME_om<span class="sc">$</span>flts)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate effort-based FLasher::fwd forecast control</span></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>flasher_ctrl <span class="ot">&lt;-</span> <span class="fu">do.call</span>(FLasher<span class="sc">::</span>fwdControl, ctrlArgs)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Simulate one year of fishing to get starting conditions right</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>omfwd <span class="ot">&lt;-</span> FLasher<span class="sc">::</span><span class="fu">fwd</span>(<span class="at">object =</span> mixedfishery_MixME_om<span class="sc">$</span>stks,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>                      <span class="at">fishery =</span> mixedfishery_MixME_om<span class="sc">$</span>flts,</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>                      <span class="at">control =</span> flasher_ctrl)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#Update the operating model with projected population numbers</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>mixedfishery_MixME_om<span class="sc">$</span>stks<span class="sc">$</span>had<span class="sc">@</span>n[,<span class="fu">ac</span>(iy)] <span class="ot">&lt;-</span> omfwd<span class="sc">$</span>biols<span class="sc">$</span>had<span class="sc">@</span>n[,<span class="fu">ac</span>(iy)]</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>mixedfishery_MixME_om<span class="sc">$</span>stks<span class="sc">$</span>cod<span class="sc">@</span>n[,<span class="fu">ac</span>(iy)] <span class="ot">&lt;-</span> omfwd<span class="sc">$</span>biols<span class="sc">$</span>cod<span class="sc">@</span>n[,<span class="fu">ac</span>(iy)]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target) <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - ? FIND OUT MORE</p>
+</section>
+<section id="creating-the-observation-error-model" class="level4">
+<h4 class="anchored" data-anchor-id="creating-the-observation-error-model">Creating the Observation Error Model</h4>
+<p>This is another important component of the MixME model <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. We create the observation error model <code>stk_oem</code> where we apply pre-sampled noise to the catch from each fleet (which we obtained earlier from the <code>mixedfishery_MixME_om</code> object) <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. We generate future stock and management advice from this object <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - MAY NEED TO REFERENCE MORE COMPLICATED TUTORIAL FOR FULL EXPLANATION OF THIS</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a list of FLStock objects from the FLBiol objects in </span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># the operating model</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>stk_oem <span class="ot">&lt;-</span> <span class="fu">FLStocks</span>(<span class="fu">lapply</span>(mixedfishery_MixME_om<span class="sc">$</span>stks, <span class="cf">function</span>(x) {</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># for each fleet, find which catch element corresponds </span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># to the current stock</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  catch <span class="ot">&lt;-</span> <span class="fu">sapply</span>(mixedfishery_MixME_om<span class="sc">$</span>flts, <span class="cf">function</span>(y) </span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>           <span class="fu">which</span>(<span class="fu">names</span>(y) <span class="sc">%in%</span> <span class="fu">name</span>(x)))</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># get catches form each fleet and convert to FLStock</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  xx <span class="ot">&lt;-</span> <span class="fu">as.FLStock</span>(x, mixedfishery_MixME_om<span class="sc">$</span>flts, </span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>                   <span class="at">full =</span> <span class="cn">FALSE</span>, <span class="at">catch =</span> catch)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># specifies fishing mortality is measured as instantaneous </span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># fishing mortality rate</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">units</span>(xx<span class="sc">@</span>harvest) <span class="ot">&lt;-</span> <span class="st">"f"</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove excess data as we don't observe stock biomass or stock </span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># numbers-at-age directly in reality forces us to simulate </span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># these using only the available data</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stock.n</span>(xx)[] <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stock</span>(xx)[]   <span class="ot">&lt;-</span> <span class="cn">NA</span></span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return the converted object</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(xx)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>}))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+</section>
+<section id="build-the-mixme-input-object" class="level3">
+<h3 class="anchored" data-anchor-id="build-the-mixme-input-object">Build the MixME input object</h3>
+<p>We then use this in the <code>makeMixME</code> function to make the MixME input object, which can then be used to run the simulation. We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. The last argument - NOT DESCRIBED YET</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>  input <span class="ot">&lt;-</span> <span class="fu">makeMixME</span>(<span class="at">om =</span> mixedfishery_MixME_om, <span class="at">catch_obs =</span> stk_oem,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">management_lag =</span> <span class="dv">0</span>, <span class="at">management_type =</span> <span class="st">"fixedF"</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">parallel =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="running-the-simulation" class="level3">
+<h3 class="anchored" data-anchor-id="running-the-simulation">Running the simulation</h3>
+<p>Lastly, we update some of the management and simulation settings and run the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cod and haddock catches occur at the start of the year so timing=0</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>oem<span class="sc">@</span>args<span class="sc">$</span>catch_timing<span class="sc">$</span>cod <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>oem<span class="sc">@</span>args<span class="sc">$</span>catch_timing<span class="sc">$</span>had <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the age range for calculating average fishing mortality </span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co"># (Fbar) for both stocks</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>oem<span class="sc">@</span>observations<span class="sc">$</span>stk<span class="sc">$</span>cod<span class="sc">@</span>range[<span class="fu">c</span>(<span class="st">"minfbar"</span>,<span class="st">"maxfbar"</span>)] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>oem<span class="sc">@</span>observations<span class="sc">$</span>stk<span class="sc">$</span>had<span class="sc">@</span>range[<span class="fu">c</span>(<span class="st">"minfbar"</span>,<span class="st">"maxfbar"</span>)] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>,<span class="dv">5</span>)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Set the target fishing mortality for both stocks as </span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co"># the next point decided by the algorithm</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>ctrl_obj<span class="sc">$</span>hcr<span class="sc">@</span>args<span class="sc">$</span>ftrg<span class="sc">$</span>cod <span class="ot">&lt;-</span> f_cod</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>ctrl_obj<span class="sc">$</span>hcr<span class="sc">@</span>args<span class="sc">$</span>ftrg<span class="sc">$</span>had <span class="ot">&lt;-</span> f_had</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a><span class="do">## Update fbar ranges</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>args<span class="sc">$</span>frange<span class="sc">$</span>cod <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"minfbar"</span> <span class="ot">=</span> <span class="dv">2</span>, <span class="st">"maxfbar"</span> <span class="ot">=</span> <span class="dv">4</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>args<span class="sc">$</span>frange<span class="sc">$</span>had <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"minfbar"</span> <span class="ot">=</span> <span class="dv">3</span>, <span class="st">"maxfbar"</span> <span class="ot">=</span> <span class="dv">5</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#RUN MIXME SIMULATION</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">runMixME</span>(<span class="at">om  =</span> input<span class="sc">$</span>om, <span class="at">oem =</span> input<span class="sc">$</span>oem, </span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>                <span class="at">ctrl_obj =</span> input<span class="sc">$</span>ctrl_obj, <span class="at">args =</span> input<span class="sc">$</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation. - MAYBE SIMILAR ON WIKI</p>
 <p>Optimising_ftarget_in_MixME_mult_points_parallel</p>
 <ul>
-<li></li>
+<li><p>obj_func</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: Remove checks? Helpful but not needed</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check for advice failure</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apply</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>iterfail, <span class="dv">1</span>, mean)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check for effort optimisation failure</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>optim</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check for effort optimisation message</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>message</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check quota uptake for cod and haddock</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>uptake[<span class="st">"cod"</span>,,,<span class="dv">1</span>]</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>uptake[<span class="st">"had"</span>,,,<span class="dv">1</span>]</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check maximum overshoot of the quota by fleets</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">max</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>overquota, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Define Blim for each stock - required for way </span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="co">#calculating risk right now</span></span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  hcrpars <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">cod =</span> <span class="fu">c</span>(<span class="at">Blim =</span> <span class="dv">107000</span>), <span class="at">had =</span> <span class="fu">c</span>(<span class="at">Blim =</span> <span class="dv">9227</span>))</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Update the control object with the new HCR parameters</span></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>ctrl_obj<span class="sc">$</span>phcr <span class="ot">&lt;-</span> <span class="fu">mseCtrl</span>(<span class="at">args =</span> <span class="fu">list</span>(<span class="at">hcrpars =</span> hcrpars))</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
+<li><p>Check for advcie failure</p></li>
+<li><p>Check for effort optimisation failure</p></li>
+<li><p>tracking object</p></li>
+<li><p>Check quota uptake</p></li>
+<li><p>Check maximum overshoot</p></li>
+<li><p>HCR parameters and setup</p></li>
+<li><p>doOne</p></li>
+<li><p>result object? mostly use tracking object from this</p></li>
+<li><p>Cleaning up result object</p></li>
 </ul>
 <p>Two_stocks_Optimising_ftarget_in_shortcut_model:</p>
 <ul>
 <li><p>ICES_HCR function (including setting HCR parameters)</p></li>
 <li><p>forecast_fun</p></li>
+<li><p>Intial projection for the year 2020?</p></li>
 <li><p>Set Forecast arguments on line 298 - think this is averaging parameters so don’t need</p></li>
 <li><p>Checking for effort optimisation or management procedure failures</p></li>
 <li><p>Explaining the tracking object as this how I get SSB and catch</p></li>
-<li><p>Explain how the data for this simulation is all the inputs form the previous one</p></li>
-<li></li>
+<li><p>Explain how the data for this simulation is all the inputs from the previous one</p></li>
+<li><p>Remove the simulation result at the end of loop and in doOne</p></li>
 </ul>
+</section>
 </section>
 </section>
 <section id="further-areas-for-development" class="level1">
@@ -273,11 +439,11 @@ ICES. 2019a. <span>“<span class="nocase">Workshop on Guidelines for Management
 <div id="ref-ICES2019CodAdvice" class="csl-entry" role="listitem">
 ———. 2019c. <span>“<span class="nocase">Cod (Gadus morhua) in Subarea 4, Division 7.d, and Subdivision 20 (North Sea, eastern English Channel, Skagerrak)</span>,”</span> November. <a href="https://doi.org/10.17895/ices.advice.5640">https://doi.org/10.17895/ices.advice.5640</a>.
 </div>
-<div id="ref-ICES2019CodBlim" class="csl-entry" role="listitem">
-———. 2019d. <span>“<span class="nocase">Cod (Gadus morhua) in Subarea 4, Division 7.d, and Subdivision 20 (North Sea, eastern English Channel, Skagerrak)</span>,”</span> November. <a href="https://doi.org/10.17895/ices.advice.5640">https://doi.org/10.17895/ices.advice.5640</a>.
+<div id="ref-ICES2020CodBlim" class="csl-entry" role="listitem">
+———. 2020a. <span>“<span class="nocase">Cod (Gadus morhua) in Subarea 4, Division 7.d, and Subdivision 20 (North Sea, eastern English Channel, Skagerrak)</span>,”</span> June. <a href="https://doi.org/10.17895/ices.advice.5891">https://doi.org/10.17895/ices.advice.5891</a>.
 </div>
 <div id="ref-ICES2020HaddockBlim" class="csl-entry" role="listitem">
-———. 2020. <span>“<span class="nocase">Haddock (Melanogrammus aeglefinus) in divisions 7.b–k (southern Celtic Seas and English Channel)</span>,”</span> October. <a href="https://doi.org/10.17895/ices.advice.5897">https://doi.org/10.17895/ices.advice.5897</a>.
+———. 2020b. <span>“<span class="nocase">Haddock (Melanogrammus aeglefinus) in divisions 7.b–k (southern Celtic Seas and English Channel)</span>,”</span> October. <a href="https://doi.org/10.17895/ices.advice.5897">https://doi.org/10.17895/ices.advice.5897</a>.
 </div>
 <div id="ref-ICESCodFactsheet" class="csl-entry" role="listitem">
 ———. n.d. <span>“ICES-FishMap Cod.”</span> <a href="https://www.ices.dk/about-ICES/projects/EU-RFP/EU%20Repository/ICES%20FIshMap/ICES%20FishMap%20species%20factsheet-cod.pdf">https://www.ices.dk/about-ICES/projects/EU-RFP/EU%20Repository/ICES%20FIshMap/ICES%20FishMap%20species%20factsheet-cod.pdf</a>.
