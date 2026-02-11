@@ -208,7 +208,7 @@ mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
 mixedfishery_MixME_om$stks$cod@n[,ac(iy)] <- omfwd$biols$cod@n[,ac(iy)]
 ```
 
-We set an arbitrary forecast target here because the 2020 numbers aThe re calculated from existing numbers (rather than a defined target) [@MixMEwiki]. - ? FIND OUT MORE
+We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target) [@MixMEwiki]. - ? FIND OUT MORE
 
 #### Creating the Observation Error Model
 
@@ -306,14 +306,31 @@ res$tracking$optim
 res$tracking$message
 ```
 
+Another result we can see is the over-quota catches [@mixMEwiki]:
+
+``` R
+## Check maximum overshoot of the quota by fleets
+max(res$tracking$overquota, na.rm = TRUE)
+```
+
+We can also check the quota uptake using the below [@MixMEwiki]:
+
 ``` R
 ## Check quota uptake for cod and haddock
 res$tracking$uptake["cod",,,1]
 res$tracking$uptake["had",,,1]
+```
 
-## Check maximum overshoot of the quota by fleets
-max(res$tracking$overquota, na.rm = TRUE)
+Laslty, we can check which stock is the choke stock using [@MixMEwiki]:
 
+``` R
+## Check choke stock
+res$tracking$choke
+```
+
+### HCR parameters
+
+``` R
 ## Define Blim for each stock - required for way 
 #calculating risk right now
 hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
@@ -323,47 +340,6 @@ res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
 ```
 
 Optimising_ftarget_in_MixME_mult_points_parallel
-
--   obj_func
-
-    ``` r
-    # TODO: Remove checks? Helpful but not needed
-
-      ## Check for advice failure
-      apply(res$tracking$iterfail, 1, mean)
-
-      ## Check for effort optimisation failure
-      res$tracking$optim
-
-      ## Check for effort optimisation message
-      res$tracking$message
-
-      ## Check quota uptake for cod and haddock
-      res$tracking$uptake["cod",,,1]
-      res$tracking$uptake["had",,,1]
-
-      ## Check maximum overshoot of the quota by fleets
-      max(res$tracking$overquota, na.rm = TRUE)
-
-      ## Define Blim for each stock - required for way 
-      #calculating risk right now
-      hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
-
-      # Update the control object with the new HCR parameters
-      res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
-
-      return(res)
-    ```
-
--   Check for advcie failure
-
--   Check for effort optimisation failure
-
--   tracking object
-
--   Check quota uptake
-
--   Check maximum overshoot
 
 -   HCR parameters and setup
 
