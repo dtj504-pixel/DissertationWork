@@ -296,7 +296,7 @@ next_points
 
 
 # Set max runs and initial round number
-max_rounds <- 30
+max_rounds <- 3
 round_num <- 1
 
 # Intiliase runs for safety

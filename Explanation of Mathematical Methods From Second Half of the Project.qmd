@@ -240,17 +240,72 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 ### Build the MixME input object
 
-We then use this in the `makeMixME` function to make the MixME model, which can then be run to create our projections into the future.
+We then use this in the `makeMixME` function to make the MixME input object, which can then be used to run the simulation. We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively [@MixMEwiki]. The last argument  - NOT DESCRIBED YET
 
-We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model.
+``` R
+  input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem, management_lag = 0, management_type = "fixedF", parallel = FALSE)
+```
+
+### Running the simulation
+
+Lastly, we update some of the management and simulation settings and run the simulation [@MixMEwiki].
+
+``` R
+# Cod and haddock catches occur at the start of the year so timing=0
+input$oem@args$catch_timing$cod <- 0
+input$oem@args$catch_timing$had <- 0
+
+# Define the age range for calculating average fishing mortality (Fbar) for both stocks
+input$oem@observations$stk$cod@range[c("minfbar","maxfbar")] <- c(2,4)
+input$oem@observations$stk$had@range[c("minfbar","maxfbar")] <- c(3,5)
+
+
+# Set the target fishing mortality for both stocks as the next point decided by the algorithm
+input$ctrl_obj$hcr@args$ftrg$cod <- f_cod
+input$ctrl_obj$hcr@args$ftrg$had <- f_had
+
+## Update fbar ranges
+input$args$frange$cod <- c("minfbar" = 2, "maxfbar" = 4)
+input$args$frange$had <- c("minfbar" = 3, "maxfbar" = 5)
+
+
+#RUN MIXME SIMULATION
+res <- runMixME(om  = input$om, oem = input$oem, ctrl_obj = input$ctrl_obj, args = input$args)
+```
+
+It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation. - MAYBE SIMILAR ON WIKI
 
 Optimising_ftarget_in_MixME_mult_points_parallel
 
--   Management lag
-
--   Management type
-
 -   obj_func
+
+    ``` R
+    # TODO: Remove checks? Helpful but not needed
+      
+      ## Check for advice failure
+      apply(res$tracking$iterfail, 1, mean)
+      
+      ## Check for effort optimisation failure
+      res$tracking$optim
+      
+      ## Check for effort optimisation message
+      res$tracking$message
+      
+      ## Check quota uptake for cod and haddock
+      res$tracking$uptake["cod",,,1]
+      res$tracking$uptake["had",,,1]
+      
+      ## Check maximum overshoot of the quota by fleets
+      max(res$tracking$overquota, na.rm = TRUE)
+      
+      ## Define Blim for each stock - required for way calculating risk right now
+      hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))  # https://doi.org/10.17895/ices.advice.5897
+      
+      # Update the control object with the new HCR parameters
+      res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
+      
+      return(res)
+    ```
 
 -   Check for advcie failure
 
@@ -267,18 +322,6 @@ Optimising_ftarget_in_MixME_mult_points_parallel
 -   doOne
 
 -   result object? mostly use tracking object from this
-
--   calculateQuotashare
-
--   stfMixME
-
--   Intial projection for the year 2020
-
--   FCB matrix
-
--   FLasher::fwdControl
-
--   FLasher::fwd
 
 -   Cleaning up result object
 
