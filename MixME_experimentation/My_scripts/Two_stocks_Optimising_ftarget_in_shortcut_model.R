@@ -251,7 +251,7 @@ forecast_fun <- function(stk, tracking, ctrl,
     #rerun simulation focusing on Blim to find the Ftarget that is appropriate
     stk_blim <- FLasher::fwd(stk0, sr = sr0, control = ctrl_blim)
     
-    ## Find iterations with zero TAC advice (some stocks may be in such bad health taht we can't catch any)
+    ## Find iterations with zero TAC advice (some stocks may be in such bad health that we can't catch any)
     zeroTAC <- ssb(stk_blim)[,ac(ay+mlag+1)] < attr(ctrl,"Blim")
     
     ## update TAC

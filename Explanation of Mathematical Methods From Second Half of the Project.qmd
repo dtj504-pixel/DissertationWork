@@ -351,11 +351,90 @@ res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
 
 ### Additions or Differences in the Shortcut Model
 
-NEED CITATIONS FROM SOMEHWERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET
+NEED CITATIONS FROM SOMEWHERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET
 
-This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the same data here as in the `Optimising_ftarget_in_MixME_mult_points_parallel.R` file, except that we have now also loaded in the Operating Model and Observation Eerror Model with the data [@MixMewiki].
+This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the same data here as in the `Optimising_ftarget_in_MixME_mult_points_parallel.R` file, except that we have now also loaded in the Operating Model and Observation Error Model with the data [@MixMewiki].
 
-In this simulation, we have a provision to return zero-catch advice if the SSBis below Blim in advice year +1. - from email with Matt, NOT SURE WHERE IN CODE
+#### Zero-catch advice
+
+In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$:
+
+``` r
+## Find iterations where SSB at end of TAC year is < Blim
+  belowBlim <- which(TACyr_ssb < attr(ctrl, "Blim"))
+
+## Go through model fits - where SSB < Blim, forecast to target Blim
+  if (length(belowBlim) > 0) {
+    
+    ## define forward control targetting Blim
+    targ <- matrix(0,nrow=fwd_yrs+1, ncol = niter)
+    targ[1,] <- fsq
+    # target is now Blim
+    targ[2,] <- c(attr(ctrl,"Blim"))
+    targ[3,] <- ctrl@iters[,"value",]
+    
+    ctrl_blim <- fwdControl(list(
+      year  = c(ay,ay+mlag,ay+mlag+1),
+      #focus on biomass in the 2nd year to force us to end at
+      # Blim instead if we were below
+      quant = c("fbar","ssb_end","fbar"),
+      value = c(targ)))
+    
+    #rerun simulation focusing on Blim to find the Ftarget
+    # that is appropriate
+    stk_blim <- FLasher::fwd(stk0, sr = sr0, control = ctrl_blim)#
+```
+
+However, if this still fails, we identify these runs in the `zeroTAC` variable and manually set the total annual catch (TAC) to zero.
+
+``` r
+## Find iterations with zero TAC advice 
+# (some stocks may be in such bad health that we can't catch any)
+zeroTAC <- ssb(stk_blim)[,ac(ay+mlag+1)] < attr(ctrl,"Blim")
+
+# set any in zeroTAC to zero manually
+TAC[zeroTAC]   <- 0
+
+}
+```
+
+Combined, this looks like:
+
+``` r
+## Find iterations where SSB at end of TAC year is < Blim
+belowBlim <- which(TACyr_ssb < attr(ctrl, "Blim"))
+
+## Go through model fits - where SSB < Blim, forecast to target Blim
+if (length(belowBlim) > 0) {
+
+    ## define forward control targetting Blim
+    targ <- matrix(0,nrow=fwd_yrs+1, ncol = niter)
+    targ[1,] <- fsq
+    # target is now Blim
+    targ[2,] <- c(attr(ctrl,"Blim"))
+    targ[3,] <- ctrl@iters[,"value",]
+    
+    ctrl_blim <- fwdControl(list(
+      year  = c(ay,ay+mlag,ay+mlag+1),
+      #focus on biomass in the 2nd year to force us to end at 
+      # Blim instead if we were below
+      quant = c("fbar","ssb_end","fbar"),
+      value = c(targ)))
+    
+    #rerun simulation focusing on Blim to find the Ftarget 
+    # that is appropriate
+    stk_blim <- FLasher::fwd(stk0, sr = sr0, control = ctrl_blim)
+    
+    ## Find iterations with zero TAC advice 
+    # (some stocks may be in such bad health that we can't catch any)
+    zeroTAC <- ssb(stk_blim)[,ac(ay+mlag+1)] < attr(ctrl,"Blim")
+    
+    ## update TAC
+    TAC[belowBlim] <- round(c(catch(stk_blim)[,ac(ay+mlag)])[belowBlim],3)
+    # set any in zeroTAC to zero manually
+    TAC[zeroTAC]   <- 0
+    }
+```
 
 #### `ICES_HCR` function
 
