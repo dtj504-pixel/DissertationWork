@@ -164,6 +164,7 @@ window.Quarto = {
 <li><p>Parallelisation</p></li>
 </ul>
 <p>HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary</p>
+<p>“Fishing fleet effort is constant throughout the simulation - a consequence of the linear relationship between effort and fishing mortality.”, ” We can see that the fishing mortality target is constant over time, whilst catch target from each stock varies from year to year.” - Fixed fishing mortality management strategy</p>
 </section>
 <section id="context" class="level1">
 <h1>Context</h1>
@@ -183,6 +184,7 @@ window.Quarto = {
 <p>We repeat this process until there is only one plausible point left and then we will accept this as being the <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> that maximise the catch whilst keeping the <span class="math inline">\(SSB\)</span> above <span class="math inline">\(B_{lim}\)</span>.</p>
 <section id="calculating-the-risk" class="level2">
 <h2 class="anchored" data-anchor-id="calculating-the-risk">Calculating the risk</h2>
+<p>NOTE THIS IS DIFFERENT OT MIXME WAY BUT MROE INFORMATIVE AND MEETS ICES STANDARD, UNLIKE MIXME WAY</p>
 <p>In contrast to the first half of the project, we now calculate the risk using the <span class="math inline">\(SSB\)</span>. We have described it above briefly but will go into more detail here.</p>
 <p>We should quickly note before our calculations that our new sample space is as below:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define Sample Space as discrete with 0.02 increments</span></span>
@@ -337,7 +339,7 @@ window.Quarto = {
 </section>
 <section id="running-the-simulation" class="level3">
 <h3 class="anchored" data-anchor-id="running-the-simulation">Running the simulation</h3>
-<p>Lastly, we update some of the management and simulation settings and run the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>We update some of the management and simulation settings and then run the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cod and haddock catches occur at the start of the year so timing=0</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>oem<span class="sc">@</span>args<span class="sc">$</span>catch_timing<span class="sc">$</span>cod <span class="ot">&lt;-</span> <span class="dv">0</span></span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>oem<span class="sc">@</span>args<span class="sc">$</span>catch_timing<span class="sc">$</span>had <span class="ot">&lt;-</span> <span class="dv">0</span></span>
@@ -361,46 +363,41 @@ window.Quarto = {
 <span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a><span class="co">#RUN MIXME SIMULATION</span></span>
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">runMixME</span>(<span class="at">om  =</span> input<span class="sc">$</span>om, <span class="at">oem =</span> input<span class="sc">$</span>oem, </span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>                <span class="at">ctrl_obj =</span> input<span class="sc">$</span>ctrl_obj, <span class="at">args =</span> input<span class="sc">$</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation. - MAYBE SIMILAR ON WIKI</p>
-<p>Optimising_ftarget_in_MixME_mult_points_parallel</p>
-<ul>
-<li><p>obj_func</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># </span><span class="al">TODO</span><span class="co">: Remove checks? Helpful but not needed</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check for advice failure</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">apply</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>iterfail, <span class="dv">1</span>, mean)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check for effort optimisation failure</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>optim</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check for effort optimisation message</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>message</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check quota uptake for cod and haddock</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>uptake[<span class="st">"cod"</span>,,,<span class="dv">1</span>]</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>tracking<span class="sc">$</span>uptake[<span class="st">"had"</span>,,,<span class="dv">1</span>]</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Check maximum overshoot of the quota by fleets</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">max</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>overquota, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Define Blim for each stock - required for way </span></span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="co">#calculating risk right now</span></span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  hcrpars <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">cod =</span> <span class="fu">c</span>(<span class="at">Blim =</span> <span class="dv">107000</span>), <span class="at">had =</span> <span class="fu">c</span>(<span class="at">Blim =</span> <span class="dv">9227</span>))</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Update the control object with the new HCR parameters</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  res<span class="sc">$</span>ctrl_obj<span class="sc">$</span>phcr <span class="ot">&lt;-</span> <span class="fu">mseCtrl</span>(<span class="at">args =</span> <span class="fu">list</span>(<span class="at">hcrpars =</span> hcrpars))</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div></li>
-<li><p>Check for advcie failure</p></li>
-<li><p>Check for effort optimisation failure</p></li>
-<li><p>tracking object</p></li>
-<li><p>Check quota uptake</p></li>
-<li><p>Check maximum overshoot</p></li>
-<li><p>HCR parameters and setup</p></li>
-<li><p>doOne</p></li>
-<li><p>result object? mostly use tracking object from this</p></li>
-<li><p>Cleaning up result object</p></li>
-</ul>
+<p>It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+</section>
+<section id="analysing-results-of-the-simulation" class="level3">
+<h3 class="anchored" data-anchor-id="analysing-results-of-the-simulation">Analysing results of the simulation</h3>
+<p>The <code>tracking</code> object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. It also contains simulation performance and diagnostics statistics, which is what we will focus on here <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>We firstly check for management advice failure <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Check for advice failure</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">apply</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>iterfail, <span class="dv">1</span>, mean)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then we can also check for effort optimisation failure and the message given if there was any failure <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Check for effort optimisation failure</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>tracking<span class="sc">$</span>optim</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Check for effort optimisation message</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>tracking<span class="sc">$</span>message</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Effort optimisation failure can be sued to see if we are over-fishing the stocks to a point that they will go extinct <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>Another result we can see is the over-quota catches <span class="citation" data-cites="mixMEwiki">(<a href="#ref-mixMEwiki" role="doc-biblioref"><strong>mixMEwiki?</strong></a>)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Check maximum overshoot of the quota by fleets</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">max</span>(res<span class="sc">$</span>tracking<span class="sc">$</span>overquota, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>We can also check the quota uptake using the below <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Check quota uptake for cod and haddock</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>tracking<span class="sc">$</span>uptake[<span class="st">"cod"</span>,,,<span class="dv">1</span>]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>tracking<span class="sc">$</span>uptake[<span class="st">"had"</span>,,,<span class="dv">1</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Laslty, we can check which stock is the choke stock using <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Check choke stock</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>tracking<span class="sc">$</span>choke</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="hcr-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="hcr-parameters">HCR parameters</h3>
+<p>We add <span class="math inline">\(B_{lim}\)</span> into the HCR to help us calculate the risk later on <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. It is helpful or calculating it in our current way, or the way MixME defines it as: “the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point ($B_{lim}$)” <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Define Blim for each stock - required for way </span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co">#calculating risk right now</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>hcrpars <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">cod =</span> <span class="fu">c</span>(<span class="at">Blim =</span> <span class="dv">107000</span>), <span class="at">had =</span> <span class="fu">c</span>(<span class="at">Blim =</span> <span class="dv">9227</span>))</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Update the control object with the new HCR parameters</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>ctrl_obj<span class="sc">$</span>phcr <span class="ot">&lt;-</span> <span class="fu">mseCtrl</span>(<span class="at">args =</span> <span class="fu">list</span>(<span class="at">hcrpars =</span> hcrpars))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Two_stocks_Optimising_ftarget_in_shortcut_model:</p>
 <ul>
 <li><p>ICES_HCR function (including setting HCR parameters)</p></li>
@@ -410,7 +407,12 @@ window.Quarto = {
 <li><p>Checking for effort optimisation or management procedure failures</p></li>
 <li><p>Explaining the tracking object as this how I get SSB and catch</p></li>
 <li><p>Explain how the data for this simulation is all the inputs from the previous one</p></li>
-<li><p>Remove the simulation result at the end of loop and in doOne</p></li>
+</ul>
+<p>Parallelisation</p>
+<ul>
+<li><p>doOne</p></li>
+<li><p>Removing the res object</p></li>
+<li><p>doMcapply, etc.</p></li>
 </ul>
 </section>
 </section>

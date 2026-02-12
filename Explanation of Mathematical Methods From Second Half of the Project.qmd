@@ -18,6 +18,8 @@ What mathematical methods will I explain in this document that have not been exp
 
 HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary
 
+"Fishing fleet effort is constant throughout the simulation - a consequence of the linear relationship between effort and fishing mortality.", " We can see that the fishing mortality target is constant over time, whilst catch target from each stock varies from year to year." - Fixed fishing mortality management strategy
+
 # Context
 
 The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch over all years of the projection will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2]. It also follows ICES guidelines to only calculate yield and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
@@ -45,6 +47,8 @@ The process for the first half of the project adapted to our new situation is ou
 We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$.
 
 ## Calculating the risk
+
+NOTE THIS IS DIFFERENT OT MIXME WAY BUT MROE INFORMATIVE AND MEETS ICES STANDARD, UNLIKE MIXME WAY
 
 In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here.
 
@@ -306,6 +310,8 @@ res$tracking$optim
 res$tracking$message
 ```
 
+Effort optimisation failure can be sued to see if we are over-fishing the stocks to a point that they will go extinct [@MixMEwiki].
+
 Another result we can see is the over-quota catches [@mixMEwiki]:
 
 ``` R
@@ -330,6 +336,8 @@ res$tracking$choke
 
 ### HCR parameters
 
+We add $B_{lim}$ into the HCR to help us calculate the risk later on [@MixMEwiki]. It is helpful or calculating it in our current way, or the way MixME defines it as: "the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point (\$B\_{lim}\$)" [@MixMEwiki].
+
 ``` R
 ## Define Blim for each stock - required for way 
 #calculating risk right now
@@ -338,10 +346,6 @@ hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
 # Update the control object with the new HCR parameters
 res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
 ```
-
-Optimising_ftarget_in_MixME_mult_points_parallel
-
--   HCR parameters and setup
 
 Two_stocks_Optimising_ftarget_in_shortcut_model:
 
