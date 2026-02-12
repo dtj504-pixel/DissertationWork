@@ -236,6 +236,9 @@ window.Quarto = {
 <section id="the-basics-of-the-mixme-model" class="level2">
 <h2 class="anchored" data-anchor-id="the-basics-of-the-mixme-model">The basics of the MixME model</h2>
 <p>Going to write down everything and then remove areas Gustav said I don’t need to worry about.</p>
+<ul>
+<li>Explaining the tracking object as this how I get catch ?? - MAYBE IN A SECTION SUMMARISING FULL CODE PROPCESS?</li>
+</ul>
 <section id="starting-f_cod-and-f_had" class="level3">
 <h3 class="anchored" data-anchor-id="starting-f_cod-and-f_had">Starting <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span></h3>
 <p>We started with <span class="math inline">\(F_{cod} = 0.28\)</span> and <span class="math inline">\(F_{had} = 0.353\)</span> based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN’T SEE 0.28 ANYWHERE - ,<span class="citation" data-cites="ICES2020HaddockBlim">(<a href="#ref-ICES2020HaddockBlim" role="doc-biblioref">ICES 2020b</a>)</span>.</p>
@@ -398,15 +401,295 @@ window.Quarto = {
 <span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Update the control object with the new HCR parameters</span></span>
 <span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>res<span class="sc">$</span>ctrl_obj<span class="sc">$</span>phcr <span class="ot">&lt;-</span> <span class="fu">mseCtrl</span>(<span class="at">args =</span> <span class="fu">list</span>(<span class="at">hcrpars =</span> hcrpars))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="additions-or-differences-in-the-shortcut-model" class="level3">
+<h3 class="anchored" data-anchor-id="additions-or-differences-in-the-shortcut-model">Additions or Differences in the Shortcut Model</h3>
+<p>NEED CITATIONS FROM SOMEHWERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET</p>
+<p>This is the <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> file. We use the same data here as in the <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> file, except that we have now also loaded in the Operating Model and Observation Eerror Model with the data <span class="citation" data-cites="MixMewiki">(<a href="#ref-MixMewiki" role="doc-biblioref"><strong>MixMewiki?</strong></a>)</span>.</p>
+<section id="ices_hcr-function" class="level4">
+<h4 class="anchored" data-anchor-id="ices_hcr-function"><code>ICES_HCR</code> function</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="do">## === Define a custom harvest control rule ===</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>ICES_HCR <span class="ot">&lt;-</span> <span class="cf">function</span> (stk, args, hcrpars, tracking) {</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param stk contains information about fish stocks, e.g. age</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param args contains useful arguments such as ay and mlag</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param hcrpars contains the parameters of the HCR, e.g. Ftrgt, Btrigger, Blim</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param tracking contains the current tracking object and </span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co"># is currently returned unchanged</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Extract year arguments</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ay is the current assessment year</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  ay <span class="ot">&lt;-</span> args<span class="sc">$</span>ay</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mlag is the management lag in years</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>  mlag <span class="ot">&lt;-</span> args<span class="sc">$</span>management_lag</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># this is the number of iterations</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  ni <span class="ot">&lt;-</span> <span class="fu">dims</span>(stk)[[<span class="st">"iter"</span>]]</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># SHORT-TERM FORECAST</span></span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Carry out short-term forecast to get ssb at the beginning of the advice year</span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>  <span class="do">## historical geomean to estimate recruitment for the stock </span></span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (prevents big spikes in recruitment having a large effect)</span></span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>  sr0 <span class="ot">&lt;-</span> <span class="fu">as.FLSR</span>(stk, <span class="at">model =</span> <span class="st">"geomean"</span>)</span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># propagate sr0 params to match number of simulations</span></span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>  sr0<span class="sc">@</span>params <span class="ot">&lt;-</span> FLCore<span class="sc">::</span><span class="fu">propagate</span>(sr0<span class="sc">@</span>params, <span class="at">iter =</span> ni)</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  <span class="co"># hardcoded using different starting years for different stocks </span></span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>  <span class="co"># when estimating recruitment</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(stk<span class="sc">@</span>name <span class="sc">==</span> <span class="st">"cod"</span>) stk_n <span class="ot">&lt;-</span> <span class="fu">window</span>(stk<span class="sc">@</span>stock.n, <span class="at">start =</span> <span class="dv">2015</span>)</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(stk<span class="sc">@</span>name <span class="sc">==</span> <span class="st">"had"</span>) stk_n <span class="ot">&lt;-</span> <span class="fu">window</span>(stk<span class="sc">@</span>stock.n, <span class="at">start =</span> <span class="dv">1993</span>)</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># We get the row of data for the youngest fish and calculate </span></span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>  <span class="co"># the geometric mean for that row</span></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>  <span class="co"># We do this by taking a log before calculating the average, </span></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>  <span class="co"># as this reduces the effect of large values, </span></span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and then exponentiating</span></span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>  sr0<span class="sc">@</span>params[] <span class="ot">&lt;-</span> <span class="fu">exp</span>(<span class="fu">yearMeans</span>(<span class="fu">log</span>(stk_n[<span class="dv">1</span>,])))</span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>  <span class="do">## find the first year with any data</span></span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>  minyr <span class="ot">&lt;-</span> <span class="fu">dims</span>(stk<span class="sc">@</span>stock[<span class="sc">!</span><span class="fu">is.na</span>(stk<span class="sc">@</span>stock.n)])<span class="sc">$</span>minyear</span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>  <span class="do">## remove any years before this</span></span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>  stk0  <span class="ot">&lt;-</span> <span class="fu">window</span>(stk, <span class="at">start =</span> minyr)</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>  <span class="do">## extend stock object by one year</span></span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>  <span class="do">## automatically fills in parameters by averaging over the last 3 years</span></span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>  stk0 <span class="ot">&lt;-</span> FLasher<span class="sc">::</span><span class="fu">stf</span>(stk0, <span class="dv">1</span>)</span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>  <span class="co"># FLasher::fwd will throw an error if there are NAs in weights in future years.</span></span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>  <span class="co"># I need to zero these if associated numbers are zero</span></span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>  FLCore<span class="sc">::</span><span class="fu">discards.wt</span>(stk0)[FLCore<span class="sc">::</span><span class="fu">discards.n</span>(stk0) <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb20-54"><a href="#cb20-54" aria-hidden="true" tabindex="-1"></a>  FLCore<span class="sc">::</span><span class="fu">landings.wt</span>(stk0)[FLCore<span class="sc">::</span><span class="fu">landings.n</span>(stk0) <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb20-55"><a href="#cb20-55" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-56"><a href="#cb20-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-57"><a href="#cb20-57" aria-hidden="true" tabindex="-1"></a>  <span class="do">## find status quo F slightly differently for each stock</span></span>
+<span id="cb20-58"><a href="#cb20-58" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cod and whiting average last three years, haddock average last year only</span></span>
+<span id="cb20-59"><a href="#cb20-59" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(stk<span class="sc">@</span>name <span class="sc">==</span> <span class="st">"cod"</span>) fwd_yrs_fsq <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:</span><span class="dv">0</span></span>
+<span id="cb20-60"><a href="#cb20-60" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(stk<span class="sc">@</span>name <span class="sc">==</span> <span class="st">"had"</span>) fwd_yrs_fsq <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb20-61"><a href="#cb20-61" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-62"><a href="#cb20-62" aria-hidden="true" tabindex="-1"></a>  <span class="co"># estimated fishing mortality for the forward year for each stock</span></span>
+<span id="cb20-63"><a href="#cb20-63" aria-hidden="true" tabindex="-1"></a>  fsq <span class="ot">&lt;-</span> <span class="fu">yearMeans</span>(<span class="fu">fbar</span>(stk)[,<span class="fu">as.character</span>(fwd_yrs_fsq<span class="sc">+</span>ay<span class="sc">-</span>mlag)])</span>
+<span id="cb20-64"><a href="#cb20-64" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-65"><a href="#cb20-65" aria-hidden="true" tabindex="-1"></a>  <span class="do">## FLasher cannot handle fsq=0</span></span>
+<span id="cb20-66"><a href="#cb20-66" aria-hidden="true" tabindex="-1"></a>  fsq <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(fsq<span class="sc">==</span><span class="dv">0</span>, <span class="fl">0.001</span>,fsq)</span>
+<span id="cb20-67"><a href="#cb20-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-68"><a href="#cb20-68" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Construct forward fishing mortality with same number of rows as simulations</span></span>
+<span id="cb20-69"><a href="#cb20-69" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Will overwrite the second row later</span></span>
+<span id="cb20-70"><a href="#cb20-70" aria-hidden="true" tabindex="-1"></a>  targ <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow=</span><span class="dv">2</span>, <span class="at">ncol =</span> ni)</span>
+<span id="cb20-71"><a href="#cb20-71" aria-hidden="true" tabindex="-1"></a>  targ[<span class="dv">1</span>,] <span class="ot">&lt;-</span> fsq</span>
+<span id="cb20-72"><a href="#cb20-72" aria-hidden="true" tabindex="-1"></a>  targ[<span class="dv">2</span>,] <span class="ot">&lt;-</span> fsq</span>
+<span id="cb20-73"><a href="#cb20-73" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-74"><a href="#cb20-74" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Wrappper that constructs the fwdControl object, setting fbar </span></span>
+<span id="cb20-75"><a href="#cb20-75" aria-hidden="true" tabindex="-1"></a>  <span class="co"># to values in the targ matrix</span></span>
+<span id="cb20-76"><a href="#cb20-76" aria-hidden="true" tabindex="-1"></a>  ctrl0 <span class="ot">&lt;-</span> <span class="fu">fwdControl</span>(<span class="fu">list</span>(</span>
+<span id="cb20-77"><a href="#cb20-77" aria-hidden="true" tabindex="-1"></a>    <span class="at">year  =</span> <span class="fu">c</span>(ay,ay<span class="sc">+</span>mlag),</span>
+<span id="cb20-78"><a href="#cb20-78" aria-hidden="true" tabindex="-1"></a>    <span class="at">quant =</span> <span class="st">"fbar"</span>,</span>
+<span id="cb20-79"><a href="#cb20-79" aria-hidden="true" tabindex="-1"></a>    <span class="at">value =</span> <span class="fu">c</span>(targ)))</span>
+<span id="cb20-80"><a href="#cb20-80" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-81"><a href="#cb20-81" aria-hidden="true" tabindex="-1"></a>  <span class="do">## project stock forward to get ssb in the advice year</span></span>
+<span id="cb20-82"><a href="#cb20-82" aria-hidden="true" tabindex="-1"></a>  stk_fwd <span class="ot">&lt;-</span> FLasher<span class="sc">::</span><span class="fu">fwd</span>(stk0, <span class="at">sr =</span> sr0, <span class="at">control =</span> ctrl0)</span>
+<span id="cb20-83"><a href="#cb20-83" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-84"><a href="#cb20-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-85"><a href="#cb20-85" aria-hidden="true" tabindex="-1"></a>  <span class="co"># HCR</span></span>
+<span id="cb20-86"><a href="#cb20-86" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-87"><a href="#cb20-87" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Extract the parameters and propogate to each simulation</span></span>
+<span id="cb20-88"><a href="#cb20-88" aria-hidden="true" tabindex="-1"></a>  Ftrgt <span class="ot">&lt;-</span> <span class="fu">propagate</span>(<span class="fu">FLPar</span>(hcrpars[<span class="st">"Ftrgt"</span>]), ni)</span>
+<span id="cb20-89"><a href="#cb20-89" aria-hidden="true" tabindex="-1"></a>  Btrigger <span class="ot">&lt;-</span> <span class="fu">propagate</span>(<span class="fu">FLPar</span>(hcrpars[<span class="st">"Btrigger"</span>]), ni)</span>
+<span id="cb20-90"><a href="#cb20-90" aria-hidden="true" tabindex="-1"></a>  <span class="co"># The Blims we put into hcrpars are propagated here </span></span>
+<span id="cb20-91"><a href="#cb20-91" aria-hidden="true" tabindex="-1"></a>  Blim <span class="ot">&lt;-</span> <span class="fu">propagate</span>(<span class="fu">FLPar</span>(hcrpars[<span class="st">"Blim"</span>]), ni)</span>
+<span id="cb20-92"><a href="#cb20-92" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-93"><a href="#cb20-93" aria-hidden="true" tabindex="-1"></a>  <span class="do">## calculate F multiplier</span></span>
+<span id="cb20-94"><a href="#cb20-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-95"><a href="#cb20-95" aria-hidden="true" tabindex="-1"></a>  <span class="co"># calculate what ratio of Btrigger we are at for each simulation </span></span>
+<span id="cb20-96"><a href="#cb20-96" aria-hidden="true" tabindex="-1"></a>  <span class="co"># - 1 means we're at Btrigger </span></span>
+<span id="cb20-97"><a href="#cb20-97" aria-hidden="true" tabindex="-1"></a>  status_Btrigger <span class="ot">&lt;-</span> <span class="fu">tail</span>(<span class="fu">ssb</span>(stk_fwd), <span class="dv">1</span>)<span class="sc">/</span>Btrigger</span>
+<span id="cb20-98"><a href="#cb20-98" aria-hidden="true" tabindex="-1"></a>  <span class="co"># find which simulations are above Btrigger</span></span>
+<span id="cb20-99"><a href="#cb20-99" aria-hidden="true" tabindex="-1"></a>  pos_Btrigger <span class="ot">&lt;-</span> <span class="fu">which</span>(status_Btrigger <span class="sc">&gt;</span> <span class="dv">1</span>)</span>
+<span id="cb20-100"><a href="#cb20-100" aria-hidden="true" tabindex="-1"></a>  <span class="co"># set Ftarget to the ratio of Ftarget that corresponds to status_Btrigger</span></span>
+<span id="cb20-101"><a href="#cb20-101" aria-hidden="true" tabindex="-1"></a>  Fmult <span class="ot">&lt;-</span> status_Btrigger</span>
+<span id="cb20-102"><a href="#cb20-102" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cap this ratio at 1</span></span>
+<span id="cb20-103"><a href="#cb20-103" aria-hidden="true" tabindex="-1"></a>  Fmult[, , , , , pos_Btrigger] <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb20-104"><a href="#cb20-104" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-105"><a href="#cb20-105" aria-hidden="true" tabindex="-1"></a>  <span class="do">## calculate new F target</span></span>
+<span id="cb20-106"><a href="#cb20-106" aria-hidden="true" tabindex="-1"></a>  Ftrgt <span class="ot">&lt;-</span> Ftrgt <span class="sc">*</span> Fmult</span>
+<span id="cb20-107"><a href="#cb20-107" aria-hidden="true" tabindex="-1"></a>  <span class="co"># make most of the control object for output</span></span>
+<span id="cb20-108"><a href="#cb20-108" aria-hidden="true" tabindex="-1"></a>  ctrl <span class="ot">&lt;-</span> <span class="fu">fwdControl</span>(<span class="fu">list</span>(<span class="at">year =</span> ay <span class="sc">+</span> mlag, <span class="at">quant =</span> <span class="st">"fbar"</span>, <span class="at">value =</span> Ftrgt))</span>
+<span id="cb20-109"><a href="#cb20-109" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-110"><a href="#cb20-110" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Attach Blim for use in implementation</span></span>
+<span id="cb20-111"><a href="#cb20-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">attr</span>(ctrl, <span class="st">"Blim"</span>) <span class="ot">&lt;-</span> Blim</span>
+<span id="cb20-112"><a href="#cb20-112" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-113"><a href="#cb20-113" aria-hidden="true" tabindex="-1"></a>  <span class="co">#return the control object and tracking object</span></span>
+<span id="cb20-114"><a href="#cb20-114" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">ctrl =</span> ctrl, <span class="at">tracking =</span> tracking))</span>
+<span id="cb20-115"><a href="#cb20-115" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="forecast_fun-function" class="level4">
+<h4 class="anchored" data-anchor-id="forecast_fun-function"><code>forecast_fun</code> function</h4>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Advice implementation using FLasher</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co">#' </span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' Carry out a short-term forecast using Flasher</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co">#' to transform advised fishing mortality into an advised catch target.</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#' </span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param stk Object of class \code{FLStock} containing observed stock </span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co">#'            information including commercial catch data, individual mean </span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="co">#'            weights and biological parameters.</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param tracking Tracking object</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param args Additional arguments</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param forecast Logical. Should a short-term forecast be carried out? Defaults</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="co">#'                 to \code{TRUE}</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_trgt Character. Catch or effort target to use during forecast. </span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="co">#'                 Defaults to 'fsq'.</span></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_yrs Integer. The number of years to forecast. Defaults to 1.</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_yrs_average Integer vector. The historical data years over which</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="co">#'                        biological parameter are averaged for use during </span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a><span class="co">#'                        forecast. Defaults to -3:-1.</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_yrs_rec_start Integer. Starting historical year from which to sample</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a><span class="co">#'                          projection period recruitment during forecast.</span></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_yrs_sel Integer vector. The historical data years over which</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a><span class="co">#'                    catch selection-at-age is averaged for use during forecast.</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a><span class="co">#'                    Defaults to -3:-1.</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_yrs_lf_remove Integer Vector. ... Defaults to -2:-1.</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a><span class="co">#' @param fwd_splitLD Logical. Defaults to \code{TRUE}</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a><span class="co"># === Creating forecast function ===</span></span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>forecast_fun <span class="ot">&lt;-</span> <span class="cf">function</span>(stk, tracking, ctrl,</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>                         args,  <span class="co"># contains ay (assessment year) and management lag</span></span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_trgt =</span> <span class="fu">c</span>(<span class="st">"fsq"</span>, <span class="st">"hcr"</span>), <span class="co"># fish to status quo (fsq) in </span></span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># intermediate year and then apply hcr in final calculations</span></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_yrs =</span> <span class="dv">2</span>,                <span class="co"># number of years to add </span></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># - have a space for the year inbetween to do intermediate </span></span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># calculations and then for the year we want a quota for</span></span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_yrs_fsq =</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:</span><span class="dv">0</span>,         <span class="co"># years used to calculate fsq</span></span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_yrs_average =</span> <span class="sc">-</span><span class="dv">3</span><span class="sc">:</span><span class="dv">0</span>,     <span class="co"># years used for averages</span></span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_yrs_rec_start =</span> <span class="cn">NULL</span>, <span class="co"># recruitment - </span></span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># null uses the entire history to estimate</span></span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_yrs_sel =</span> <span class="sc">-</span><span class="dv">3</span><span class="sc">:-</span><span class="dv">1</span>,        <span class="co"># selectivity of equipment </span></span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># - average form 3 years ago to 1 year ago </span></span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_yrs_lf_remove =</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:-</span><span class="dv">1</span>,  <span class="co"># calculate landings to discards</span></span>
+<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># ratio from 2 years ago to 1 year ago</span></span>
+<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>                         <span class="at">fwd_splitLD =</span> <span class="cn">TRUE</span>)         <span class="co"># Whether to calculate landings </span></span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a>                         <span class="co"># and discards separately</span></span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a>{  </span>
+<span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a>  <span class="do">## get current assessment year</span></span>
+<span id="cb21-48"><a href="#cb21-48" aria-hidden="true" tabindex="-1"></a>  ay <span class="ot">&lt;-</span> args<span class="sc">$</span>ay</span>
+<span id="cb21-49"><a href="#cb21-49" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-50"><a href="#cb21-50" aria-hidden="true" tabindex="-1"></a>  <span class="do">## get management lag</span></span>
+<span id="cb21-51"><a href="#cb21-51" aria-hidden="true" tabindex="-1"></a>  mlag <span class="ot">&lt;-</span> args<span class="sc">$</span>management_lag</span>
+<span id="cb21-52"><a href="#cb21-52" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-53"><a href="#cb21-53" aria-hidden="true" tabindex="-1"></a>  <span class="do">## checking number of iterations</span></span>
+<span id="cb21-54"><a href="#cb21-54" aria-hidden="true" tabindex="-1"></a>  niter <span class="ot">&lt;-</span> <span class="fu">dim</span>(stk)[<span class="dv">6</span>]  </span>
+<span id="cb21-55"><a href="#cb21-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-56"><a href="#cb21-56" aria-hidden="true" tabindex="-1"></a>  <span class="do">## geomean to estimate recruitment for the stock</span></span>
+<span id="cb21-57"><a href="#cb21-57" aria-hidden="true" tabindex="-1"></a>  sr0 <span class="ot">&lt;-</span> <span class="fu">as.FLSR</span>(stk, <span class="at">model =</span> <span class="st">"geomean"</span>)</span>
+<span id="cb21-58"><a href="#cb21-58" aria-hidden="true" tabindex="-1"></a>  sr0<span class="sc">@</span>params <span class="ot">&lt;-</span> FLCore<span class="sc">::</span><span class="fu">propagate</span>(sr0<span class="sc">@</span>params, <span class="at">iter =</span> niter)</span>
+<span id="cb21-59"><a href="#cb21-59" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-60"><a href="#cb21-60" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(fwd_yrs_rec_start)) {</span>
+<span id="cb21-61"><a href="#cb21-61" aria-hidden="true" tabindex="-1"></a>    stk_n <span class="ot">&lt;-</span> <span class="fu">window</span>(stk<span class="sc">@</span>stock.n, <span class="at">start =</span> fwd_yrs_rec_start)</span>
+<span id="cb21-62"><a href="#cb21-62" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb21-63"><a href="#cb21-63" aria-hidden="true" tabindex="-1"></a>    stk_n <span class="ot">&lt;-</span> stk<span class="sc">@</span>stock.n</span>
+<span id="cb21-64"><a href="#cb21-64" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb21-65"><a href="#cb21-65" aria-hidden="true" tabindex="-1"></a>  sr0<span class="sc">@</span>params[] <span class="ot">&lt;-</span> <span class="fu">exp</span>(<span class="fu">yearMeans</span>(<span class="fu">log</span>(stk_n[<span class="dv">1</span>,])))</span>
+<span id="cb21-66"><a href="#cb21-66" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-67"><a href="#cb21-67" aria-hidden="true" tabindex="-1"></a>  <span class="do">## remnove years before first data year</span></span>
+<span id="cb21-68"><a href="#cb21-68" aria-hidden="true" tabindex="-1"></a>  minyr <span class="ot">&lt;-</span> <span class="fu">dims</span>(stk<span class="sc">@</span>stock[<span class="sc">!</span><span class="fu">is.na</span>(stk<span class="sc">@</span>stock.n)])<span class="sc">$</span>minyear <span class="co"># min year where data exists</span></span>
+<span id="cb21-69"><a href="#cb21-69" aria-hidden="true" tabindex="-1"></a>  stk0  <span class="ot">&lt;-</span> <span class="fu">window</span>(stk, <span class="at">start =</span> minyr)</span>
+<span id="cb21-70"><a href="#cb21-70" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-71"><a href="#cb21-71" aria-hidden="true" tabindex="-1"></a>  <span class="do">## extend stock object and fill with assumptions calculated based on</span></span>
+<span id="cb21-72"><a href="#cb21-72" aria-hidden="true" tabindex="-1"></a>  <span class="co"># variables defined in function call use fwd_yrs+1 because we need to </span></span>
+<span id="cb21-73"><a href="#cb21-73" aria-hidden="true" tabindex="-1"></a>  <span class="co"># see if the stock crashes at the start of the year after the advice year</span></span>
+<span id="cb21-74"><a href="#cb21-74" aria-hidden="true" tabindex="-1"></a>  stk0 <span class="ot">&lt;-</span> FLasher<span class="sc">::</span><span class="fu">stf</span>(stk0, fwd_yrs<span class="sc">+</span><span class="dv">1</span>)</span>
+<span id="cb21-75"><a href="#cb21-75" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-76"><a href="#cb21-76" aria-hidden="true" tabindex="-1"></a>  <span class="co"># FLasher::fwd will throw an error if there are NAs in weights in future years.</span></span>
+<span id="cb21-77"><a href="#cb21-77" aria-hidden="true" tabindex="-1"></a>  <span class="co"># I need to zero these if associated numbers are zero</span></span>
+<span id="cb21-78"><a href="#cb21-78" aria-hidden="true" tabindex="-1"></a>  FLCore<span class="sc">::</span><span class="fu">discards.wt</span>(stk0)[FLCore<span class="sc">::</span><span class="fu">discards.n</span>(stk0) <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb21-79"><a href="#cb21-79" aria-hidden="true" tabindex="-1"></a>  FLCore<span class="sc">::</span><span class="fu">landings.wt</span>(stk0)[FLCore<span class="sc">::</span><span class="fu">landings.n</span>(stk0) <span class="sc">==</span> <span class="dv">0</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb21-80"><a href="#cb21-80" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-81"><a href="#cb21-81" aria-hidden="true" tabindex="-1"></a>  <span class="do">## find status quo F for each stock</span></span>
+<span id="cb21-82"><a href="#cb21-82" aria-hidden="true" tabindex="-1"></a>  fsq <span class="ot">&lt;-</span> <span class="fu">yearMeans</span>(<span class="fu">fbar</span>(stk)[,<span class="fu">as.character</span>(fwd_yrs_fsq<span class="sc">+</span>ay<span class="sc">-</span>mlag)])</span>
+<span id="cb21-83"><a href="#cb21-83" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-84"><a href="#cb21-84" aria-hidden="true" tabindex="-1"></a>  <span class="do">## FLasher cannot handle fsq=0</span></span>
+<span id="cb21-85"><a href="#cb21-85" aria-hidden="true" tabindex="-1"></a>  fsq <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(fsq<span class="sc">==</span><span class="dv">0</span>, <span class="fl">0.001</span>,fsq)</span>
+<span id="cb21-86"><a href="#cb21-86" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-87"><a href="#cb21-87" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Construct matrix with rows as years and columns as iterations as before</span></span>
+<span id="cb21-88"><a href="#cb21-88" aria-hidden="true" tabindex="-1"></a>  <span class="co"># and fill it with the Ftarget values</span></span>
+<span id="cb21-89"><a href="#cb21-89" aria-hidden="true" tabindex="-1"></a>  targ <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow=</span>fwd_yrs<span class="sc">+</span><span class="dv">1</span>, <span class="at">ncol =</span> niter)</span>
+<span id="cb21-90"><a href="#cb21-90" aria-hidden="true" tabindex="-1"></a>  targ[<span class="dv">1</span>,] <span class="ot">&lt;-</span> fsq</span>
+<span id="cb21-91"><a href="#cb21-91" aria-hidden="true" tabindex="-1"></a>  targ[<span class="dv">2</span>,] <span class="ot">&lt;-</span> ctrl<span class="sc">@</span>iters[,<span class="st">"value"</span>,]</span>
+<span id="cb21-92"><a href="#cb21-92" aria-hidden="true" tabindex="-1"></a>  targ[<span class="dv">3</span>,] <span class="ot">&lt;-</span> ctrl<span class="sc">@</span>iters[,<span class="st">"value"</span>,]</span>
+<span id="cb21-93"><a href="#cb21-93" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-94"><a href="#cb21-94" aria-hidden="true" tabindex="-1"></a>  <span class="co"># year sets the timeline, quant = fbar says we are using fishing mortality</span></span>
+<span id="cb21-95"><a href="#cb21-95" aria-hidden="true" tabindex="-1"></a>  ctrl0 <span class="ot">&lt;-</span> <span class="fu">fwdControl</span>(<span class="fu">list</span>(<span class="at">year  =</span> <span class="fu">c</span>(ay,ctrl<span class="sc">@</span>target<span class="sc">$</span>year,ctrl<span class="sc">@</span>target<span class="sc">$</span>year<span class="sc">+</span><span class="dv">1</span>), </span>
+<span id="cb21-96"><a href="#cb21-96" aria-hidden="true" tabindex="-1"></a>                           <span class="at">quant =</span> <span class="st">"fbar"</span>, <span class="at">value =</span> <span class="fu">c</span>(targ)))</span>
+<span id="cb21-97"><a href="#cb21-97" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-98"><a href="#cb21-98" aria-hidden="true" tabindex="-1"></a>  <span class="do">## project stock forward</span></span>
+<span id="cb21-99"><a href="#cb21-99" aria-hidden="true" tabindex="-1"></a>  stk_fwd <span class="ot">&lt;-</span> FLasher<span class="sc">::</span><span class="fu">fwd</span>(stk0, <span class="at">sr =</span> sr0, <span class="at">control =</span> ctrl0)</span>
+<span id="cb21-100"><a href="#cb21-100" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-101"><a href="#cb21-101" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Extract catch target for the advice year (3 decimal places) </span></span>
+<span id="cb21-102"><a href="#cb21-102" aria-hidden="true" tabindex="-1"></a>  <span class="co"># by looking at the result object</span></span>
+<span id="cb21-103"><a href="#cb21-103" aria-hidden="true" tabindex="-1"></a>  TAC <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">catch</span>(stk_fwd)[,<span class="fu">ac</span>(ay<span class="sc">+</span>mlag)]),<span class="dv">3</span>)</span>
+<span id="cb21-104"><a href="#cb21-104" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-105"><a href="#cb21-105" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Get SSB at the end of the advice year (or at the start of the year after?)</span></span>
+<span id="cb21-106"><a href="#cb21-106" aria-hidden="true" tabindex="-1"></a>  TACyr_ssb <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">ssb</span>(stk_fwd)[,<span class="fu">ac</span>(ay<span class="sc">+</span>mlag<span class="sc">+</span><span class="dv">1</span>)])</span>
+<span id="cb21-107"><a href="#cb21-107" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-108"><a href="#cb21-108" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Find iterations where SSB at end of TAC year is &lt; Blim</span></span>
+<span id="cb21-109"><a href="#cb21-109" aria-hidden="true" tabindex="-1"></a>  belowBlim <span class="ot">&lt;-</span> <span class="fu">which</span>(TACyr_ssb <span class="sc">&lt;</span> <span class="fu">attr</span>(ctrl, <span class="st">"Blim"</span>))</span>
+<span id="cb21-110"><a href="#cb21-110" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-111"><a href="#cb21-111" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Go through model fits - where SSB &lt; Blim, forecast to target Blim</span></span>
+<span id="cb21-112"><a href="#cb21-112" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(belowBlim) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb21-113"><a href="#cb21-113" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-114"><a href="#cb21-114" aria-hidden="true" tabindex="-1"></a>    <span class="do">## define forward control targetting Blim</span></span>
+<span id="cb21-115"><a href="#cb21-115" aria-hidden="true" tabindex="-1"></a>    targ <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="dv">0</span>,<span class="at">nrow=</span>fwd_yrs<span class="sc">+</span><span class="dv">1</span>, <span class="at">ncol =</span> niter)</span>
+<span id="cb21-116"><a href="#cb21-116" aria-hidden="true" tabindex="-1"></a>    targ[<span class="dv">1</span>,] <span class="ot">&lt;-</span> fsq</span>
+<span id="cb21-117"><a href="#cb21-117" aria-hidden="true" tabindex="-1"></a>    <span class="co"># target is now Blim</span></span>
+<span id="cb21-118"><a href="#cb21-118" aria-hidden="true" tabindex="-1"></a>    targ[<span class="dv">2</span>,] <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">attr</span>(ctrl,<span class="st">"Blim"</span>))</span>
+<span id="cb21-119"><a href="#cb21-119" aria-hidden="true" tabindex="-1"></a>    targ[<span class="dv">3</span>,] <span class="ot">&lt;-</span> ctrl<span class="sc">@</span>iters[,<span class="st">"value"</span>,]</span>
+<span id="cb21-120"><a href="#cb21-120" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-121"><a href="#cb21-121" aria-hidden="true" tabindex="-1"></a>    ctrl_blim <span class="ot">&lt;-</span> <span class="fu">fwdControl</span>(<span class="fu">list</span>(</span>
+<span id="cb21-122"><a href="#cb21-122" aria-hidden="true" tabindex="-1"></a>      <span class="at">year  =</span> <span class="fu">c</span>(ay,ay<span class="sc">+</span>mlag,ay<span class="sc">+</span>mlag<span class="sc">+</span><span class="dv">1</span>),</span>
+<span id="cb21-123"><a href="#cb21-123" aria-hidden="true" tabindex="-1"></a>      <span class="co">#focus on biomass in the 2nd year to force us to end </span></span>
+<span id="cb21-124"><a href="#cb21-124" aria-hidden="true" tabindex="-1"></a>      <span class="co"># at Blim instead if we were below</span></span>
+<span id="cb21-125"><a href="#cb21-125" aria-hidden="true" tabindex="-1"></a>      <span class="at">quant =</span> <span class="fu">c</span>(<span class="st">"fbar"</span>,<span class="st">"ssb_end"</span>,<span class="st">"fbar"</span>),</span>
+<span id="cb21-126"><a href="#cb21-126" aria-hidden="true" tabindex="-1"></a>      <span class="at">value =</span> <span class="fu">c</span>(targ)))</span>
+<span id="cb21-127"><a href="#cb21-127" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-128"><a href="#cb21-128" aria-hidden="true" tabindex="-1"></a>    <span class="co">#rerun simulation focusing on Blim to find the Ftarget that is appropriate</span></span>
+<span id="cb21-129"><a href="#cb21-129" aria-hidden="true" tabindex="-1"></a>    stk_blim <span class="ot">&lt;-</span> FLasher<span class="sc">::</span><span class="fu">fwd</span>(stk0, <span class="at">sr =</span> sr0, <span class="at">control =</span> ctrl_blim)</span>
+<span id="cb21-130"><a href="#cb21-130" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-131"><a href="#cb21-131" aria-hidden="true" tabindex="-1"></a>    <span class="do">## Find iterations with zero TAC advice (some stocks may be in such</span></span>
+<span id="cb21-132"><a href="#cb21-132" aria-hidden="true" tabindex="-1"></a>    <span class="co"># bad health taht we can't catch any)</span></span>
+<span id="cb21-133"><a href="#cb21-133" aria-hidden="true" tabindex="-1"></a>    zeroTAC <span class="ot">&lt;-</span> <span class="fu">ssb</span>(stk_blim)[,<span class="fu">ac</span>(ay<span class="sc">+</span>mlag<span class="sc">+</span><span class="dv">1</span>)] <span class="sc">&lt;</span> <span class="fu">attr</span>(ctrl,<span class="st">"Blim"</span>)</span>
+<span id="cb21-134"><a href="#cb21-134" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb21-135"><a href="#cb21-135" aria-hidden="true" tabindex="-1"></a>    <span class="do">## update TAC</span></span>
+<span id="cb21-136"><a href="#cb21-136" aria-hidden="true" tabindex="-1"></a>    TAC[belowBlim] <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">catch</span>(stk_blim)[,<span class="fu">ac</span>(ay<span class="sc">+</span>mlag)])[belowBlim],<span class="dv">3</span>)</span>
+<span id="cb21-137"><a href="#cb21-137" aria-hidden="true" tabindex="-1"></a>    <span class="co"># set any in zeroTAC to zero manually</span></span>
+<span id="cb21-138"><a href="#cb21-138" aria-hidden="true" tabindex="-1"></a>    TAC[zeroTAC]   <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb21-139"><a href="#cb21-139" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb21-140"><a href="#cb21-140" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-141"><a href="#cb21-141" aria-hidden="true" tabindex="-1"></a>  <span class="do">## Construct fwd control object, which we measurre using catch not fbar now</span></span>
+<span id="cb21-142"><a href="#cb21-142" aria-hidden="true" tabindex="-1"></a>  ctrl0 <span class="ot">&lt;-</span> <span class="fu">fwdControl</span>(<span class="fu">list</span>(<span class="at">year =</span> ay <span class="sc">+</span> mlag, <span class="at">quant =</span> <span class="st">"catch"</span>, <span class="at">value =</span> TAC))</span>
+<span id="cb21-143"><a href="#cb21-143" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-144"><a href="#cb21-144" aria-hidden="true" tabindex="-1"></a>  <span class="co"># return the same objects as before</span></span>
+<span id="cb21-145"><a href="#cb21-145" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">list</span>(<span class="at">ctrl =</span> ctrl0, <span class="at">tracking =</span> tracking))</span>
+<span id="cb21-146"><a href="#cb21-146" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
+<section id="setting-forecast-arguments" class="level4">
+<h4 class="anchored" data-anchor-id="setting-forecast-arguments">Setting forecast arguments</h4>
+<p>This is how we find the average values for the parameters form the historical data in this simulation. It is similar to the stfMixME function we used beforehand, but here we can set it up separately for each stock.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Set Forecast/ISYS Arguments</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Using similar settings to Cod/Had and those defined in ICES_HCR function for whiting</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>input<span class="sc">$</span>ctrl_obj<span class="sc">$</span>isys<span class="sc">@</span>args<span class="sc">$</span>isysList <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">cod =</span> <span class="fu">list</span>(<span class="at">fwd_trgt =</span> <span class="fu">c</span>(<span class="st">"fsq"</span>, <span class="st">"hcr"</span>), <span class="at">fwd_yrs =</span> <span class="dv">2</span>, <span class="at">fwd_yrs_fsq =</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:</span><span class="dv">0</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">fwd_yrs_average =</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">fwd_yrs_rec_start =</span> <span class="dv">2015</span>, </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">fwd_yrs_sel =</span> <span class="sc">-</span><span class="dv">3</span><span class="sc">:-</span><span class="dv">1</span>),</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">had =</span> <span class="fu">list</span>(<span class="at">fwd_trgt =</span> <span class="fu">c</span>(<span class="st">"fsq"</span>, <span class="st">"hcr"</span>), <span class="at">fwd_yrs =</span> <span class="dv">2</span>, <span class="at">fwd_yrs_fsq =</span> <span class="dv">0</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">fwd_yrs_average =</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">fwd_yrs_rec_start =</span> <span class="dv">1993</span>, </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">fwd_yrs_sel =</span> <span class="sc">-</span><span class="dv">3</span><span class="sc">:-</span><span class="dv">1</span>)</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Two_stocks_Optimising_ftarget_in_shortcut_model:</p>
 <ul>
 <li><p>ICES_HCR function (including setting HCR parameters)</p></li>
 <li><p>forecast_fun</p></li>
-<li><p>Intial projection for the year 2020?</p></li>
-<li><p>Set Forecast arguments on line 298 - think this is averaging parameters so don’t need</p></li>
-<li><p>Checking for effort optimisation or management procedure failures</p></li>
-<li><p>Explaining the tracking object as this how I get SSB and catch</p></li>
-<li><p>Explain how the data for this simulation is all the inputs from the previous one</p></li>
 </ul>
 <p>Parallelisation</p>
 <ul>
@@ -414,6 +697,7 @@ window.Quarto = {
 <li><p>Removing the res object</p></li>
 <li><p>doMcapply, etc.</p></li>
 </ul>
+</section>
 </section>
 </section>
 </section>
