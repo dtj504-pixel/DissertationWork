@@ -134,6 +134,8 @@ By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB <
 
 Going to write down everything and then remove areas Gustav said I don't need to worry about.
 
+-   Explaining the tracking object as this how I get catch ?? - MAYBE IN A SECTION SUMMARISING FULL CODE PROPCESS?
+
 ### Starting $F_{cod}$ and $F_{had}$
 
 We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES2020HaddockBlim].
@@ -295,14 +297,14 @@ The `tracking` object records summary statistics for the modelled stock and flee
 
 We firstly check for management advice failure [@MixMEwiki]:
 
-``` R
+``` r
 ## Check for advice failure
 apply(res$tracking$iterfail, 1, mean)
 ```
 
 Then we can also check for effort optimisation failure and the message given if there was any failure [@MixMEwiki]:
 
-``` R
+``` r
 ## Check for effort optimisation failure
 res$tracking$optim
 
@@ -314,14 +316,14 @@ Effort optimisation failure can be sued to see if we are over-fishing the stocks
 
 Another result we can see is the over-quota catches [@mixMEwiki]:
 
-``` R
+``` r
 ## Check maximum overshoot of the quota by fleets
 max(res$tracking$overquota, na.rm = TRUE)
 ```
 
 We can also check the quota uptake using the below [@MixMEwiki]:
 
-``` R
+``` r
 ## Check quota uptake for cod and haddock
 res$tracking$uptake["cod",,,1]
 res$tracking$uptake["had",,,1]
@@ -329,7 +331,7 @@ res$tracking$uptake["had",,,1]
 
 Laslty, we can check which stock is the choke stock using [@MixMEwiki]:
 
-``` R
+``` r
 ## Check choke stock
 res$tracking$choke
 ```
@@ -338,7 +340,7 @@ res$tracking$choke
 
 We add $B_{lim}$ into the HCR to help us calculate the risk later on [@MixMEwiki]. It is helpful or calculating it in our current way, or the way MixME defines it as: "the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point (\$B\_{lim}\$)" [@MixMEwiki].
 
-``` R
+``` r
 ## Define Blim for each stock - required for way 
 #calculating risk right now
 hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
@@ -347,21 +349,36 @@ hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
 res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
 ```
 
+### Additions or Differences in the Shortcut Model
+
+NEED CITATIONS FROM SOMEHWERE BUT MAY BE VEYR DIFFICUTL AS NOT PUBLIC YET
+
+This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the same data here as in the `Optimising_ftarget_in_MixME_mult_points_parallel.R` file, except that we have now also loaded in the Operating Model and Observation Eerror Model with the data [@MixMewiki].
+
+#### `ICES_HCR` function
+
+#### `forecast_fun` function
+
+#### Setting forecast arguments
+
+This is how we find the average values for the parameters form the historical data in this simulation. It is similar to the stfMixME function we used beforehand, but here we can set it up separately for each stock.
+
+``` R
+# Set Forecast/ISYS Arguments
+# Using similar settings to Cod/Had and those defined in ICES_HCR function for whiting
+input$ctrl_obj$isys@args$isysList <- list(
+    cod = list(fwd_trgt = c("fsq", "hcr"), fwd_yrs = 2, fwd_yrs_fsq = -2:0, fwd_yrs_average = -2:0,
+          fwd_yrs_rec_start = 2015, fwd_yrs_sel = -3:-1),
+    had = list(fwd_trgt = c("fsq", "hcr"), fwd_yrs = 2, fwd_yrs_fsq = 0, fwd_yrs_average = -2:0,
+          fwd_yrs_rec_start = 1993, fwd_yrs_sel = -3:-1)
+)
+```
+
 Two_stocks_Optimising_ftarget_in_shortcut_model:
 
 -   ICES_HCR function (including setting HCR parameters)
 
 -   forecast_fun
-
--   Intial projection for the year 2020?
-
--   Set Forecast arguments on line 298 - think this is averaging parameters so don't need
-
--   Checking for effort optimisation or management procedure failures
-
--   Explaining the tracking object as this how I get SSB and catch
-
--   Explain how the data for this simulation is all the inputs from the previous one
 
 Parallelisation
 
