@@ -357,6 +357,8 @@ This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the
 
 #### Zero-catch advice
 
+CHECK DEFINETLY NOT IN OLD METHOD
+
 In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$:
 
 ``` r
@@ -437,6 +439,8 @@ if (length(belowBlim) > 0) {
 ```
 
 #### `ICES_HCR` function
+
+This is a new way to create the HCR.
 
 ``` r
 ## === Define a custom harvest control rule ===
@@ -557,6 +561,8 @@ ICES_HCR <- function (stk, args, hcrpars, tracking) {
 ```
 
 #### `forecast_fun` function
+
+This function projects forwards into the next year to set an appropriate TAC. We call this for every year of the simulation and it is similar to the short term forecast we used in the last file.
 
 ``` r
 #' Advice implementation using FLasher
@@ -724,9 +730,7 @@ input$ctrl_obj$isys@args$isysList <- list(
 )
 ```
 
-Two_stocks_Optimising_ftarget_in_shortcut_model:
-
-Parallelisation
+### Parallelisation
 
 -   doOne
 
@@ -742,6 +746,4 @@ Mention the one in the MixME paper.
 
 ## Doing a proper risk calculation
 
-We would need multiple iterations for this.
-
-Precautionary is a requirement for many jurisdictions - I do now though, so would it be much of an improvement to use probabilities instead?
+I now meet precautionary, so would it be much of an improvement to use probabilities instead?
