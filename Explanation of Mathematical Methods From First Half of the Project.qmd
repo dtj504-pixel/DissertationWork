@@ -202,13 +202,13 @@ Now, we will look at the mathematics behind the methods above and also at the ac
 
 ## Gaussian Processes
 
-A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $j,i\in\{1, ..., k\}$ to find the covariance matrix $\Sigma_{1:k}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_m}$, the marginal probability distribution on $(F(x_1),...,F(x_m))$ is given by[@BayesianOptimisationTutorial]:
+A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $i,j\in\{1, ..., m\}$ to find the covariance matrix $\Sigma_{1:m}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_m}$, the marginal probability distribution on $(F(x_1),...,F(x_m))$ is given by [@BayesianOptimisationTutorial]:
 
 \begin{equation}
-    (F(x_1),...,F(x_m)) \sim N((\mu_0(x_1),...,\mu(x_m)),\Sigma_{1:k})
+    (F(x_1),...,F(x_m)) \sim N((\mu_0(x_1),...,\mu_0(x_m)),\Sigma_{1:m})
 \end{equation}
 
-We choose a covariance function such that inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated[@Originalpaper]. This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$[@BayesianOptimisationTutorial].
+We choose a covariance function such that inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper]. This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
 
 From the original paper, we are using the mean function $m_1$ for the catch and the mean function $m_2$ for the risk:
 
@@ -220,7 +220,13 @@ $$
 m_2(\phi) = \beta_{2,0} + \beta_{2,1}\phi_1 + \beta_{2,2}\phi_2 + \beta_{2,3}\phi_1\phi_2
 $$
 
-and our covariance function is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function[@Originalpaper]:
+where all of the above $\beta_{s,t}$ for $s \in \{1,2\}$ and $t \in \{1,2,3,4,5\}$ are coefficients to be found and:
+
+$$
+\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
+$$
+
+Our covariance function is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
 
 $$
 r_i(\phi,\phi',\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi'_1|}{\delta_{i,1}} - \frac{|\phi_2 - \phi_2'|}{\delta_{i,2}}\right)
@@ -236,9 +242,9 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
               response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
 ```
 
-where `covtype` tells us the type of covariance function we are using and `estim.method` tells us how to estimate unknown parameters[@DiceKrigingDocumentation]. Here, `nugget` is a small value being used to ensure we have an invertible matrix and telling the GP that our objective function is deterministic because it is so small[@DiceKrigingDocumentation]. If our objective function had noise, `nugget` would instead be used to add that noise along the diagonal of the covariance matrix to encode that noise into our GP[@mackay1998introduction].
+where `covtype` tells us the type of covariance function we are using and `estim.method` tells us how to estimate unknown parameters [@DiceKrigingDocumentation]. Here, `nugget` is a small value being used to ensure we have an invertible matrix and telling the GP that our objective function is deterministic because it is so small [@DiceKrigingDocumentation]. If our objective function had noise, `nugget` would instead be used to add that noise along the diagonal of the covariance matrix to encode that noise into our GP [@mackay1998introduction].
 
-The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $\mu_0$ and $\operatorname{cov}_0$ for our GPs. We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$. This likelihood can be modelled by a multivariate normal[@BayesianOptimisationTutorial]. Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
+The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $\mu_0$ and $\operatorname{cov}_0$ for our GPs. We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$. This likelihood can be modelled by a multivariate normal - WHY IS THIS THE SAME AS EQ 1 [@BayesianOptimisationTutorial]. Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
 
 $$
  \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
