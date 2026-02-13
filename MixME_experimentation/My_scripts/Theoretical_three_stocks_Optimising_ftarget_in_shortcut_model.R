@@ -1,3 +1,5 @@
+# Authored by Matt Pace
+
 ## // UNDER ADJUSTMENT SO MIGHT GET QUITE ODD //
 # NO data to test on yet as no data for whiting in MixME tutorial
 

@@ -159,8 +159,16 @@ window.Quarto = {
 <h1>Introduction</h1>
 <p>What mathematical methods will I explain in this document that have not been explained in <a href="https://github.com/dtj504-pixel/DissertationWork/blob/main/Explanation%20of%20Mathematical%20Methods%20From%20First%20Half%20of%20the%20Project.qmd">Explanation of Mathematical Methods from First Half of the Project</a>?</p>
 <ul>
+<li><p>The basics of the MixME model</p>
+<ul>
+<li><p>Creating the operating model</p></li>
+<li><p>Building the MixME input object</p></li>
+<li><p>Running the simulation</p></li>
+<li><p>Analysing the results of the simulation</p></li>
+<li><p>HCR parameters</p></li>
+<li><p>Additions or differences in the shortcut model</p></li>
+</ul></li>
 <li><p>Calculating the risk</p></li>
-<li><p>The basics of the MixME model - BREAK DOWN A BIT MORE LATER</p></li>
 <li><p>Parallelisation</p></li>
 </ul>
 <p>HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary</p>
@@ -168,7 +176,7 @@ window.Quarto = {
 </section>
 <section id="context" class="level1">
 <h1>Context</h1>
-<p>The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch over all years of the projection will minimise the chance that a simulation where a stock fails is chosen <span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>,<span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. It also follows ICES guidelines to only calculate yield and risk for the last ten years for long-term projection, to allow time for a recovery period <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>.</p>
+<p>The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen.<span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>,<span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. It also follows ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>.</p>
 <p>I focused on the datasets from the Fixed fishing mortality management strategy example (<code>mixedfishery_MixME_om</code>) and the Exploring simulation outputs example (<code>mixedfishery_MixME_input</code>) which are both in the MixME documentation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. However, for the second dataset <code>mixedfishery_MixME_input</code> I was given a shortcut method by a colleague at Cefas which takes a more direct approach to the simulation and so is deterministic. The code for these datasets is <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> and <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> respectively.</p>
 <p>Both of these datasets have two stocks (cod and haddock) and two fleets <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. I was told by a colleague at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>. This allows me to use the same methods as in the first half of the project by replacing <span class="math inline">\(F_{target}\)</span> with <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(B_{trigger}\)</span> with <span class="math inline">\(F_{had}\)</span>, where <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> are the fishing mortalities for cod and haddock respectively.</p>
 <p>For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>. These conditions simplify the simulation but unfortunately mean that we cannot use the standard ICES definition of risk to calculate <span class="math inline">\(Risk = P(SSB &lt; B_{lim})\)</span> <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. Instead, we extract <span class="math inline">\(\textrm{min}(SSB)\)</span> for each sampled point from the years 2030-2039 in the simulation and then model these as a GP [<span class="citation" data-cites="Originalpaper">Spence (<a href="#ref-Originalpaper" role="doc-biblioref">2025</a>)</span>]<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. This allows us to predict possible <span class="math inline">\(\textrm{min}(SSB)\)</span> values at each point in the design space and see how many of these predictions fall below <span class="math inline">\(B_{lim}\)</span> to calculate <span class="math inline">\(P(\textrm{min}(SSB) &lt; B_{lim})\)</span> <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. We do this for each stock. This method of calculation satisfies the ICES precautionary standard <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>.</p>
@@ -404,9 +412,12 @@ window.Quarto = {
 </section>
 <section id="additions-or-differences-in-the-shortcut-model" class="level3">
 <h3 class="anchored" data-anchor-id="additions-or-differences-in-the-shortcut-model">Additions or Differences in the Shortcut Model</h3>
-<p>NEED CITATIONS FROM SOMEHWERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET</p>
-<p>This is the <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> file. We use the same data here as in the <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> file, except that we have now also loaded in the Operating Model and Observation Eerror Model with the data <span class="citation" data-cites="MixMewiki">(<a href="#ref-MixMewiki" role="doc-biblioref"><strong>MixMewiki?</strong></a>)</span>.</p>
-<p>In this simulation, we have a provision to return zero-catch advice if the SSB is below Blim in advice year +1. Firstly, we identify any simulation where <span class="math inline">\(SSB &lt;B_{lim}\)</span> and re-run these simulations specifically targeting <span class="math inline">\(B_{lim}\)</span>:</p>
+<p>NEED CITATIONS FROM SOMEWHERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET</p>
+<p>This is the <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> file. We use the same data here as in the <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> file, except that we have now also loaded in the Operating Model and Observation Error Model with the data <span class="citation" data-cites="MixMewiki">(<a href="#ref-MixMewiki" role="doc-biblioref"><strong>MixMewiki?</strong></a>)</span>.</p>
+<section id="zero-catch-advice" class="level4">
+<h4 class="anchored" data-anchor-id="zero-catch-advice">Zero-catch advice</h4>
+<p>CHECK DEFINETLY NOT IN OLD METHOD</p>
+<p>In this simulation, we have a condition meaning we return zero-catch advice if the <span class="math inline">\(SSB\)</span> is below <span class="math inline">\(B_{lim}\)</span> in the year after the advice year. We are checking year after the advice year due to our management lag of one year. Firstly, we identify any simulation where <span class="math inline">\(SSB &lt;B_{lim}\)</span> and re-run these simulations specifically targeting <span class="math inline">\(B_{lim}\)</span>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="do">## Find iterations where SSB at end of TAC year is &lt; Blim</span></span>
 <span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  belowBlim <span class="ot">&lt;-</span> <span class="fu">which</span>(TACyr_ssb <span class="sc">&lt;</span> <span class="fu">attr</span>(ctrl, <span class="st">"Blim"</span>))</span>
 <span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
@@ -473,8 +484,10 @@ window.Quarto = {
 <span id="cb22-31"><a href="#cb22-31" aria-hidden="true" tabindex="-1"></a>    <span class="co"># set any in zeroTAC to zero manually</span></span>
 <span id="cb22-32"><a href="#cb22-32" aria-hidden="true" tabindex="-1"></a>    TAC[zeroTAC]   <span class="ot">&lt;-</span> <span class="dv">0</span></span>
 <span id="cb22-33"><a href="#cb22-33" aria-hidden="true" tabindex="-1"></a>    }</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</section>
 <section id="ices_hcr-function" class="level4">
 <h4 class="anchored" data-anchor-id="ices_hcr-function"><code>ICES_HCR</code> function</h4>
+<p>This is a new way to create the HCR.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="do">## === Define a custom harvest control rule ===</span></span>
 <span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>ICES_HCR <span class="ot">&lt;-</span> <span class="cf">function</span> (stk, args, hcrpars, tracking) {</span>
 <span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  </span>
@@ -593,6 +606,7 @@ window.Quarto = {
 </section>
 <section id="forecast_fun-function" class="level4">
 <h4 class="anchored" data-anchor-id="forecast_fun-function"><code>forecast_fun</code> function</h4>
+<p>This function projects forwards into the next year to set an appropriate TAC. We call this for every year of the simulation and it is similar to the short term forecast we used in the last file.</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co">#' Advice implementation using FLasher</span></span>
 <span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co">#' </span></span>
 <span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co">#' Carry out a short-term forecast using Flasher</span></span>
@@ -753,14 +767,15 @@ window.Quarto = {
 <span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">fwd_yrs_average =</span> <span class="sc">-</span><span class="dv">2</span><span class="sc">:</span><span class="dv">0</span>, <span class="at">fwd_yrs_rec_start =</span> <span class="dv">1993</span>, </span>
 <span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">fwd_yrs_sel =</span> <span class="sc">-</span><span class="dv">3</span><span class="sc">:-</span><span class="dv">1</span>)</span>
 <span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Two_stocks_Optimising_ftarget_in_shortcut_model:</p>
-<p>Parallelisation</p>
+</section>
+</section>
+<section id="parallelisation" class="level3">
+<h3 class="anchored" data-anchor-id="parallelisation">Parallelisation</h3>
 <ul>
 <li><p>doOne</p></li>
 <li><p>Removing the res object</p></li>
 <li><p>doMcapply, etc.</p></li>
 </ul>
-</section>
 </section>
 </section>
 </section>
@@ -772,8 +787,7 @@ window.Quarto = {
 </section>
 <section id="doing-a-proper-risk-calculation" class="level2">
 <h2 class="anchored" data-anchor-id="doing-a-proper-risk-calculation">Doing a proper risk calculation</h2>
-<p>We would need multiple iterations for this.</p>
-<p>Precautionary is a requirement for many jurisdictions - I do now though, so would it be much of an improvement to use probabilities instead?</p>
+<p>I now meet precautionary, so would it be much of an improvement to use probabilities instead?</p>
 
 </section>
 </section>
