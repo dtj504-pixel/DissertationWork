@@ -380,19 +380,22 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 # Application of theory in my project
 
-## Gaussian Processes and Maximum Likelihood Estimation Application
+## Set up the Gaussian Processes
 
-To maintain the notation from the Spence 2025 paper, we are using the mean function $m_1$ for the catch and the mean function $m_2$ for the risk [@Originalpaper]:
+To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
-m_1 (\phi) = \beta_{1,0} + \beta_{1,1} (\operatorname{ln}(\phi_1 + 0.1))+\beta_{1,2}(\operatorname{ln}(\phi_1 + 0.1))^2 + \beta_{1,3}(\operatorname{ln}(\phi_1 + 0.1))^3+ \beta_{1,4}(\phi_2\operatorname{ln}(\phi_1 + 0.1)) + \beta_{1,5}\phi_2
+\begin{split}
+m_1 (\phi) = \beta_{1,0} + \beta_{1,1} (\operatorname{ln}(\phi_1 + 0.1))+\beta_{1,2}(\operatorname{ln}(\phi_1 + 0.1))^2 + \\
+ \beta_{1,3}(\operatorname{ln}(\phi_1 + 0.1))^3+ \beta_{1,4}(\phi_2\operatorname{ln}(\phi_1 + 0.1)) + \beta_{1,5}\phi_2
+\end{split}
 $$
 
 $$
 m_2(\phi) = \beta_{2,0} + \beta_{2,1}\phi_1 + \beta_{2,2}\phi_2 + \beta_{2,3}\phi_1\phi_2
 $$
 
-where all of the above $\beta_{s,t}$ for $s \in \{1,2\}$ and $t \in \{1,2,3,4,5\}$ are coefficients to be found and:
+where all of the above $\beta_{s,t}$ for $s \in \{1,2\}$ and $t \in \{1,2,3,4,5\}$ are coefficients to be found through maximum likelihood estimation and:
 
 $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
@@ -499,7 +502,7 @@ rgl::view3d(theta = 40, phi = 25, zoom = 0.8)
 rglwidget()
 ```
 
-## Bayesian History Matching Application
+## Excluding implausible points
 
 Once the objective function $f$ has been evaluated at eight points for the first round, Bayesian history matching speeds up the process by removing any points that are implausible [@Originalpaper]. This is done by using Bayes' Theorem to update our beliefs about the value of every unevaluated point based on the values of the points we have evaluated so far [@Originalpaper].
 
@@ -524,17 +527,6 @@ pcat <- pnorm(log(current_max), pred_cat_g$mean, pred_cat_g$sd + 1e-12)
 #These are our plausible points that remain.
 possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
 ```
-
-## Kriging Application
-
-In our second round, we need to update our GP with new data. - FIND CITATION Our process for updating GPs can be seen in the code below:
-
-``` r
-gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], estim.method = "MLE",
-              response = res_risk, nugget = 1e-12 * var(res_risk), covtype = "exp")
-```
-
-This looks the same as before, but the `runs` variable includes all of our evaluated points and so we are adding the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round.
 
 ## Deciding on next point to sample
 
@@ -722,7 +714,7 @@ All the arguments of the function are as in EI with a few exceptions. `obs_noise
 
 To then sample multiple next points that are spread out across the sample space, we use the Kmeans process as coded up below: - FIND/COPY CITATIONS
 
-``` R
+``` r
 # Select next points
 
 # cand is our Possible Space
@@ -751,3 +743,27 @@ To then sample multiple next points that are spread out across the sample space,
    }))
  }
 ```
+
+## Updating our GPS
+
+In our second round, we need to update our GPs with new data. - FIND CITATION Our process for updating GPs can be seen in the code below:
+
+``` r
+gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], estim.method = "MLE",
+              response = res_risk, nugget = 1e-12 * var(res_risk), covtype = "exp")
+```
+
+This looks the same as before, but the `runs` variable includes all of our evaluated points and so we are adding the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round.
+
+For the catch GP, we move on to using a new prior because by the time we create this GP we have sampled 16 points[@Originalpaper]. Here is the catch GP for the second round and onwards:
+
+``` r
+gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + 
+                I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),
+                design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
+                response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+```
+
+Now, we repeat the process described above until there are no points with a positive KG. Then, the optimal point is the $x^*$ has the highest catch out of the precautionary points.
+
+### References
