@@ -689,19 +689,26 @@ The code for this process can be seen below:
 
 # cand is our Possible Space
  if (nrow(cand) <= 8) {
-    # Here, we take all of the points as there are less than the amount we want to sample left
+    # Here, we take all of the points as there are less than the 
+    # amount we want to sample left
    next_points <- cand[order(-cand$ei), c("Ftarget", "Btrigger")]
  } else {
-    # We order the points based on the value given by the acquisition function, from highest to lowest here
+    # We order the points based on the value given 
+    # by the acquisition function, from highest to lowest here
    top_candidates <- cand[order(-cand$ei), ][1:nrow(cand), ]
-   # We need to set a seed to make the points that kmeans picks as the first centroids reproducible
+   # We need to set a seed to make the points that kmeans
+    # picks as the first centroids reproducible
    set.seed(123)
    # We find the clusters
    km_result <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
    # We add the cluster column to our table
    top_candidates$cluster <- km_result$cluster
-   # We pick the point with the highest value from the acquisition function from each cluster and assemble these points into a vector
-   next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
+   # We pick the point with the highest value from the 
+   # acquisition function from each cluster and assemble these 
+   # points into a vector
+   next_points <- do.call(rbind, 
+                  lapply(split(top_candidates, top_candidates$cluster),
+                         function(df) {
      df[which.max(df$ei), c("Ftarget", "Btrigger", "ei")]
    }))
  }
