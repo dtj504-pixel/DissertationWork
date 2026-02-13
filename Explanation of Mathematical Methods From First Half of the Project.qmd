@@ -380,7 +380,11 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 # Application of theory in my project
 
+FOR CODE, COULD I CITE SOMETHIGN SIMIALR TO MIXME WIKI FOR MIKE'S CODE?
+
 ## Set up the Gaussian Processes
+
+As we have to estimate coefficients here, we need to sample our first round of eight points before setting up the GPs so that have enough data to estimate all of the coefficients in our GPs. - FIND CITATION
 
 To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
@@ -401,11 +405,15 @@ $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
 $$
 
-Our covariance function is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
+Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$ [@Originalpaper].
+
+Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
 
 $$
 r_i(\phi,\phi',\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi'_1|}{\delta_{i,1}} - \frac{|\phi_2 - \phi_2'|}{\delta_{i,2}}\right)
 $$
+
+where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of $\phi_1$ and $\phi_2$ respectively. - CHECK AND CITATION.
 
 We can set up Gaussian Processes (GPs) in R using the DiceKriging package as below:
 
@@ -419,7 +427,7 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
 
 where `covtype` tells us the type of covariance function we are using and `estim.method` tells us how to estimate unknown parameters [@DiceKrigingDocumentation]. Here, `nugget` is a small value being used to ensure we have an invertible matrix and telling the GP that our objective function is deterministic because it is so small [@DiceKrigingDocumentation]. If our objective function had noise, `nugget` would instead be used to add that noise along the diagonal of the covariance matrix to encode that noise into our GP [@mackay1998introduction].
 
-The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $\mu_0$ and $\operatorname{cov}_0$ for our GPs.
+The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs. - CITATION
 
 In the code, we predict the $log(catch)$ and $log(risk)$ at every point in the design space using the code below:
 
@@ -427,14 +435,6 @@ In the code, we predict the $log(catch)$ and $log(risk)$ at every point in the d
 pred_risk_g <- predict(gp_risk,newdata=gridd,type="SK")
 pred_cat_g <- predict(gp_cat,newdata=gridd,type="SK")
 ```
-
-and then we can find $P(log(risk)\le0.05)$ by using:
-
-``` r
-prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
-```
-
-where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the pnorm function which would stop the code [@DiceKrigingDocumentation]. - JUSTIFY MORE - DICEKRIGIGN 2012 ROUSTANT PAPER
 
 We can then exponentiate these results where needed. We are building our GPs with log of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
@@ -504,16 +504,21 @@ rglwidget()
 
 ## Excluding implausible points
 
-Once the objective function $f$ has been evaluated at eight points for the first round, Bayesian history matching speeds up the process by removing any points that are implausible [@Originalpaper]. This is done by using Bayes' Theorem to update our beliefs about the value of every unevaluated point based on the values of the points we have evaluated so far [@Originalpaper].
-
-In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper]. We also make sure to set $\varepsilon = 0.0001$ [@originalpaper].
-
-This process is written up in the code as the below:
+Firstly, we enforce the precautionary threshold of $P(log(risk)\le0.05)$ by calculating:
 
 ``` r
-#Finds the probability that log(risk) <= log(0.05)
-prisk <- pnorm(log(0.05),pred_risk1_g$mean,pred_risk1_g$sd+1e-12)
+prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
+```
 
+where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the pnorm function which would stop the code [@DiceKrigingDocumentation]. - JUSTIFY MORE - DICEKRIGIGN 2012 ROUSTANT PAPER
+
+Then, Bayesian history matching speeds up the process by removing any points that are implausible [@Originalpaper]. This is done by using Bayes' Theorem to update our beliefs about the value of every unevaluated point based on the values of the points we have evaluated so far [@Originalpaper]. - WHAT DOES THIS MEAN? WHICH EQUATION?
+
+In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
+
+This process is written up in the code as the below, where we have set $\varepsilon = 0.0001$ [@Originalpaper]:
+
+``` r
 #Finds the current maximum catch which also has risk < 0.05
 #Note that we have exponentiated for this part
 current_max <- max(runs$C_long[runs$risk3_long < 0.05])
@@ -522,7 +527,7 @@ current_max <- max(runs$C_long[runs$risk3_long < 0.05])
 #all points in the design space
 pcat <- pnorm(log(current_max), pred_cat_g$mean, pred_cat_g$sd + 1e-12)
 
-#Check which points have P(log(catch) >= log(curent_max)) > 0.00001 
+#Check which points have P(log(catch) >= log(curent_max)) > 0.00001)
 #and have P(log(risk) <= log(0.05)) > 0.00001.
 #These are our plausible points that remain.
 possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
@@ -665,10 +670,7 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0,
 
             mu_i <- mu[i]
             sigma_i <- sqrt(var[i] + obs_noise_var)
-            # nsim simulated observations - using rnorm to sample from a  
-            # normal distribution is ok here as we are running a GP
-            # to model the catch, which is assumed to be normally         
-            # distributed
+            # nsim simulated observations
             y_sim <- rnorm(nsim, mu_i, sigma_i)
             # the covariance between every point in the grid and 
             # the point x_i
@@ -685,17 +687,13 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0,
                 # space, updating other points based on closeness 
                 # to the evaluated point by using the cov matrix
                 mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
-                # takes this new maximum mu into a vector for later        
-                # averaging
+                # takes this new maximum mu into a vector for averaging
                 max_after[s] <- max(mu_new)
             }
-            # Computes expected increase in the maximum posterior mean, mu
-            # higher values mean we're getting better knowledge as to where
-            # and what the maximum catch could be
+            # Computes expected increase in the maximum posterior mean
             kg[i] <- mean(max_after - mu_best)
         }
-    # Returns the vector of knowledge gradient values for each point in 
-    # the design space
+    # Returns the vector of KG values for each point in the design space
     kg
 }
 ```
@@ -712,7 +710,7 @@ All the arguments of the function are as in EI with a few exceptions. `obs_noise
 
 ### Kmeans process
 
-To then sample multiple next points that are spread out across the sample space, we use the Kmeans process as coded up below: - FIND/COPY CITATIONS
+To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process as coded up below: - FIND/COPY CITATIONS
 
 ``` r
 # Select next points
@@ -744,6 +742,8 @@ To then sample multiple next points that are spread out across the sample space,
  }
 ```
 
+Then, at the beginning of our next round we sample the eight points given in `next_points`.
+
 ## Updating our GPS
 
 In our second round, we need to update our GPs with new data. - FIND CITATION Our process for updating GPs can be seen in the code below:
@@ -764,6 +764,6 @@ gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) +
                 response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 ```
 
-Now, we repeat the process described above until there are no points with a positive KG. Then, the optimal point is the $x^*$ has the highest catch out of the precautionary points.
+Now, we repeat the full process described in the Application of theory in my project section until there are no points with a positive KG. Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points.
 
 ### References
