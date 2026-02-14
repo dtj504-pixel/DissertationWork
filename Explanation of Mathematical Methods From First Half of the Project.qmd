@@ -270,7 +270,7 @@ Let $f$ be the objective function and $x$ be a point in the sample space. We beg
     P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
 \end{equation}
 
-Once we evaluate another point $x'$ where $x' \neq x$, we are able to improve our integral to:
+Once we evaluate another point $x'$ where $x' \neq x$, we are able to use Bayes' Theorem improve our integral to:
 
 \begin{equation}
     P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
@@ -278,9 +278,9 @@ Once we evaluate another point $x'$ where $x' \neq x$, we are able to improve ou
 
 We now let $a=max\{f(x_1),...,f(x_l)\}$ where $l$ is the number of points we have evaluated so far. For the first round, $l=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated.[@Originalpaper] We remove the point $x$ if:
 
-\begin{equation}
-    P(f(x)>a|f(x_1),...,f(x_l)) = \int_{a}^{\infty}P(f(x)|f(x_1),...,f(x_l))df(x) <\varepsilon
-\end{equation}
+$$
+P(f(x)>a|f(x_1),...,f(x_l)) = \int_{a}^{\infty}P(f(x)|f(x_1),...,f(x_l))df(x) <\varepsilon
+$$ {#eq-removeimplausiblepoint}
 
 for a small $\varepsilon > 0$ until no plausible points remain. Then, the optimum will be $x^*$ such that:
 
@@ -370,21 +370,17 @@ where $\sigma_{obs}$ is a noise variable which can be determined by the user [@u
 
 We have now been able to determine which points are possible based on the probability that their catch is higher than the current maximum catch (using Bayesian History Matching) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
 
-For sampling only one point next, this would be very simple as you would take the point with the highest value assigned by the acquisition function [@BayesianOptimisationTutorial]. However, we want to sample 8 points next so that we continue the pattern set up in the original paper and we want a good trade-off between exploration and exploitation [@Originalpaper][@batchspreadinoutjustification].
+For sampling only one point next, this would be very simple as you would take the point with the highest value assigned by the acquisition function [@BayesianOptimisationTutorial]. However, we want to sample 8 points next so that we continue the pattern set up in the original paper and we want a good trade-off between exploration and exploitation [@Originalpaper],[@batchspreadinoutjustification].
 
-So, we use the `kmeans` function which is part of the stats package in R (which is automatically loaded into an R session). This function uses the algorithm from Hartigan and Wong, 2018 by default[@AKMeansClusteringAlgorithm][@kmeansdocumentation]. The k-means clustering method is the most commonly used due to its simplicity compared to other clustering algorithms[@kodinariya2013review.]
+So, we use the `kmeans` function which is part of the stats package in R (which is automatically loaded into an R session). This function uses the algorithm from Hartigan and Wong, 1979 by default[@AKMeansClusteringAlgorithm],[@kmeansdocumentation]. The k-means clustering method is the most commonly used due to its simplicity compared to other clustering algorithms[@kodinariya2013review.]
 
-This algoritm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters[@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters[@AKMeansClusteringAlgorithm][@kodinariya2013review].
+This algoritm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters [@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters [@AKMeansClusteringAlgorithm],[@kodinariya2013review].
 
-However, before the algorithm can start, we must specify how many clusters we want [@kodinariya2013review]. This can be difficult in many cases [@kodinariya2013review]. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. We then run the algorithm on $PS$ to form the clusters. Then, we pick one point from each cluster to sample in our next round. This allows us to search for viable points by looking in the Possible Space but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
+However, before the algorithm can start, we must specify how many clusters we want [@kodinariya2013review]. This can be difficult in many cases [@kodinariya2013review]. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. We then run the algorithm on $PS$ to form the clusters. Then, we pick the point with the highest value of the acquisition function from each cluster to sample in our next round. This allows us to search for viable points by looking in the Possible Space but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 # Application of theory in my project
 
-FOR CODE, COULD I CITE SOMETHIGN SIMIALR TO MIXME WIKI FOR MIKE'S CODE?
-
 ## Set up the Gaussian Processes
-
-As we have to estimate coefficients here, we need to sample our first round of eight points before setting up the GPs so that have enough data to estimate all of the coefficients in our GPs. - FIND CITATION
 
 To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
@@ -405,7 +401,7 @@ $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
 $$
 
-Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$ [@Originalpaper].
+where we rescale for numerical stability in the GP [@Originalpaper].
 
 Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
 
@@ -413,7 +409,9 @@ $$
 r_i(\phi,\phi',\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi'_1|}{\delta_{i,1}} - \frac{|\phi_2 - \phi_2'|}{\delta_{i,2}}\right)
 $$
 
-where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of $\phi_1$ and $\phi_2$ respectively. - CHECK AND CITATION.
+where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of $\phi_1$ and $\phi_2$ respectively [@williams2006gaussian].
+
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$ [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch, risk and the length scales for the covariance function $c$ [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions cannot have more than eight coefficients between them in our first round as we are only sampling eight points per round due to computation limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
 We can set up Gaussian Processes (GPs) in R using the DiceKriging package as below:
 
@@ -427,7 +425,7 @@ gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
 
 where `covtype` tells us the type of covariance function we are using and `estim.method` tells us how to estimate unknown parameters [@DiceKrigingDocumentation]. Here, `nugget` is a small value being used to ensure we have an invertible matrix and telling the GP that our objective function is deterministic because it is so small [@DiceKrigingDocumentation]. If our objective function had noise, `nugget` would instead be used to add that noise along the diagonal of the covariance matrix to encode that noise into our GP [@mackay1998introduction].
 
-The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs. - CITATION
+The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
 
 In the code, we predict the $log(catch)$ and $log(risk)$ at every point in the design space using the code below:
 
@@ -510,11 +508,9 @@ Firstly, we enforce the precautionary threshold of $P(log(risk)\le0.05)$ by calc
 prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
 ```
 
-where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the pnorm function which would stop the code [@DiceKrigingDocumentation]. - JUSTIFY MORE - DICEKRIGIGN 2012 ROUSTANT PAPER
+where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the `pnorm` function which would stop the code [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
 
-Then, Bayesian history matching speeds up the process by removing any points that are implausible [@Originalpaper]. This is done by using Bayes' Theorem to update our beliefs about the value of every unevaluated point based on the values of the points we have evaluated so far [@Originalpaper]. - WHAT DOES THIS MEAN? WHICH EQUATION?
-
-In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
+Then, Bayesian history matching speeds up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
 
 This process is written up in the code as the below, where we have set $\varepsilon = 0.0001$ [@Originalpaper]:
 
@@ -698,7 +694,7 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0,
 }
 ```
 
-where the resulting KG is given by the line: - WORDING (IT'S EACH POINT)
+where the KG for each point is calculated by:
 
 ``` r
 kg[i] <- mean(max_after - mu_best)
@@ -710,7 +706,7 @@ All the arguments of the function are as in EI with a few exceptions. `obs_noise
 
 ### Kmeans process
 
-To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process as coded up below: - FIND/COPY CITATIONS
+To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process as coded up below [@batchspreadingoutjustification]:
 
 ``` r
 # Select next points
@@ -746,7 +742,7 @@ Then, at the beginning of our next round we sample the eight points given in `ne
 
 ## Updating our GPS
 
-In our second round, we need to update our GPs with new data. - FIND CITATION Our process for updating GPs can be seen in the code below:
+In our second round, we need to update our GPs with new data [@Originalpaper]. Our process for updating GPs can be seen in the code below:
 
 ``` r
 gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], estim.method = "MLE",
