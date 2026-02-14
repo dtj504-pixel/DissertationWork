@@ -204,41 +204,35 @@ Now, we will look at the mathematics behind the methods above and also at the ac
 
 ## Gaussian Processes
 
-A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $i,j\in\{1, ..., m\}$ to find the covariance matrix $\Sigma_{1:m}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_m}$, the marginal probability distribution on $F(x_{1:m}) = (F(x_1),...,F(x_m))$ is given by [@BayesianOptimisationTutorial]:
+A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $i,j\in\{1, ..., n\}$ to find the covariance matrix $\Sigma_{1:n}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_n}$, the marginal probability distribution on $F(x_{1:n}) = (F(x_1),...,F(x_n))$ is given by [@BayesianOptimisationTutorial]:
 
 $$
-F(x_{1:m}) \sim N((\mu_0(x_{1:m}),\Sigma_{1:m})
+F(x_{1:n}) \sim N((\mu_0(x_{1:n}),\Sigma_{1:n})
 $$ {#eq-MultivariateNormalDist}
 
 where
 
 $$
-\mu_0(x_{1:m}) = (\mu_0(x_1), . . ., \mu_0(x_m))
+\mu_0(x_{1:n}) = (\mu_0(x_1), . . ., \mu_0(x_n))
 $$
 
 We choose a covariance function such that inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper]. This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
 
-We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. If we let $F$ and $f$ be as in the Gaussian Processes section, then we can calculate $F(x)$ for any $x$ in the design space as our estimate of $f(x)$ based on our current beliefs. This is true even for the evaluated points $x_1,...,x_m$ as the emulator is fitted to these points [@Originalpaper].
+We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can calculate $F(x)$ for any $x$ in the design space as our estimate of $f(x)$ based on our current beliefs. This is true even for the evaluated points $x_1,...,x_m$ as the emulator is fitted to these points [@Originalpaper].
 
 ## Maximum Likelihood Estimation
 
-When using GPs to emulate our objective function, we need to be able to estimate the coefficients of the objective function using the data we gain from evaluating our points $x_1,...,x_m$. - FIND CITATION, JUSTIFY
+When using GPs to emulate our objective function, we need to be able to estimate the coefficients of the objective function using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
 
-We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:m}) = (f(x_1),...,f(x_m))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:m})|\eta)$. This likelihood can be modelled by a multivariate normal - WHY IS THIS THE SAME AS EQ 1 [@BayesianOptimisationTutorial]. Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
+We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ which is modelled by @eq-MultivariateNormalDist . Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood @BayesianOptimisationTutorial\]:
 
 $$
- \hat{\eta} = argmax_\eta p(f(x_{1:m})|\eta)
+ \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
 $$
 
 ## Kriging
 
-Kriging is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function. We now focus on the values $F(x_1),...F(x_k)$ where $X := \{x_1,...,x_k\}$ is the finite design space. We can represent these values as the vector $F(x_{1:k}) := (F(x_1),...,F(x_k))$. This vector is unknown, but we can assume it was drawn at random from a multivariate normal distribution [@BayesianOptimisationTutorial]. Thus, we can set up @eq-MultivariateNormalDist with $m=k$:
-
-$$
-F(x_{1:k}) \sim N(\mu_0(x_{1:k}), \Sigma_{1:k})
-$$ {#eq-priordistribution}
-
-Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-priordistribution. Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
+Kriging is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_n\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
 
 $$
 F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
@@ -264,7 +258,7 @@ This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior pr
 
 ## Bayesian History Matching
 
-Let $f$ be the objective function and $x$ be a point in the sample space. We begin with some uncertainty about $f(x)$ [@Originalpaper]. However, we can make probabilistic statements such as:
+Let $x$ be a point in the sample space. We begin with some uncertainty about our objective function $f(x)$ [@Originalpaper]. However, we can make probabilistic statements such as:
 
 \begin{equation}
     P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
@@ -276,19 +270,19 @@ Once we evaluate another point $x'$ where $x' \neq x$, we are able to use Bayes'
     P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
 \end{equation}
 
-We now let $a=max\{f(x_1),...,f(x_l)\}$ where $l$ is the number of points we have evaluated so far. For the first round, $l=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated.[@Originalpaper] We remove the point $x$ if:
+We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. For the first round, $n=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated.[@Originalpaper] We remove the point $x$ if:
 
 $$
-P(f(x)>a|f(x_1),...,f(x_l)) = \int_{a}^{\infty}P(f(x)|f(x_1),...,f(x_l))df(x) <\varepsilon
+P(f(x)>a|f(x_{1:n}) = \int_{a}^{\infty}P(f(x)|f(x_{1:n})df(x) <\varepsilon
 $$ {#eq-removeimplausiblepoint}
 
 for a small $\varepsilon > 0$ until no plausible points remain. Then, the optimum will be $x^*$ such that:
 
 $$
-f(x^*) = max\{f(x_1),...,f(x_l)\}
+f(x^*) = max\{f(x_{1:n})\}
 $$
 
-as our index $l$ counts the number of points we have evaluated throughout the whole simulation.
+as our index $n$ counts the number of points we have evaluated throughout the whole simulation.
 
 ## Expected Improvement
 
@@ -381,6 +375,8 @@ However, before the algorithm can start, we must specify how many clusters we wa
 # Application of theory in my project
 
 ## Set up the Gaussian Processes
+
+WHAT OBJECTIVE FUNCTION ARE WE MAXIMISING AND WHY DO WE USE TWO SEPARATE GPs?
 
 To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
