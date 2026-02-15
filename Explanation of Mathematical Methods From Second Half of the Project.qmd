@@ -744,11 +744,13 @@ input$ctrl_obj$isys@args$isysList <- list(
 
 ### Parallelisation
 
-This process has been set up so that it is easy to run in parallel. We are able to load in the data we need once and then run the simulations for each point we have chosen to sample in the round. Then, we collect the results from these simulations which consist of the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock all over the years 2030-2039.
+This process has been set up so that it is easy to run in parallel. We are able to load in the data we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock all over the years 2030-2039.
 
-These results allow us to set up the GP for
+Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project. We iterate this process until the optimal point(s) are found. - TACKLE WHEN I AM ABLE TO TACKLE WHY I AM GETTING MULTIPLE POINTS AS AN ANSWER (LIKELY DUE TO HAVING SAME FCOD AND COD BEING THE CHOKE?)
 
-and are able to use them  - MAIN PART I PARALLELLISE before running multiple jobs at tehs ame time
+The process above makes up one run of script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we want to follow on from the original paper and run this script 1000 times [@Originalpaper]. This requires a new kind of parallelisation. We were able to accomplish this by creating an array of jobs which will run when there is free space on the Viking HPC. - CITE VIKING DOCS AND CHECK NAMING CORRECTLY This allowed us to submit one job that would run the script 1000 times, making it a lot easier to do this than having to submit 1000 separate jobs. - CITE VIKING DOCS
+
+EXPLAIN CODE TOO AND THEN MAKE NO CODE VERSION
 
 -   How much of the calculations are parallelisable
 
