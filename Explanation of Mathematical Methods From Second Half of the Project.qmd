@@ -748,17 +748,74 @@ This process has been set up so that it is easy to run in parallel. We are able 
 
 Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project. We iterate this process until the optimal point(s) are found. - TACKLE WHEN I AM ABLE TO TACKLE WHY I AM GETTING MULTIPLE POINTS AS AN ANSWER (LIKELY DUE TO HAVING SAME FCOD AND COD BEING THE CHOKE?)
 
-The process above makes up one run of script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we want to follow on from the original paper and run this script 1000 times [@Originalpaper]. This requires a new kind of parallelisation. We were able to accomplish this by creating an array of jobs which will run when there is free space on the Viking HPC. - CITE VIKING DOCS AND CHECK NAMING CORRECTLY This allowed us to submit one job that would run the script 1000 times, making it a lot easier to do this than having to submit 1000 separate jobs. - CITE VIKING DOCS
+The process above makes up one run of script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we want to follow on from the original paper and run this script 1000 times [@Originalpaper]. This requires a new kind of parallelisation. We were able to accomplish this by creating an array of jobs which will run when there is free space on the Viking HPC used by the Univeristy of York [@VikingDocumentation]. This allowed us to submit one job that would run the script 1000 times, making it a lot easier to do this than having to submit 1000 separate jobs [@VikingDocumentation].
 
-EXPLAIN CODE TOO AND THEN MAKE NO CODE VERSION
+We will now briefly explain the code for this. Firstly, we have the `doOne` function which runs the simulation for one of the points we have chosen to sample that round [@ParallelandOtherSimulationsInRMadeEasy]. Note that we must first load in the libraries so that the worker has access to them, similarly to how we must provide the `input_data` and `run_id`. Also note that we remove the large result object (`res`) once we have the values we need to return.
 
--   How much of the calculations are parallelisable
+``` r
+# This is the function that will eventually run on each core
+doOne <- function(run_id,input_data) {
+  
+  #Fixing could not find functions error in runners by loading libraries - DO NOT REMOVE
+  library(FLCore)
+  library(FLFishery)
+  library(mse)  
+  library(stockassessment)
+  library(MixME)
+  library(DiceKriging)
+  
+  # Retrieve the specific inputs for this run ID
+  # We use the 'frozen' input_data table and pick the row matching run_id
+  this_Fcod <- input_data$Fcod[run_id]
+  this_Fhad <- input_data$Fhad[run_id]
+  
+  # Run the simulation
+  res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
+  
+  # Get Catch directly from the 'tracking' object
+  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2030:2039)], na.rm = TRUE)
+  catch_had <- sum(res$tracking$had$stk["C.om", ac(2030:2039)], na.rm = TRUE)
+  # Calculate total catch
+  total_catch <- catch_cod + catch_had
+  
+  ## // Extract the min ssb at the last ten years of the simulation for both stocks //
+    # Picking up long term SSB values to see if they dip below Blim at any point
+    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2030:2039)])
+    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2030:2039)])
 
--   doOne
+    # Getting minimums to model with GPs
+    ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
+    ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
 
--   Removing the res object
+    # Safety Ctahc for if the simulation failed or produced all NAs
+    if(is.infinite(ssb_cod_min) | is.na(ssb_cod_min)) ssb_cod_min <- 0
+    if(is.infinite(ssb_had_min) | is.na(ssb_had_min)) ssb_had_min <- 0
+  
+  # free up memory now that we have the data we need from res
+  rm(res)   
+  
+  # Set up variable to return
+  to_return <- c(Fcod = this_Fcod,Fhad = this_Fhad,SSBCod = ssb_cod_min,SSBHad = ssb_had_min,TotalCatch = total_catch)
+  
+  # Return the result
+  return(to_return)
+}
+```
 
--   doMcapply, etc.
+We currently run this on `n_cores` which is one less than the number of cores we can detect the computer has as we needed to keep our computer running during initial testing.
+
+``` R
+n_cores <- parallel::detectCores() - 1 
+```
+
+For each round, we are sampling `2 * n_cores` points. We are able to apply this `doOne` function to each of these points using the `doMclapply` function [@ParallelandOtherSimulationsInRMadeEasy]:
+
+``` R
+# Run all the points in parallel, one at a time one each core
+result <- doMclapply(points_to_run,doOne = doOne,cores = n_cores)
+```
+
+This means we can run each `doOne` on a different core and the first argument provides the data [@ParallelandOtherSimulationsInRMadeEasy]. Unfortunately, this method does not work on Windows because it relies on forking [@ParallelandOtherSimulationsInRMadeEasy].
 
 # Further areas for Development
 
