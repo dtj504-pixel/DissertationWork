@@ -343,7 +343,7 @@ res$tracking$uptake["cod",,,1]
 res$tracking$uptake["had",,,1]
 ```
 
-Laslty, we can check which stock is the choke stock using [@MixMEwiki]:
+Lastly, we can check which stock is the choke stock using [@MixMEwiki]:
 
 ``` r
 ## Check choke stock
