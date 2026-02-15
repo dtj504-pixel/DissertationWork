@@ -352,7 +352,7 @@ res$tracking$choke
 
 ### HCR parameters
 
-We add $B_{lim}$ into the HCR to help us calculate the risk later on [@MixMEwiki]. It is helpful or calculating it in our current way, or the way MixME defines it as: "the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point (\$B\_{lim}\$)" [@MixMEwiki].
+We add $B_{lim}$ into the HCR to help us calculate the risk later on [@MixMEwiki]. It is helpful for calculating it in our current way, or the way MixME defines it as: "the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point ($B_{lim}$)" [@MixMEwiki].
 
 ``` r
 ## Define Blim for each stock - required for way 
@@ -362,6 +362,8 @@ hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
 # Update the control object with the new HCR parameters
 res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
 ```
+
+ARE THERE OTHER hcrpars ALREADY DEFINED?
 
 ### Additions or Differences in the Shortcut Model
 
@@ -373,7 +375,7 @@ This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the
 
 CHECK DEFINETLY NOT IN OLD METHOD
 
-In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$:
+In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking the year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$:
 
 ``` r
 ## Find iterations where SSB at end of TAC year is < Blim
@@ -729,7 +731,7 @@ forecast_fun <- function(stk, tracking, ctrl,
 
 #### Setting forecast arguments
 
-This is how we find the average values for the parameters form the historical data in this simulation. It is similar to the stfMixME function we used beforehand, but here we can set it up separately for each stock.
+This is how we find the average values for the parameters from the historical data in this simulation. It is similar to the `stfMixME` function we used beforehand, but here we can set it up separately for each stock.
 
 ``` r
 # Set Forecast/ISYS Arguments
@@ -744,7 +746,7 @@ input$ctrl_obj$isys@args$isysList <- list(
 )
 ```
 
-### Parallelisation
+## Parallelisation
 
 This process has been set up so that it is easy to run in parallel. We are able to load in the data we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock all over the years 2030-2039.
 
