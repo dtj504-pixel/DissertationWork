@@ -380,7 +380,7 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 WHAT OBJECTIVE FUNCTION ARE WE MAXIMISING AND WHY DO WE USE TWO SEPARATE GPs?
 
-The risk GP models $ln(risk)$ and the catch GP models $ln(catch)$ . To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the log(catch) GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+The risk GP models $ln(risk)$ and the catch GP models $ln(catch)$ . To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -411,32 +411,13 @@ where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of th
 
 We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$ [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch, risk and the length scales for the covariance function $c$ [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions cannot have more than eight coefficients between them in our first round as we are only sampling eight points per round due to computation limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
-We can set up Gaussian Processes (GPs) in R using the DiceKriging package as below:
+We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $ln(catch)$ and $ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
-``` r
-gp_cat <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
-             response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
-
-gp_risk <- km(~.^2,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
-              response = res_risk,nugget=1e-12*var(res_risk),covtype = "exp")
-```
-
-where `covtype` tells us the type of covariance function we are using and `estim.method` tells us how to estimate unknown parameters [@DiceKrigingDocumentation]. Here, `nugget` is a small value being used to ensure we have an invertible matrix and telling the GP that our objective function is deterministic because it is so small [@DiceKrigingDocumentation]. If our objective function had noise, `nugget` would instead be used to add that noise along the diagonal of the covariance matrix to encode that noise into our GP [@mackay1998introduction].
-
-The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
-
-In the code, we predict the $ln(catch)$ and $ln(risk)$ at every point in the design space using the code below:
-
-``` r
-pred_risk_g <- predict(gp_risk,newdata=gridd,type="SK")
-pred_cat_g <- predict(gp_cat,newdata=gridd,type="SK")
-```
-
-We can then exponentiate these results where needed. We are building our GPs with log of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
-
-We have been able to visualise this process using the code below. Firstly, we can look at the GP for risk after the first round of `case_study8.R`:
+We have been able to visualise the GPs after the first round in 3D:
 
 ```{r}
+#| include: false
+
 library(DiceView)
 library(rgl)
 
@@ -470,6 +451,8 @@ The middle plane is the mean of the GP, whereas the bottom and top planes repres
 We can then also do this for the GP for catch:
 
 ```{r}
+#| include: false
+
 library(DiceView)
 library(rgl)
 
@@ -510,26 +493,9 @@ where we include `+1e-12` in the above to prevent the variance becoming negative
 
 Then, Bayesian history matching speeds up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
 
-This process is written up in the code as the below, where we have set $\varepsilon = 0.0001$ [@Originalpaper]:
-
-``` r
-#Finds the current maximum catch which also has risk < 0.05
-#Note that we have exponentiated for this part
-current_max <- max(runs$C_long[runs$risk3_long < 0.05])
-
-#Finds the probability that the log(catch)<= log(current_max) for 
-#all points in the design space
-pcat <- pnorm(log(current_max), pred_cat_g$mean, pred_cat_g$sd + 1e-12)
-
-#Check which points have P(log(catch) >= log(curent_max)) > 0.00001)
-#and have P(log(risk) <= log(0.05)) > 0.00001.
-#These are our plausible points that remain.
-possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
-```
-
 ## Deciding on next point to sample
 
-The method we use here depends on which script we are running. We have three options.
+We have three different acquisition functions we have investigated using here..
 
 ### Expected Improvement
 
