@@ -241,7 +241,7 @@ $$ {#eq-posteriordistributiongivensamples}
 where:
 
 $$
-mu_n(x_{n+1}) = \operatorname{cov}_0(x_{n+1}, x_{1:n})(\Sigma_{1:n})^{-1}(f(x_{1:n}) - \mu_0(x_{1:n}))  + \mu_0(x_{n+1})
+\mu_n(x_{n+1}) = \operatorname{cov}_0(x_{n+1}, x_{1:n})(\Sigma_{1:n})^{-1}(f(x_{1:n}) - \mu_0(x_{1:n}))  + \mu_0(x_{n+1})
 $$
 
 $$
@@ -416,7 +416,7 @@ We can set up Gaussian Processes (GPs) as described above in R using the DiceKri
 We have been able to visualise the GPs after the first round in 3D:
 
 ```{r}
-#| include: false
+#| echo: false
 
 library(DiceView)
 library(rgl)
@@ -451,7 +451,7 @@ The middle plane is the mean of the GP, whereas the bottom and top planes repres
 We can then also do this for the GP for catch:
 
 ```{r}
-#| include: false
+#| echo: false
 
 library(DiceView)
 library(rgl)
@@ -483,15 +483,9 @@ rglwidget()
 
 ## Excluding implausible points
 
-Firstly, we enforce the precautionary threshold of $P(log(risk)\le0.05)$ by calculating:
+Firstly, we enforce the precautionary threshold by calculating $P(ln(risk)\le0.05)$. We exclude these points by setting their value of the acquisition function to 0 so that they will not be chosen as a point to sample in the next round.
 
-``` r
-prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
-```
-
-where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the `pnorm` function which would stop the code [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
-
-Then, Bayesian history matching speeds up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
+Then, we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
 
 ## Deciding on next point to sample
 
@@ -499,230 +493,31 @@ We have three different acquisition functions we have investigated using here..
 
 ### Expected Improvement
 
-We use the @eq-EIincode expression. This method of EI can be coded up as the function:
-
-``` r
-expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max", 
-                                 pred_risk, eps = 1e-4) 
-{
-  #Setting up EI vector
-  ei <- numeric(length(mu))
-  #Determining points with P(risk<=0.05)>0.00001
-  safe_points <- pred_risk >= eps
-
-  # Only calculate EI if there are safe points and the task is a valid option
-  if (any(safe_points)) {
-    if (task == "min") 
-        imp <- y_best - mu[safe_points] - xi
-    if (task == "max") 
-        imp <- mu[safe_points] - y_best - xi 
-    else 
-        stop('task must be "min" or "max"')
-    
-    Z <- imp / sigma[safe_points]
-    #Only calculate EI for safe points
-    ei[safe_points] <- imp * pnorm(Z) + sigma[safe_points] * dnorm(Z)
-    ei[safe_points][sigma[safe_points] == 0.0] <- 0.0
-  }
-
-  return(ei)
-}
-```
-
-where `mu` is the mean of the GP for log(catch) and `sigma` is the standard deviation of the GP for log(catch). Then we also have `y_best` which is the current best log(catch), `xi` which is a parameter balancing exploration and exploitation. We set `pred_risk = prisk` and `eps = 1e-4` and these are the same as before.
+We use the @eq-EIincode expression and calculate the EI for every point in the sample space, setting those that don't meet the precautionary threshold to zero as explained above.
 
 ### Augmented Expected Improvement
 
-As our situation has no noise, in our code we are still using $f^*_n$[@Originalpaper]. Thus, we code up the equation:
+As our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper]. Thus, we use the equation:
 
 \begin{equation}
     AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 \end{equation}
 
-in the code below:
-
-``` r
-augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, 
-                                           task = "max", pred_risk, eps = 1e-4,
-                                           noise_var = 0) 
-{
-  ei <- numeric(length(mu))
-  safe_points <- pred_risk >= eps
-
-  # Only calculate AEI for safe points
-  if (any(safe_points))
-        if (task == "min") 
-            imp <- y_best - mu[safe_points] - xi
-        if (task == "max") 
-            imp <- mu[safe_points] - y_best - xi 
-        else 
-            stop('task must be "min" or "max"')
-
-        Z <- imp / sigma[safe_points]
-        ei[safe_points] <- imp * pnorm(Z) + sigma[safe_points] * dnorm(Z)
-        ei[safe_points][sigma[safe_points] == 0.0] <- 0.0
-  
-        # Augmentation factor to handle noise
-        # When noise_var = 0 it reduces to standard EI
-        augmentation_factor <- 1 - sqrt(noise_var / (noise_var + sigma^2))
-        aei <- ei * augmentation_factor
-  
-  # Giving points with prob(risk <= 0.05) < 0.0001 an expected 
-  # improvement of zero so we avoid them
-  aei <- ifelse(pred_risk < eps, 0, aei)
-  
-  return(aei)
-}
-```
-
-where `noise_var` corresponds to $\sigma_{obs}^2$ and `sigma` corresponds to $\sigma_n(\cdot)$ and the other arguments are as in EI.
+calculate the AEI for every point in the sample space. We again make sure to set any points not meeting the precautionary threshold to have AEI = 0.
 
 ### Knowledge Gradient
 
-@eq-updatemuKG is mirrored in the code as:
+We calculate the KG using @eq-KnowledgeGradient and update it each round using @eq-updatemuKG . As in the other acquisition functions, we make sure to set the value to zero for any point in the sample space not meeting the precautionary threshold.
 
-``` r
-# nsim number of simulated observations from a normal
-y_sim <- rnorm(nsim, mu_i, sigma_i)
-# the covariance between every point in the grid and the point x_i
-cov_xp_xi <- cov_grid[, i]
-# denominator term in the KG update formula
-denom <- var[i] + obs_noise_var
-# For each simulated y, compute updated max(mu)
-max_after <- numeric(nsim)
-
-for (s in seq_len(nsim)) {
-                # says what would the new maximum mu be if we observed this
-                # simulated value at the point x_i   
-                # Evaluates the posterior mean for every point in the 
-                # space, updating other points based on closeness 
-                # to the evaluated point by using the covariance matrix
-                mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
-                # takes this new maximum mu into a vector for later averaging
-                max_after[s] <- max(mu_new)
-            }
-```
-
-where `mu_new` is $\mu_{n+1}(x)$, `cov_xp_xi` is $\operatorname{cov}_n(x_{n+1},x)$, `y_sim[s]` is a simulated value drawn from $F_{n+1}$ and `mu_i` is $\mu_n(x_{n+1})$. We can also see that `var[i]` is $\operatorname{var}_n(x_{n+1})$ and `obs_noise_var` is $\sigma_{\mathrm{obs}}^2$ which makes the denominators equivalent.
-
-Now, we have everything needed to compute @eq-KnowledgeGradient . We can write the whole process in code as below:
-
-``` r
-knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, 
-                                   nsim = 100, pred_risk, eps = 1e-4) 
-{ 
-    X_pred <- dat[, c("Ftrgt", "Btrigger")]
-    cov_grid <- cov_exp(X_pred, X_pred, theta = model@covariance@range.val, 
-                        sigma2 = model@covariance@sd2)
-    m <- length(mu)
-    var <- sigma^2
-    # Current best mean catch
-    mu_best <- max(mu)   
-    kg <- numeric(m)
-    
-        # Loop over all candidate points
-        for (i in seq_len(m)) {
-            # Set KG to 0 for points where risk is too high
-            if (pred_risk[i] < eps) {
-                kg[i] <- 0
-                next
-            }
-
-            mu_i <- mu[i]
-            sigma_i <- sqrt(var[i] + obs_noise_var)
-            # nsim simulated observations
-            y_sim <- rnorm(nsim, mu_i, sigma_i)
-            # the covariance between every point in the grid and 
-            # the point x_i
-            cov_xp_xi <- cov_grid[, i]
-            # denominator term in the KG update formula
-            denom <- var[i] + obs_noise_var
-            # For each simulated y, compute updated max(mu)
-            max_after <- numeric(nsim)
-            for (s in seq_len(nsim)) {
-                # says what would the new maximum mu be if we observed this
-                # simulated value at the point x_i by implementing 
-                # the standard formula for this in GP posterior updating   
-                # This evaluates the posterior mean for every point in the 
-                # space, updating other points based on closeness 
-                # to the evaluated point by using the cov matrix
-                mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
-                # takes this new maximum mu into a vector for averaging
-                max_after[s] <- max(mu_new)
-            }
-            # Computes expected increase in the maximum posterior mean
-            kg[i] <- mean(max_after - mu_best)
-        }
-    # Returns the vector of KG values for each point in the design space
-    kg
-}
-```
-
-where the KG for each point is calculated by:
-
-``` r
-kg[i] <- mean(max_after - mu_best)
-```
-
-where `max_after` is $\mu_{n+1}^*$ and `mu_best` is $\mu_n^*$.
-
-All the arguments of the function are as in EI with a few exceptions. `obs_noise_var` is the new name for the noise variable set by the user; `theta` is the length scale of our GP determining how quickly the objective function changes as $Ftarget$ and $Btrigger$ change; and `nsim` tells the code how many times to estimate the value of $f(x_{n+1})$ using $F(x_{n+1})$ before we calculate $KG_n(x)$[@DiceKrigingDocumentation].
+CHECK I HAVE PROPERLY EXPLAINED SIMULATING TO FIND THE EXPECTED VALUE IN THE THEORY EQUIVALENT OF THIS SECTION
 
 ### Kmeans process
 
-To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process as coded up below [@batchspreadingoutjustification]:
-
-``` r
-# Select next points
-
-# cand is our Possible Space
- if (nrow(cand) <= 8) {
-    # Here, we take all of the points as there are less than the 
-    # amount we want to sample left
-   next_points <- cand[order(-cand$ei), c("Ftarget", "Btrigger")]
- } else {
-    # We order the points based on the value given 
-    # by the acquisition function, from highest to lowest here
-   top_candidates <- cand[order(-cand$ei), ][1:nrow(cand), ]
-   # We need to set a seed to make the points that kmeans
-    # picks as the first centroids reproducible
-   set.seed(123)
-   # We find the clusters
-   km_result <- kmeans(top_candidates[, c("Ftarget", "Btrigger")], centers = 8)
-   # We add the cluster column to our table
-   top_candidates$cluster <- km_result$cluster
-   # We pick the point with the highest value from the 
-   # acquisition function from each cluster and assemble these 
-   # points into a vector
-   next_points <- do.call(rbind, 
-                  lapply(split(top_candidates, top_candidates$cluster),
-                         function(df) {
-     df[which.max(df$ei), c("Ftarget", "Btrigger", "ei")]
-   }))
- }
-```
-
-Then, at the beginning of our next round we sample the eight points given in `next_points`.
+To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process [@batchspreadingoutjustification]. We create eight clusters and note the point with the highest value of the acquisition function in each cluster. These are the points we will sample in the next round.
 
 ## Updating our GPS
 
-In our second round, we need to update our GPs with new data [@Originalpaper]. Our process for updating GPs can be seen in the code below:
-
-``` r
-gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], estim.method = "MLE",
-              response = res_risk, nugget = 1e-12 * var(res_risk), covtype = "exp")
-```
-
-This looks the same as before, but the `runs` variable includes all of our evaluated points and so we are adding the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round.
-
-For the catch GP, we move on to using a new prior because by the time we create this GP we have sampled 16 points[@Originalpaper]. Here is the catch GP for the second round and onwards:
-
-``` r
-gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + 
-                I(Btrigger) + I(Btrigger * log(Ftarget+0.1)),
-                design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
-                response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
-```
+In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. - CHECK SITLL IN KRIGING SECTION For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points[@Originalpaper].
 
 Now, we repeat the full process described in the Application of theory in my project section until there are no points with a positive KG. Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points.
 

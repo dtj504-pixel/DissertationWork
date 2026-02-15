@@ -500,13 +500,15 @@ rglwidget()
 
 ## Excluding implausible points
 
-Firstly, we enforce the precautionary threshold of $P(log(risk)\le0.05)$ by calculating:
+Firstly, we enforce the precautionary threshold of $P(ln(risk)\le0.05)$ by calculating:
 
 ``` r
 prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
 ```
 
 where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the `pnorm` function which would stop the code [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
+
+We exclude any points not meeting the precautionary threshold by setting their value of the acquisition function to 0 so that they will not be chosen as a point to sample in the next round.
 
 Then, Bayesian history matching speeds up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
 
