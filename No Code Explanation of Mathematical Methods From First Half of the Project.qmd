@@ -362,7 +362,7 @@ where $\sigma_{obs}$ is a noise variable which can be determined by the user [@u
 
 ## Kmeans process for selecting multiple points
 
-HIGHLIGHT THAT COMBINING THIS WITH AN ACQUISITION FUCNTION WAS AN IDEA I HAD BEFRE READINGA NY LITERATURE ON IT ( AS I THINK THERE IS SOME).
+HIGHLIGHT THAT COMBINING THIS WITH AN ACQUISITION FUCNTION WAS AN IDEA I HAD BEFORE READING ANY LITERATURE ON IT ( AS I THINK THERE IS SOME).
 
 We have now been able to determine which points are possible based on the probability that their catch is higher than the current maximum catch (using Bayesian History Matching) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
 
@@ -378,9 +378,25 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ## Set up the Gaussian Processes
 
-WHAT OBJECTIVE FUNCTION ARE WE MAXIMISING AND WHY DO WE USE TWO SEPARATE GPs?
+We are focusing on maximising the objective function from the paper which is given below [@Originalpaper]:
 
-The risk GP models $ln(risk)$ and the catch GP models $ln(catch)$ . To maintain the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+$$
+f(\theta) = I_{[0.95,1]}(P(B(\theta)>B_{lim})) \times C(\theta)
+$$
+
+where $C(\theta)$ is median long term catch, $B(\theta)$ is long-term $SSB$ and:
+
+$$
+I_{[0.95,1]}(x) = 
+\begin{cases}
+1 & \text{if   } x\in[0.95,1] \\
+0 & \text{otherwise }
+\end{cases}
+$$
+
+is an indicator function.
+
+To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(catch)$ [@Originalpaper]. Maintaining the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -499,9 +515,9 @@ We use the @eq-EIincode expression and calculate the EI for every point in the s
 
 As our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper]. Thus, we use the equation:
 
-\begin{equation}
-    AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
-\end{equation}
+$$
+AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
+$$
 
 calculate the AEI for every point in the sample space. We again make sure to set any points not meeting the precautionary threshold to have AEI = 0.
 
