@@ -30,7 +30,7 @@ What mathematical methods will I explain in this document that have not been exp
 
 HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary
 
-"Fishing fleet effort is constant throughout the simulation - a consequence of the linear relationship between effort and fishing mortality.", " We can see that the fishing mortality target is constant over time, whilst catch target from each stock varies from year to year." - Fixed fishing mortality management strategy wiki page
+"Fishing fleet effort is constant throughout the simulation - a consequence of the linear relationship between effort and fishing mortality.", " We can see that the fishing mortality target is constant over time, whilst catch target from each stock varies from year to year." - Fixed fishing mortality management strategy
 
 # Context
 
@@ -62,83 +62,17 @@ We repeat this process until there is only one plausible point left and then we 
 
 NOTE THIS IS DIFFERENT OT MIXME WAY BUT MROE INFORMATIVE AND MEETS ICES STANDARD, UNLIKE MIXME WAY
 
-In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here.
-
-We should quickly note before our calculations that our new sample space is as below:
-
-``` r
-# Define Sample Space as discrete with 0.02 increments
-dat <- data.frame(expand.grid(
-  Fcod = seq(0.0, 0.6, by=0.02),
-  Fhad = seq(0.0, 0.6, by=0.02)
-))
-```
+In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here. We should quickly note before our calculations that our new sample space is a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments.
 
 This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki].
 
-We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]:
+We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ and the $B_{lim}$ for haddock is $9,227$. - IN TONNES?
 
-``` r
-Blim_cod <- 107000
-Blim_had <- 9227
-```
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock.
 
-Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]:
+These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY
 
-``` r
-## // Extract the min ssb at the last ten years of the simulation for both stocks //
-    # Picking up long term SSB values to see if they dip below Blim at any point
-    ssb_cod_data <- c(res$tracking$cod$stk["SB.om", ac(2030:2039)])
-    ssb_had_data <- c(res$tracking$had$stk["SB.om", ac(2030:2039)])
-
-    # Getting minimum ssb during this time for each stock to model with GPs
-    ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
-    ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
-```
-
-We then put these results into the GP we will use to model $\textrm{min}(SSB)$ for each stock:
-
-``` r
-gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",
-                 response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,
-                 covtype = "exp")
-gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",
-                 response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,
-                 covtype = "exp")
-```
-
-These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY
-
-Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space:
-
-``` r
-pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
-pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
-```
-
-We then calculate $Risk = P(SSB < B_{lim})$ for each stock:
-
-``` r
-# Get the probability that sbb =< Blim for cod and haddock
-pssb_cod <- pnorm(Blim_cod, pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
-pssb_had <- pnorm(Blim_had, pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
-```
-
-Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future:
-
-``` r
-# Loop over candidate points
-  for (i in seq_len(m)) {
-    # set to 0 for any unsafe points - any points with 
-    # probability that ssb < Blim > 0.05 in the years 2030-2039 
-    # i.e. the run is not precautionary in these years
-    if (pssb_cod[i] > 0.05 || pssb_had[i] > 0.05) {
-      kg[i] <- 0
-      next
-    }
-```
-
-We can say `ssb < Blim` here instead of `ssb =< Blim` because we are sampling from a continuous normal distribution and so they are equivalent.
+Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(SSB < B_{lim})$ for each stock. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
 By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 5% threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ in [@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
 
@@ -146,7 +80,7 @@ By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB <
 
 Going to write down everything and then remove areas Gustav said I don't need to worry about.
 
--   Explaining the tracking object as this how I get catch ?? - MAYBE IN A SECTION SUMMARISING FULL CODE PROPCESS?
+-   Explaining the tracking object as this how I get catch ?? - MAYBE IN A SECTION SUMMARISING FULL CODE PROCESS?
 
 ### Starting $F_{cod}$ and $F_{had}$
 
@@ -189,12 +123,7 @@ To carry out our 20 year projection, we need to extend the stock and fishery str
 
 3.  Quota-share
 
-We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function [@MixMEwiki].
-
-``` r
-out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
-       wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
-```
+We project the parameters in each of these categories from 2019-2039 using the average from the last three years [@MixMEwiki].
 
 #### Calculate numbers of both stocks in initial year
 
