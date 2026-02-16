@@ -28,9 +28,7 @@ What mathematical methods will I explain in this document that have not been exp
 
 -   Parallelisation
 
-HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary
-
-"Fishing fleet effort is constant throughout the simulation - a consequence of the linear relationship between effort and fishing mortality.", " We can see that the fishing mortality target is constant over time, whilst catch target from each stock varies from year to year." - Fixed fishing mortality management strategy wiki page
+HIGHLIGHT MORE THAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION - found in MixME wiki Fixed fishing mortality management strategy
 
 # Context
 
@@ -304,6 +302,8 @@ res <- runMixME(om  = input$om, oem = input$oem,
 ```
 
 It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation [@MixMEwiki].
+
+It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain constant throughout the simulation [@MixMEwiki]. - SURELY IN SUPP OR PAPAER TOO?
 
 ### Analysing results of the simulation
 
