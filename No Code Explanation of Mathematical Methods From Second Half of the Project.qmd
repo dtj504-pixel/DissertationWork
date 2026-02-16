@@ -84,7 +84,7 @@ Going to write down everything and then remove areas Gustav said I don't need to
 
 ### Starting $F_{cod}$ and $F_{had}$
 
-We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively - ASKED MIKE ABOUT CITATION FOR COD AS CAN'T SEE 0.28 ANYWHERE - ,[@ICES2020HaddockBlim].
+We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively [@ICES2021Cod028],[@ICES2020HaddockBlim].
 
 ### Creating the Operating model
 
