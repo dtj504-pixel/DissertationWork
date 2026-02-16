@@ -171,8 +171,7 @@ window.Quarto = {
 <li><p>Calculating the risk</p></li>
 <li><p>Parallelisation</p></li>
 </ul>
-<p>HIGHLIGHT SOMEHWRE ETHAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION????? - MIxME simualtion loop says HCR can cause it to vary</p>
-<p>“Fishing fleet effort is constant throughout the simulation - a consequence of the linear relationship between effort and fishing mortality.”, ” We can see that the fishing mortality target is constant over time, whilst catch target from each stock varies from year to year.” - Fixed fishing mortality management strategy wiki page</p>
+<p>HIGHLIGHT MORE THAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION - found in MixME wiki Fixed fishing mortality management strategy</p>
 </section>
 <section id="context" class="level1">
 <h1>Context</h1>
@@ -376,6 +375,7 @@ window.Quarto = {
 <span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">runMixME</span>(<span class="at">om  =</span> input<span class="sc">$</span>om, <span class="at">oem =</span> input<span class="sc">$</span>oem, </span>
 <span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>                <span class="at">ctrl_obj =</span> input<span class="sc">$</span>ctrl_obj, <span class="at">args =</span> input<span class="sc">$</span>args)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>It is important to note that the <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> we choose remain constant throughout the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - SURELY IN SUPP OR PAPAER TOO?</p>
 </section>
 <section id="analysing-results-of-the-simulation" class="level3">
 <h3 class="anchored" data-anchor-id="analysing-results-of-the-simulation">Analysing results of the simulation</h3>
