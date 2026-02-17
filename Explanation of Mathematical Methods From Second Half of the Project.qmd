@@ -58,7 +58,7 @@ We repeat this process until there is only one plausible point left and then we 
 
 ## Calculating the risk
 
-NOTE THIS IS DIFFERENT OT MIXME WAY BUT MROE INFORMATIVE AND MEETS ICES STANDARD, UNLIKE MIXME WAY
+MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki].
 
 In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here.
 
@@ -80,6 +80,8 @@ We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020Haddoc
 Blim_cod <- 107000
 Blim_had <- 9227
 ```
+
+which are both measured in tonnes.
 
 Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]:
 
@@ -105,7 +107,7 @@ gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",
                  covtype = "exp")
 ```
 
-These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY
+These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY MORE
 
 Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space:
 
@@ -148,11 +150,11 @@ Going to write down everything and then remove areas Gustav said I don't need to
 
 ### Starting $F_{cod}$ and $F_{had}$
 
-We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively [@ICES2021Cod028],[@ICES2020HaddockBlim].
+We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Sea Cod and Celtic Sea Haddock advice published in 2020 respectively [@ICES2021Cod028],[@ICES2020HaddockBlim].
 
 ### Creating the Operating model
 
-We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and form Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki]**. - DISCUSS CATCHABILITY?**
+We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki]**. - DISCUSS CATCHABILITY?**
 
 In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki].
 
@@ -160,7 +162,7 @@ The steps for fully assembling the operating model for input into the MixME mode
 
 1.  Estimate historic quota-share for the two fleets
 
-2.  Project stock n years into the future
+2.  Project stocks n years into the future
 
 3.  Calculate numbers of both stocks in initial year
 
@@ -174,8 +176,6 @@ Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catc
 out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, 
        flts = mixedfishery_MixME_om$flts, verbose = TRUE)
 ```
-
-IS THIS IT?
 
 #### Project stock n years into the future
 
@@ -193,6 +193,8 @@ We project the parameters in each of these categories from 2019-2039 using the a
 out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
        wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
 ```
+
+ - JUST SET THIS UP OR ACTUALLY PROJECT? DO HAVE HISTORIC DATA TO DO THIS FROM
 
 #### Calculate numbers of both stocks in initial year
 
