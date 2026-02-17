@@ -21,41 +21,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 /* CSS for citations */
 div.csl-bib-body { }
 div.csl-entry {
@@ -224,9 +189,6 @@ window.Quarto = {
 <section id="estimate-historic-quota-share-for-the-two-fleets" class="level4">
 <h4 class="anchored" data-anchor-id="estimate-historic-quota-share-for-the-two-fleets">Estimate historic quota-share for the two fleets</h4>
 <p>Firstly, we use <code>mixedfishery_MixME_om</code> to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the <code>calculateQuotashare</code> function <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">calculateQuotashare</span>(<span class="at">stks =</span> mixedfishery_MixME_om<span class="sc">$</span>stks, </span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">flts =</span> mixedfishery_MixME_om<span class="sc">$</span>flts, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>IS THIS IT?</p>
 </section>
 <section id="project-stock-n-years-into-the-future" class="level4">
 <h4 class="anchored" data-anchor-id="project-stock-n-years-into-the-future">Project stock n years into the future</h4>
@@ -236,7 +198,7 @@ window.Quarto = {
 <li><p>Catchability and catch selection</p></li>
 <li><p>Quota-share</p></li>
 </ol>
-<p>We project the parameters in each of these categories from 2019-2039 using the average from the last three years <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>We project the parameters in each of these categories from 2019-2039 using the average from the last three years <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - JUST SET THIS UP OR ACTUALLY PROJECT? DO HAVE HISTORIC DATA TO DO THIS FROM</p>
 </section>
 <section id="calculate-numbers-of-both-stocks-in-initial-year" class="level4">
 <h4 class="anchored" data-anchor-id="calculate-numbers-of-both-stocks-in-initial-year">Calculate numbers of both stocks in initial year</h4>
