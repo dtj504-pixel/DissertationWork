@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Emma Bowen">
+
+<title>Explanation of Mathematical Methods Behind the Second Half of the Project</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/clipboard/clipboard.min.js"></script>
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/popper.min.js"></script>
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/anchor.min.js"></script>
+<link href="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/quarto-html/quarto-syntax-highlighting-ed96de9b727972fe78a7b5d16c58bf87.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="No Code Explanation of Mathematical Methods From Second Half of the Project_files/libs/bootstrap/bootstrap-55aa396ea3e988129bcec43acf404917.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Explanation of Mathematical Methods Behind the Second Half of the Project</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Emma Bowen </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>What mathematical methods will I explain in this document that have not been explained in <a href="https://github.com/dtj504-pixel/DissertationWork/blob/main/Explanation%20of%20Mathematical%20Methods%20From%20First%20Half%20of%20the%20Project.qmd">Explanation of Mathematical Methods from First Half of the Project</a>?</p>
+<ul>
+<li><p>The basics of the MixME model</p>
+<ul>
+<li><p>Creating the operating model</p></li>
+<li><p>Building the MixME input object</p></li>
+<li><p>Running the simulation</p></li>
+<li><p>Analysing the results of the simulation</p></li>
+<li><p>HCR parameters</p></li>
+<li><p>Additions or differences in the shortcut model</p></li>
+</ul></li>
+<li><p>Calculating the risk</p></li>
+<li><p>Parallelisation</p></li>
+</ul>
+<p>HIGHLIGHT MORE THAT FTARGETS ARE STAYIING THE SAME THROUGHOUT THE SIMUALTION - found in MixME wiki Fixed fishing mortality management strategy</p>
+</section>
+<section id="context" class="level1">
+<h1>Context</h1>
+<p>The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the Ftarget for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen <span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>,<span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. It also follows ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>.</p>
+<p>I focused on the datasets from the Fixed fishing mortality management strategy example (<code>mixedfishery_MixME_om</code>) and the Exploring simulation outputs example (<code>mixedfishery_MixME_input</code>) which are both in the MixME documentation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. However, for the second dataset <code>mixedfishery_MixME_input</code> I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> and <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> respectively.</p>
+<p>Both of these datasets have two stocks (cod and haddock) and two fleets <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. I was told by the same researcher at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>,<span class="citation" data-cites="ICESCodFactsheet">(<a href="#ref-ICESCodFactsheet" role="doc-biblioref">ICES, n.d.</a>)</span>. This allows me to use the same methods as in the first half of the project by replacing <span class="math inline">\(F_{target}\)</span> with <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(B_{trigger}\)</span> with <span class="math inline">\(F_{had}\)</span>, where <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> are the fishing mortalities for cod and haddock respectively.</p>
+<p>For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>. These conditions simplify the simulation but unfortunately mean that we cannot use the standard ICES definition of risk to calculate <span class="math inline">\(Risk = P(SSB &lt; B_{lim})\)</span> <span class="citation" data-cites="MixMESupp">(<a href="#ref-MixMESupp" role="doc-biblioref">Pace et al. 2025b</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. Instead, we extract <span class="math inline">\(\textrm{min}(SSB)\)</span> for each sampled point from the years 2030-2039 in the simulation and then model these as a GP <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>,<span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. This allows us to predict the distribution of <span class="math inline">\(\textrm{min}(SSB)\)</span> values at each point in the design space. - FIND CITATION, JUSTIFY For each point, we then see how many of these predicted values fall below <span class="math inline">\(B_{lim}\)</span> to calculate <span class="math inline">\(P(\textrm{min}(SSB) &lt; B_{lim})\)</span> at that point <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. We do this for each stock. This method of calculation satisfies the ICES precautionary standard <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>.</p>
+<p>Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled by the <code>~.^2</code> function in R for every round of the optimisation process. Despite the more complicated prior used in later rounds in <code>case_study8.R</code> being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>,<span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>, <span class="citation" data-cites="ULRICH201238">(<a href="#ref-ULRICH201238" role="doc-biblioref">Ulrich et al. 2012</a>)</span>. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p>The process for the first half of the project adapted to our new situation is outlined below. We take a Bayesian History Matching (BHM) approach <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. Firstly, to get some initial data, we randomly sample our first set of <span class="math inline">\(n-1\)</span> points, where <span class="math inline">\(n\)</span> is the number of cores the system we are on has <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. Then, for each round we do the following:</p>
+<ul>
+<li><p>We set up or update the Gaussian Processes (GPs) to model the <span class="math inline">\(\textrm{min}(SSB)\)</span> from 2030-2039 for each stock and the GP to model the total catch from 2030-2039</p></li>
+<li><p>We can then use the <span class="math inline">\(B_{lim}\)</span> for each stock as a threshold so that we only consider the values of <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> that have <span class="math inline">\(SSB\)</span> above <span class="math inline">\(B_{lim}\)</span> for all of the last ten years of the simulation (2030-2039)</p></li>
+<li><p>We use the GP which is modelling the total catch to predict the value for the total catch at every point in the sample space, which will have some uncertainty</p></li>
+<li><p>We use BHM to remove any points that are implausible (that have a probability less than 0.01 of being higher than the current best total catch - DOUBLE CHECK)</p></li>
+<li><p>We use the Knowledge Gradient (KG) acquisition function to select <span class="math inline">\(n-1\)</span> plausible points to sample in the next round, as per the discussion in <a href="https://github.com/dtj504-pixel/DissertationWork/blob/main/Deciding%20which%20acquisition%20function%20is%20best.qmd">Deciding which acquisition function is best</a></p></li>
+</ul>
+<p>We repeat this process until there is only one plausible point left and then we will accept this as being the <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> that maximise the catch whilst keeping the <span class="math inline">\(SSB\)</span> above <span class="math inline">\(B_{lim}\)</span>.</p>
+<section id="calculating-the-risk" class="level2">
+<h2 class="anchored" data-anchor-id="calculating-the-risk">Calculating the risk</h2>
+<p>NOTE THIS IS DIFFERENT OT MIXME WAY BUT MROE INFORMATIVE AND MEETS ICES STANDARD, UNLIKE MIXME WAY</p>
+<p>In contrast to the first half of the project, we now calculate the risk using the <span class="math inline">\(SSB\)</span>. We have described it above briefly but will go into more detail here. We should quickly note before our calculations that our new sample space is a grid with all the combinations of <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> both ranging from <span class="math inline">\(0\)</span> to <span class="math inline">\(0.6\)</span> in <span class="math inline">\(0.02\)</span> increments.</p>
+<p>This range ensures that we are able to model stock collapse for cod by modelling values above <span class="math inline">\(F_{lim}\)</span> and that we can model stock recovery for cod by including very low values <span class="citation" data-cites="ICES2019CodAdvice">(<a href="#ref-ICES2019CodAdvice" role="doc-biblioref">ICES 2019c</a>)</span>. It also allows us to model unsafe fishing for haddock by modelling values above <span class="math inline">\(F_{MSY}\)</span> <span class="citation" data-cites="ICES2019HaddockAdvice">(<a href="#ref-ICES2019HaddockAdvice" role="doc-biblioref">ICES 2019b</a>)</span>. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>We also have a <span class="math inline">\(B_{lim}\)</span> for each stock, taken from ICES advice <span class="citation" data-cites="ICES2020HaddockBlim">(<a href="#ref-ICES2020HaddockBlim" role="doc-biblioref">ICES 2020b</a>)</span>,<span class="citation" data-cites="ICES2020CodBlim">(<a href="#ref-ICES2020CodBlim" role="doc-biblioref">ICES 2020a</a>)</span>. The <span class="math inline">\(B_{lim}\)</span> for cod is <span class="math inline">\(107,000\)</span> and the <span class="math inline">\(B_{lim}\)</span> for haddock is <span class="math inline">\(9,227\)</span>. - IN TONNES?</p>
+<p>Firstly, we extract the <span class="math inline">\(\textrm{min}(SSB)\)</span> for each stock from the result of the simulation we have run using the tracking object <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>,<span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>. We then put these results into the GPs we will use to model <span class="math inline">\(\textrm{min}(SSB)\)</span> for each stock.</p>
+<p>These GPs have remained modelled by the <code>.^2</code> function, the same as in the GP for risk in the first half of the project to avoid mis-specification <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>,<span class="citation" data-cites="DiceKrigingPaper">(<a href="#ref-DiceKrigingPaper" role="doc-biblioref">Roustant, Ginsbourger, and Deville 2012</a>)</span>. They have also kept the same estimation method, nugget and kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. - JUSTIFY</p>
+<p>Next, we predict the <span class="math inline">\(\textrm{min}(SSB)\)</span> for every point in the sample space and calculate <span class="math inline">\(Risk = P(SSB &lt; B_{lim})\)</span> for each stock. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.</p>
+<p>By ensuring that <span class="math inline">\(P(\textrm{min}(SSB) &lt; B_{lim}) &lt; 0.05\)</span> we ensure that <span class="math inline">\(P(SSB &lt; B_{lim})&lt;0.05\)</span> for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 5% threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of <span class="math inline">\(Prob3\)</span> in <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard <span class="citation" data-cites="ICES2019WKGMSE2">(<a href="#ref-ICES2019WKGMSE2" role="doc-biblioref">ICES 2019a</a>)</span>.</p>
+</section>
+<section id="the-basics-of-the-mixme-model" class="level2">
+<h2 class="anchored" data-anchor-id="the-basics-of-the-mixme-model">The basics of the MixME model</h2>
+<p>Going to write down everything and then remove areas Gustav said I don’t need to worry about.</p>
+<ul>
+<li>Explaining the tracking object as this how I get catch ?? - MAYBE IN A SECTION SUMMARISING FULL CODE PROCESS?</li>
+</ul>
+<section id="starting-f_cod-and-f_had" class="level3">
+<h3 class="anchored" data-anchor-id="starting-f_cod-and-f_had">Starting <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span></h3>
+<p>We started with <span class="math inline">\(F_{cod} = 0.28\)</span> and <span class="math inline">\(F_{had} = 0.353\)</span> based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. These were drawn from the North Seas Cod and Celtic Seas Haddock advice published in 2020 respectively <span class="citation" data-cites="ICES2021Cod028">(<a href="#ref-ICES2021Cod028" role="doc-biblioref">ICES 2021</a>)</span>,<span class="citation" data-cites="ICES2020HaddockBlim">(<a href="#ref-ICES2020HaddockBlim" role="doc-biblioref">ICES 2020b</a>)</span>.</p>
+</section>
+<section id="creating-the-operating-model" class="level3">
+<h3 class="anchored" data-anchor-id="creating-the-operating-model">Creating the Operating model</h3>
+<p>We first create the operating model <code>mixedfishery_MixME_om</code> which contains the true data for the stocks and fleets in the dataset <span class="citation" data-cites="MixME">(<a href="#ref-MixME" role="doc-biblioref">Pace et al. 2025a</a>)</span>. We have data for North Sea Cod from 1963-2019 and form Celtic Sea Haddock from 1993-2019 <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span><strong>. - DISCUSS CATCHABILITY?</strong></p>
+<p>In both of our files, this is loaded with the dataset <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>The steps for fully assembling the operating model for input into the MixME model are:</p>
+<ol type="1">
+<li><p>Estimate historic quota-share for the two fleets</p></li>
+<li><p>Project stock n years into the future</p></li>
+<li><p>Calculate numbers of both stocks in initial year</p></li>
+<li><p>Generate an observation error model</p></li>
+</ol>
+<section id="estimate-historic-quota-share-for-the-two-fleets" class="level4">
+<h4 class="anchored" data-anchor-id="estimate-historic-quota-share-for-the-two-fleets">Estimate historic quota-share for the two fleets</h4>
+<p>Firstly, we use <code>mixedfishery_MixME_om</code> to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the <code>calculateQuotashare</code> function <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>out <span class="ot">&lt;-</span> <span class="fu">calculateQuotashare</span>(<span class="at">stks =</span> mixedfishery_MixME_om<span class="sc">$</span>stks, </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">flts =</span> mixedfishery_MixME_om<span class="sc">$</span>flts, <span class="at">verbose =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>IS THIS IT?</p>
+</section>
+<section id="project-stock-n-years-into-the-future" class="level4">
+<h4 class="anchored" data-anchor-id="project-stock-n-years-into-the-future">Project stock n years into the future</h4>
+<p>To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. These are:</p>
+<ol type="1">
+<li><p>All stock parameters, landings and discards mean individual weights and landed fraction</p></li>
+<li><p>Catchability and catch selection</p></li>
+<li><p>Quota-share</p></li>
+</ol>
+<p>We project the parameters in each of these categories from 2019-2039 using the average from the last three years <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+</section>
+<section id="calculate-numbers-of-both-stocks-in-initial-year" class="level4">
+<h4 class="anchored" data-anchor-id="calculate-numbers-of-both-stocks-in-initial-year">Calculate numbers of both stocks in initial year</h4>
+<p>To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. We set an arbitrary forecast target for this forecast because the 2020 numbers are calculated from existing numbers (rather than a defined target) <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - ? FIND OUT MORE</p>
+</section>
+<section id="creating-the-observation-error-model" class="level4">
+<h4 class="anchored" data-anchor-id="creating-the-observation-error-model">Creating the Observation Error Model</h4>
+<p>This is another important component of the MixME model <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. We create the observation error model <code>stk_oem</code> where we apply pre-sampled noise to the catch from each fleet (which we obtained earlier from the <code>mixedfishery_MixME_om</code> object) <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. We generate future stock and management advice from this object <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - MAY NEED TO REFERENCE MORE COMPLICATED TUTORIAL FOR FULL EXPLANATION OF THIS</p>
+</section>
+</section>
+<section id="build-the-mixme-input-object" class="level3">
+<h3 class="anchored" data-anchor-id="build-the-mixme-input-object">Build the MixME input object</h3>
+<p>We then use this in the <code>makeMixME</code> function to make the MixME input object, which can then be used to run the simulation. We have five arguments for this fucntion. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. The last argument - NOT DESCRIBED YET</p>
+</section>
+<section id="running-the-simulation" class="level3">
+<h3 class="anchored" data-anchor-id="running-the-simulation">Running the simulation</h3>
+<p>We update some of the management and simulation settings and then run the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>We update the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - FIND OUT MORE ABOUT WHY NEEDED AND IMPORTANT IF POSS</p>
+<p>It is important to note that the <span class="math inline">\(F_{cod}\)</span> and <span class="math inline">\(F_{had}\)</span> we choose remain constant throughout the simulation <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. - SURELY IN SUPP OR PAPAER TOO?</p>
+</section>
+<section id="analysing-results-of-the-simulation" class="level3">
+<h3 class="anchored" data-anchor-id="analysing-results-of-the-simulation">Analysing results of the simulation</h3>
+<p>The <code>tracking</code> object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. It also contains simulation performance and diagnostics statistics, which is what we will focus on here <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>We check for management advice failure, effort optimisation failure and the message given if there was any failure <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. Effort optimisation failure can be sued to see if we are over-fishing the stocks to a point that they will go extinct <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>Other results we can see are the over-quota catches and the quota uptake <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. Lastly, we can check which stock is the choke stock <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+</section>
+<section id="hcr-parameters" class="level3">
+<h3 class="anchored" data-anchor-id="hcr-parameters">HCR parameters</h3>
+<p>We add <span class="math inline">\(B_{lim}\)</span> into the HCR to help us calculate the risk later on <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>. It is helpful for calculating it in our current way, or the way MixME defines it as: “the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point (<span class="math inline">\(B_{lim}\)</span>)” <span class="citation" data-cites="MixMEwiki">(<a href="#ref-MixMEwiki" role="doc-biblioref">Pace 2024</a>)</span>.</p>
+<p>ARE THERE OTHER hcrpars ALREADY DEFINED?</p>
+</section>
+<section id="additions-or-differences-in-the-shortcut-model" class="level3">
+<h3 class="anchored" data-anchor-id="additions-or-differences-in-the-shortcut-model">Additions or Differences in the Shortcut Model</h3>
+<p>NEED CITATIONS FROM SOMEWHERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET</p>
+<p>This is the <code>Two_stocks_Optimising_ftarget_in_shortcut_model.R</code> file. We use the same data here as in the <code>Optimising_ftarget_in_MixME_mult_points_parallel.R</code> file, except that we have now also loaded in the Operating Model and Observation Error Model with the data <span class="citation" data-cites="MixMewiki">(<a href="#ref-MixMewiki" role="doc-biblioref"><strong>MixMewiki?</strong></a>)</span>.</p>
+<section id="zero-catch-advice" class="level4">
+<h4 class="anchored" data-anchor-id="zero-catch-advice">Zero-catch advice</h4>
+<p>CHECK DEFINETLY NOT IN OLD METHOD</p>
+<p>In this simulation, we have a condition meaning we return zero-catch advice if the <span class="math inline">\(SSB\)</span> is below <span class="math inline">\(B_{lim}\)</span> in the year after the advice year. We are checking the year after the advice year due to our management lag of one year. Firstly, we identify any simulation where <span class="math inline">\(SSB &lt;B_{lim}\)</span> and re-run these simulations specifically targeting <span class="math inline">\(B_{lim}\)</span>.</p>
+<p>However, if this still fails, we identify these runs in the <code>zeroTAC</code> variable and manually set the total annual catch (TAC) to zero.</p>
+<p>MAYBE NOT ENOUGH INFO ON THESE TWO BELOW TO INCLUDE THEM?</p>
+</section>
+<section id="ices_hcr-function" class="level4">
+<h4 class="anchored" data-anchor-id="ices_hcr-function"><code>ICES_HCR</code> function</h4>
+<p>This is a new way to create the HCR.</p>
+</section>
+<section id="forecast_fun-function" class="level4">
+<h4 class="anchored" data-anchor-id="forecast_fun-function"><code>forecast_fun</code> function</h4>
+<p>This function projects forwards into the next year to set an appropriate TAC. We call this for every year of the simulation and it is similar to the short term forecast we used in the last file.</p>
+</section>
+<section id="setting-forecast-arguments" class="level4">
+<h4 class="anchored" data-anchor-id="setting-forecast-arguments">Setting forecast arguments</h4>
+<p>We set up the forecast arguments in a similar way to before, but make sure to set them separately for each stock.</p>
+</section>
+</section>
+</section>
+<section id="parallelisation" class="level2">
+<h2 class="anchored" data-anchor-id="parallelisation">Parallelisation</h2>
+<p>This process has been set up so that it is easy to run in parallel. We are able to load in the data we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the <span class="math inline">\(min(SSB)\)</span> for cod, the <span class="math inline">\(min(SSB)\)</span> for haddock and the total catch of cod and haddock all over the years 2030-2039.</p>
+<p>Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project. We iterate this process until the optimal point(s) are found. - TACKLE WHEN I AM ABLE TO TACKLE WHY I AM GETTING MULTIPLE POINTS AS AN ANSWER (LIKELY DUE TO HAVING SAME FCOD AND COD BEING THE CHOKE?)</p>
+<p>The process above makes up one run of the script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we want to follow on from the original paper and run this script 1000 times <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. This requires a new kind of parallelisation. We were able to accomplish this by creating an array of jobs which will run when there is free space on the Viking HPC used by the Univeristy of York <span class="citation" data-cites="VikingDocumentation">(<a href="#ref-VikingDocumentation" role="doc-biblioref">York, n.d.</a>)</span>. This allowed us to submit one job that would run the script 1000 times, making it a lot easier to do this than having to submit 1000 separate jobs <span class="citation" data-cites="VikingDocumentation">(<a href="#ref-VikingDocumentation" role="doc-biblioref">York, n.d.</a>)</span>. - SAY ABOUT MY 50 THROTTLE AS WELL?</p>
+</section>
+</section>
+<section id="further-areas-for-development" class="level1">
+<h1>Further areas for Development</h1>
+<section id="moving-to-a-more-complicated-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="moving-to-a-more-complicated-dataset">Moving to a more complicated dataset</h2>
+<p>Mention the one in the MixME paper.</p>
+</section>
+<section id="doing-a-proper-risk-calculation" class="level2">
+<h2 class="anchored" data-anchor-id="doing-a-proper-risk-calculation">Doing a proper risk calculation</h2>
+<p>I now meet precautionary, so would it be much of an improvement to use probabilities instead?</p>
+
+</section>
+</section>
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-ICES2019WKGMSE2" class="csl-entry" role="listitem">
+ICES. 2019a. <span>“<span class="nocase">Workshop on Guidelines for Management Strategy Evaluations (WKGMSE2)</span>,”</span> January. <a href="https://doi.org/10.17895/ices.pub.5531">https://doi.org/10.17895/ices.pub.5531</a>.
+</div>
+<div id="ref-ICES2019HaddockAdvice" class="csl-entry" role="listitem">
+———. 2019b. <span>“<span class="nocase">Haddock (Melanogrammus aeglefinus) in divisions 7.b–k (southern Celtic Seas and English Channel)</span>,”</span> June. <a href="https://doi.org/10.17895/ices.advice.4785">https://doi.org/10.17895/ices.advice.4785</a>.
+</div>
+<div id="ref-ICES2019CodAdvice" class="csl-entry" role="listitem">
+———. 2019c. <span>“<span class="nocase">Cod (Gadus morhua) in Subarea 4, Division 7.d, and Subdivision 20 (North Sea, eastern English Channel, Skagerrak)</span>,”</span> November. <a href="https://doi.org/10.17895/ices.advice.5640">https://doi.org/10.17895/ices.advice.5640</a>.
+</div>
+<div id="ref-ICES2020CodBlim" class="csl-entry" role="listitem">
+———. 2020a. <span>“<span class="nocase">Cod (Gadus morhua) in Subarea 4, Division 7.d, and Subdivision 20 (North Sea, eastern English Channel, Skagerrak)</span>,”</span> June. <a href="https://doi.org/10.17895/ices.advice.5891">https://doi.org/10.17895/ices.advice.5891</a>.
+</div>
+<div id="ref-ICES2020HaddockBlim" class="csl-entry" role="listitem">
+———. 2020b. <span>“<span class="nocase">Haddock (Melanogrammus aeglefinus) in divisions 7.b–k (southern Celtic Seas and English Channel)</span>,”</span> October. <a href="https://doi.org/10.17895/ices.advice.5897">https://doi.org/10.17895/ices.advice.5897</a>.
+</div>
+<div id="ref-ICES2021Cod028" class="csl-entry" role="listitem">
+———. 2021. <span>“<span class="nocase">Benchmark Workshop on North Sea Stocks (WKNSEA)</span>,”</span> April. <a href="https://doi.org/10.17895/ices.pub.7922">https://doi.org/10.17895/ices.pub.7922</a>.
+</div>
+<div id="ref-ICESCodFactsheet" class="csl-entry" role="listitem">
+———. n.d. <span>“ICES-FishMap Cod.”</span> <a href="https://www.ices.dk/about-ICES/projects/EU-RFP/EU%20Repository/ICES%20FIshMap/ICES%20FishMap%20species%20factsheet-cod.pdf">https://www.ices.dk/about-ICES/projects/EU-RFP/EU%20Repository/ICES%20FIshMap/ICES%20FishMap%20species%20factsheet-cod.pdf</a>.
+</div>
+<div id="ref-MixMEwiki" class="csl-entry" role="listitem">
+Pace, Matthew. 2024. <span>“MixME Wiki.”</span> <a href="https://github.com/CefasRepRes/MixME/wiki">https://github.com/CefasRepRes/MixME/wiki</a>.
+</div>
+<div id="ref-MixME" class="csl-entry" role="listitem">
+Pace, Matthew, José Oliveira, Simon Fischer, and Paul Dolder. 2025a. <span>“MixME: An r Package to Simulation‐test Fisheries Management Robustness to Mixed‐fisheries Interactions.”</span> <em>Methods in Ecology and Evolution</em> 16 (February): 698–706. <a href="https://doi.org/10.1111/2041-210X.70005">https://doi.org/10.1111/2041-210X.70005</a>.
+</div>
+<div id="ref-MixMESupp" class="csl-entry" role="listitem">
+———. 2025b. <span>“"Supplementary Material a: Conditioning a Multi-Stock, Multi-Fleet Operating Model for Celtic Sea Cod, Haddock and Whiting",”</span> February. <a href="https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.70005&amp;file=mee370005-sup-0001-Supinfo1.pdf">https://besjournals.onlinelibrary.wiley.com/action/downloadSupplement?doi=10.1111%2F2041-210X.70005&amp;file=mee370005-sup-0001-Supinfo1.pdf</a>.
+</div>
+<div id="ref-DiceKrigingPaper" class="csl-entry" role="listitem">
+Roustant, Olivier, David Ginsbourger, and Yves Deville. 2012. <span>“DiceKriging, DiceOptim: Two r Packages for the Analysis of Computer Experiments by Kriging-Based Metamodeling and Optimization.”</span> <em>Journal of Statistical Software</em> 51 (1): 1–55. <a href="https://doi.org/10.18637/jss.v051.i01">https://doi.org/10.18637/jss.v051.i01</a>.
+</div>
+<div id="ref-Originalpaper" class="csl-entry" role="listitem">
+Spence, Michael A. 2025. <span>“Using History Matching to Speed up Management Strategy Evaluation Grid Searches.”</span> <em>Canadian Journal of Fisheries and Aquatic Sciences</em> 82: 1–14. <a href="https://doi.org/10.1139/cjfas-2024-0191">https://doi.org/10.1139/cjfas-2024-0191</a>.
+</div>
+<div id="ref-ULRICH201238" class="csl-entry" role="listitem">
+Ulrich, Clara, Douglas C. K. Wilson, J. Rasmus Nielsen, Francois Bastardie, Stuart A. Reeves, Bo S. Andersen, and Ole R. Eigaard. 2012. <span>“Challenges and Opportunities for Fleet- and Métier-Based Approaches for Fisheries Management Under the European Common Fishery Policy.”</span> <em>Ocean &amp; Coastal Management</em> 70: 38–47. https://doi.org/<a href="https://doi.org/10.1016/j.ocecoaman.2012.06.002">https://doi.org/10.1016/j.ocecoaman.2012.06.002</a>.
+</div>
+<div id="ref-williams2006gaussian" class="csl-entry" role="listitem">
+Williams, Christopher KI, and Carl Edward Rasmussen. 2006. <em>Gaussian Processes for Machine Learning</em>. Vol. 2. 3. MIT press Cambridge, MA.
+</div>
+<div id="ref-VikingDocumentation" class="csl-entry" role="listitem">
+York, University of. n.d. <span>“Viking Documentation.”</span> <a href="https://vikingdocs.york.ac.uk/index.html">https://vikingdocs.york.ac.uk/index.html</a>.
+</div>
+</div></section></div></main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
