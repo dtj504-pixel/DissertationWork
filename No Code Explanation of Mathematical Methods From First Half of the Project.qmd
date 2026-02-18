@@ -182,21 +182,21 @@ What mathematical methods will I explain in this document?
 
 # Context
 
-We are building on the paper "Using history matching to speed up management strategy evaluation grid searches". This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the catch whilst keeping the risk below 0.05 for a single-stock fishery. The paper does not consider fleet dynamics. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal catch with the constraint of keeping the risk below 0.05.
+We are building on the paper "Using history matching to speed up management strategy evaluation grid searches". This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. The paper does not consider fleet dynamics. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal median catch with the constraint of keeping the risk below 0.05.
 
 To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
--   We set up or update the Gaussian Process (GP) to model the risk and the GP to model the catch
+-   We set up or update the Gaussian Process (GP) to model the risk and the GP to model the median catch
 
 -   We can then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have risk below 0.05
 
--   We use the GP which is modelling the catch to get the value for the catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling the median catch to get the value for the median catch at every point in the sample space, which will have some uncertainty
 
--   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best catch)
+-   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 
 -   We select 8 plausible points to sample in the next round
 
-We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{target}$ and $B_{trigger}$ that maximise the catch whilst keeping the risk below 0.05.
+We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{target}$ and $B_{trigger}$ that maximise the median catch whilst keeping the risk below 0.05.
 
 Now, we will look at the mathematics behind the methods above and also at the acquisition functions of Expected Improvement, Augmented Expected Improvement and Knowledge Gradient which I added to the original code.
 
@@ -358,13 +358,13 @@ $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})-\mu_n(x_{n+1}))
 $$ {#eq-updatemuKG}
 
-where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. From the GP for catch, we get $\operatorname{cov}_n(x_{n+1},x)$ and the standard deviation $\sigma_{\mathrm{obs}}^2$.
+where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. From the GP for median catch, we get $\operatorname{cov}_n(x_{n+1},x)$ and the standard deviation $\sigma_{\mathrm{obs}}^2$.
 
 ## Kmeans process for selecting multiple points
 
 HIGHLIGHT THAT COMBINING THIS WITH AN ACQUISITION FUNCTION WAS AN IDEA I HAD BEFORE READING ANY LITERATURE ON IT ( AS I THINK THERE IS SOME). - NOT QUITE SURE HOW TO DO THIS, ASK GUSTAV ON TUES
 
-We have now been able to determine which points are possible based on the probability that their catch is higher than the current maximum catch (using Bayesian History Matching) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
+We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using Bayesian History Matching) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
 
 For sampling only one point next, this would be very simple as you would take the point with the highest value assigned by the acquisition function [@BayesianOptimisationTutorial]. However, we want to sample 8 points next so that we continue the pattern set up in the original paper and we want a good trade-off between exploration and exploitation [@Originalpaper],[@batchspreadinoutjustification].
 
@@ -396,7 +396,7 @@ $$
 
 is an indicator function.
 
-To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(catch)$ [@Originalpaper]. Maintaining the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -425,7 +425,7 @@ $$
 
 where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the $\phi_1$ and $\phi_2$ terms respectively [@williams2006gaussian].
 
-We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $ln(catch)$ and $ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
@@ -462,9 +462,9 @@ rgl::view3d(theta = 40, phi = 25, zoom = 0.8)
 rglwidget()
 ```
 
-The middle plane is the mean of the GP, whereas the bottom and top planes represent the lower and upper bounds of the 95% confidence interval respectively. The planes meet at the evaluated points, which are the red dots on the diagram. The scales are odd due to the re-scaling of $F_{target}$ and $B_{trigger}$ and fitting our GPs to log of the values we want throughout the code which helps to keep the GP stable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
+The middle plane is the mean of the risk GP, whereas the bottom and top planes represent the lower and upper bounds of the 95% confidence interval respectively. The planes meet at the evaluated points, which are the red dots on the diagram. The scales are odd due to the re-scaling of $F_{target}$ and $B_{trigger}$ and fitting our GPs to log of the values we want throughout the code which helps to keep the GP stable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
-We can then also do this for the GP for catch:
+We can then also do this for the catch GP:
 
 ```{r}
 #| echo: false
@@ -501,11 +501,13 @@ rglwidget()
 
 Firstly, we enforce the precautionary threshold by calculating $P(ln(risk)\le0.05)$. We exclude these points by setting their value of the acquisition function to 0 so that they will not be chosen as a point to sample in the next round.
 
-Then, we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest catch whilst following the precautionary principle [@Originalpaper].
+Recall that we have the GP for $ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus in maximising $C(theta)$ whilst meeting the threshold stated by the indicator function.
+
+we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
 ## Deciding on next point to sample
 
-We have three different acquisition functions we have investigated using here..
+We have three different acquisition functions we have investigated using here.
 
 ### Expected Improvement
 
@@ -527,12 +529,12 @@ We estimate the KG from 100 simulations and update the KG each round using @eq-u
 
 ### Kmeans process
 
-To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process [@batchspreadingoutjustification]. We create eight clusters and note the point with the highest value of the acquisition function in each cluster. These are the points we will sample in the next round.
+To then make sure that the next points we sample are spread out across the sample space, we use the Kmeans process [@batchspreadingoutjustification]. We create eight clusters and select the point with the highest value of the acquisition function in each cluster. These are the points we will sample in the next round.
 
 ## Updating our GPS
 
 In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. - CHECK SITLL IN KRIGING SECTION For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points[@Originalpaper].
 
-Now, we repeat the full process described in the Application of theory in my project section until there are no points with a positive KG. Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points.
+Now, we repeat the full process described in the Application of theory in my project section until there are no points with a $KG > 0$ . Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points.
 
 ### References

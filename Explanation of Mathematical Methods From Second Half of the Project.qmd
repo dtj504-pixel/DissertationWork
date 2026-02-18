@@ -194,7 +194,7 @@ out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
        wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
 ```
 
- - JUST SET THIS UP OR ACTUALLY PROJECT? DO HAVE HISTORIC DATA TO DO THIS FROM
+-   JUST SET THIS UP OR ACTUALLY PROJECT? DO HAVE HISTORIC DATA TO DO THIS FROM
 
 #### Calculate numbers of both stocks in initial year
 
