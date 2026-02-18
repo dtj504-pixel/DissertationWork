@@ -499,11 +499,13 @@ rglwidget()
 
 ## Excluding implausible points
 
-Firstly, we enforce the precautionary threshold by calculating $P(ln(risk)\le0.05)$. We exclude these points by setting their value of the acquisition function to 0 so that they will not be chosen as a point to sample in the next round.
+Recall that we have the GP for $ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function.
 
-Recall that we have the GP for $ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus in maximising $C(theta)$ whilst meeting the threshold stated by the indicator function.
+Firstly, we enforce the threshold in the indicator function by calculating $P(ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $ln(0.05)$. We exclude any points with $P(ln(risk)\le\ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to 0. This means they will not be chosen as a point to sample in the next round.
 
-we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
+To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint.
+
+This full process ensures that only points that meet the precautionary threshold and and are plausible according @eq-removeimplausiblepoint can be selected.
 
 ## Deciding on next point to sample
 
@@ -535,6 +537,6 @@ To then make sure that the next points we sample are spread out across the sampl
 
 In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. - CHECK SITLL IN KRIGING SECTION For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points[@Originalpaper].
 
-Now, we repeat the full process described in the Application of theory in my project section until there are no points with a $KG > 0$ . Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points.
+Now, we repeat the full process described in the Application of theory in my project section until there are no points with a $KG > 0$ . Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
 ### References
