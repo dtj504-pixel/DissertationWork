@@ -556,7 +556,7 @@ for (iteration in 1:max_rounds) {
     
     print("GPs done")
     
-    # Find the remaining plausible points using BHM
+    # Predict the catch and ssb values across the whole grid of Fcod and Fhad values using the GPs we have fitted
     pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
     pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")

@@ -72,7 +72,7 @@ dat <- data.frame(expand.grid(
 ))
 ```
 
-This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki].
+This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki]. - MAYBE FIND MORE JUSTIFICATION, I.E. SOMEHTING SAYING HOW TO SET UP THESE SMAPLE SPACES?
 
 We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]:
 
@@ -116,7 +116,7 @@ pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
 pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
 ```
 
-We then calculate $Risk = P(SSB < B_{lim})$ for each stock:
+We then calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]:  - COULD INCLUDE EXPLANATION OF PREDICTIONS AND MORE ON RISK (highlighted in Roustant paper)
 
 ``` r
 # Get the probability that sbb =< Blim for cod and haddock

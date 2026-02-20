@@ -501,7 +501,7 @@ rglwidget()
 
 Recall that we have the GP for $ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function.
 
-Firstly, we enforce the threshold in the indicator function by calculating $P(ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $ln(0.05)$. We exclude any points with $P(ln(risk)\le\ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to 0. This means they will not be chosen as a point to sample in the next round.
+Firstly, we enforce the threshold in the indicator function by calculating $P(ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $ln(0.05)$. This probability can be found using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Then, we exclude any points with $P(ln(risk)\le\ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to 0. This means they will not be chosen as a point to sample in the next round.
 
 To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint.
 
