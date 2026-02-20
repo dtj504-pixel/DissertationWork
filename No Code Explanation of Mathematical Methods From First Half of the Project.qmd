@@ -433,6 +433,8 @@ We have been able to visualise the GPs after the first round in 3D:
 
 ```{r}
 #| echo: false
+#| message: false
+#| warning: false
 
 library(DiceView)
 library(rgl)
@@ -468,6 +470,8 @@ We can then also do this for the catch GP:
 
 ```{r}
 #| echo: false
+#| message: false
+#| warning: false
 
 library(DiceView)
 library(rgl)

@@ -453,6 +453,9 @@ We can then exponentiate these results where needed. We are building our GPs wit
 We have been able to visualise this process using the code below. Firstly, we can look at the GP for risk after the first round of `case_study8.R`:
 
 ```{r}
+#| message: false
+#| warning: false
+
 library(DiceView)
 library(rgl)
 
@@ -486,6 +489,9 @@ The middle plane is the mean of the GP, whereas the bottom and top planes repres
 We can then also do this for the catch GP:
 
 ```{r}
+#| message: false
+#| warning: false
+
 library(DiceView)
 library(rgl)
 
