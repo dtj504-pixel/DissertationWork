@@ -116,7 +116,7 @@ pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
 pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
 ```
 
-We then calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]:  - COULD INCLUDE EXPLANATION OF PREDICTIONS AND MORE ON RISK (highlighted in Roustant paper)
+We then calculate $Risk = P(min(SSB) < B_{lim})$ for each stock:
 
 ``` r
 # Get the probability that sbb =< Blim for cod and haddock

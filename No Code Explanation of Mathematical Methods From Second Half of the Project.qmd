@@ -70,7 +70,13 @@ Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of th
 
 These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY MORE
 
-Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future. - COULD INCLUDE EXPLANATION OF PREDICTIONS AND MORE ON RISK (highlighted in Roustant paper)
+Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using the equation below which we already touched on in the first half of the project [@BayesianOptimisationTutorial]:
+
+$$
+F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
+$$
+
+Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
 By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 5% threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ in [@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
 
