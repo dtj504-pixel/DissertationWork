@@ -765,7 +765,7 @@ gp_risk <- km(~.^2, design = runs[, c("Ftarget", "Btrigger")], estim.method = "M
 
 This looks the same as before, but the `runs` variable includes all of our evaluated points and so we are adding the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round.
 
-For the catch GP, we move on to using a new prior because by the time we create this GP we have sampled 16 points[@Originalpaper]. Here is the median catch GP for the second round and onwards:
+For the catch GP, we move on to using a new prior because by the time we create this GP we have sampled 16 points [@Originalpaper]. Here is the median catch GP for the second round and onwards:
 
 ``` r
 gp_cat <- km(~I(log(Ftarget+0.1)^2)+I(log(Ftarget+0.1))+ I(log(Ftarget+0.1)^3) + 
