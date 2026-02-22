@@ -222,7 +222,7 @@ We use a GP to emulate the objective function because it is much cheaper to eval
 
 ## Maximum Likelihood Estimation
 
-When using GPs to emulate our objective function, we need to be able to estimate the coefficients of the objective function using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
+When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
 
 We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist . Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood @BayesianOptimisationTutorial\]:
 
