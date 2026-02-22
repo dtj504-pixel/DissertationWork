@@ -295,7 +295,7 @@ res <- runMixME(om  = input$om, oem = input$oem,
 
 It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation [@MixMEwiki].
 
-It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain constant throughout the simulation [@MixMEwiki]. - SURELY IN SUPP OR PAPAER TOO?
+It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain constant throughout the simulation [@MixMEwiki].
 
 ### Analysing results of the simulation
 

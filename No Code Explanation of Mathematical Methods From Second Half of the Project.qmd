@@ -130,7 +130,7 @@ We update some of the management and simulation settings and then run the simula
 
 We update the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation [@MixMEwiki]. - FIND OUT MORE ABOUT WHY NEEDED AND IMPORTANT IF POSS
 
-It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain constant throughout the simulation [@MixMEwiki]. - SURELY IN SUPP OR PAPAER TOO?
+It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain constant throughout the simulation [@MixMEwiki].
 
 ### Analysing results of the simulation
 
