@@ -152,7 +152,7 @@ The steps for fully assembling the operating model for input into the MixME mode
 
 1.  Estimate historic quota-share for the two fleets
 
-2.  Project stocks n years into the future
+2.  Project structures 20 years into the future
 
 3.  Calculate numbers of both stocks in initial year
 
@@ -160,14 +160,14 @@ The steps for fully assembling the operating model for input into the MixME mode
 
 #### Estimate historic quota-share for the two fleets
 
-Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the `calculateQuotashare` function [@MixMEwiki].
+Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet for each year in our projection. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the `calculateQuotashare` function [@MixMEwiki].
 
 ``` r
 out <- calculateQuotashare(stks = mixedfishery_MixME_om$stks, 
        flts = mixedfishery_MixME_om$flts, verbose = TRUE)
 ```
 
-#### Project stock n years into the future
+#### Project structures 20 years into the future
 
 To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended [@MixMEwiki]. These are:
 
@@ -177,14 +177,12 @@ To carry out our 20 year projection, we need to extend the stock and fishery str
 
 3.  Quota-share
 
-We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function [@MixMEwiki].
+We project the parameters in each of these categories from 2019-2039 using the average from the last three years using the `stfMixME` function [@MixMEwiki]. This means we fill in the actual values we will use, instead of calculating a percentage that is then used in a further calculation like in the quota share section [@MixMEwiki].
 
 ``` r
 out <- stfMixME(mixedfishery_MixME_om, method = "yearMeans", nyears = 20,
        wts.nyears = 3, sel.nyears = 3, qs.nyears = 3, verbose = TRUE)
 ```
-
--   JUST SET THIS UP OR ACTUALLY PROJECT? DO HAVE HISTORIC DATA TO DO THIS FROM
 
 #### Calculate numbers of both stocks in initial year
 
@@ -218,11 +216,11 @@ mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
 mixedfishery_MixME_om$stks$cod@n[,ac(iy)] <- omfwd$biols$cod@n[,ac(iy)]
 ```
 
-We set an arbitrary forecast target here because the 2020 numbers are calculated from existing numbers (rather than a defined target) [@MixMEwiki]. - ? FIND OUT MORE
+We set an arbitrary forecast target for this forecast \[@MixMEwiki\]. This is because the forecast target is designed to tell the simulation what to aim for by the end of 2020, but we want the stock numbers at the beginning of 2020 and so this has no effect on the result we want [@MixMEwiki].
 
 #### Creating the Observation Error Model
 
-This is another important component of the MixME model [@MixMEwiki]. We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet (which we obtained earlier from the `mixedfishery_MixME_om` object) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki]. - MAY NEED TO REFERENCE MORE COMPLICATED TUTORIAL FOR FULL EXPLANATION OF THIS
+This is another important component of the MixME model [@MixMEwiki]. We create the observation error model `stk_oem` where we apply pre-sampled noise to the catch from each fleet (which we obtain from the `mixedfishery_MixME_om` object) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki]. - CONCISE AS IS SO NOT SURE IF NEED MORE DETAIL
 
 ``` r
 # Create a list of FLStock objects from the FLBiol objects in 
@@ -255,7 +253,7 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 ### Build the MixME input object
 
-We then use this in the `makeMixME` function to make the MixME input object, which can then be used to run the simulation. We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively [@MixMEwiki]. The last argument - NOT DESCRIBED YET
+We then use the operating model in the `makeMixME` function to make the MixME input object, which can then be used to run the simulation. We have five arguments here. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively [@MixMEwiki]. The last argument decides whether or not parallel processing should be used [@MixMEwiki]. We have set it to `FALSE`, mostly as it's usage is not currently well described.
 
 ``` r
   input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem,
@@ -293,9 +291,9 @@ res <- runMixME(om  = input$om, oem = input$oem,
                 ctrl_obj = input$ctrl_obj, args = input$args)
 ```
 
-It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation [@MixMEwiki].
+It can be seen above that we have updated the arguments for when catches occur, the age range for calculating average fishing mortality in all the places it is needed and the target fishing mortality we are using for this round of the simulation [@MixMEwiki]. - NOT ENOUGH INFORMATION WHY PROVIDED ON WIKI seems they may have purposefully set things up wrong to show customisation possibilities
 
-It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain constant throughout the simulation [@MixMEwiki].
+It is important to note that the $F_{cod}$ and $F_{had}$ we choose at the start remain constant throughout the simulation [@MixMEwiki].
 
 ### Analysing results of the simulation
 
@@ -344,7 +342,7 @@ res$tracking$choke
 
 ### HCR parameters
 
-We add $B_{lim}$ into the HCR to help us calculate the risk later on [@MixMEwiki]. It is helpful for calculating it in our current way, or the way MixME defines it as: "the proportion of iterations (read replicates) in each year where stock spawning biomass falls below the biological limit reference point ($B_{lim}$)" [@MixMEwiki].
+We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating it in our current way, or the way MixME defines it.  - NO INFORMATION ON WIKI
 
 ``` r
 ## Define Blim for each stock - required for way 
@@ -354,8 +352,6 @@ hcrpars <- list(cod = c(Blim = 107000), had = c(Blim = 9227))
 # Update the control object with the new HCR parameters
 res$ctrl_obj$phcr <- mseCtrl(args = list(hcrpars = hcrpars))
 ```
-
-ARE THERE OTHER hcrpars ALREADY DEFINED?
 
 ### Additions or Differences in the Shortcut Model
 
