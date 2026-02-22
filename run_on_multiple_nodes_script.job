@@ -23,4 +23,4 @@ module load R/4.5.2-gfbf-2025b
 
 # Commands to run
 # Your R script can now "see" which array number it is (1 through 10)
-Rscript ./MixME_experimentation/My_scripts/Two_stocks_Optimising_ftarget_in_shortcut_model.R
+Rscript ./MixME_experimentation/My_scripts/Optimising_ftarget_in_MixME_mult_points_parallel.R
