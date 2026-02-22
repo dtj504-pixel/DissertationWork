@@ -60,15 +60,11 @@ We repeat this process until there is only one plausible point left and then we 
 
 MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki].
 
-In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here. We should quickly note before our calculations that our new sample space is a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments.
-
-This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki]. - MAYBE FIND MORE JUSTIFICATION, I.E. SOMEHTING SAYING HOW TO SET UP THESE SMAPLE SPACES?
+In contrast to the first half of the project, we now calculate the risk using the $SSB$. We have described it above briefly but will go into more detail here. We should quickly note before our calculations that our new sample space is a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments [@Originalpaper]. This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki],[@MixedFisheriesStatusandManagement2023],[@ICES2019WKGMSE2].
 
 We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
 
-Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock.
-
-These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY MORE
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY MORE
 
 Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using the equation below which we already touched on in the first half of the project [@BayesianOptimisationTutorial]:
 
@@ -82,17 +78,13 @@ By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB <
 
 ## The basics of the MixME model
 
-Going to write down everything and then remove areas Gustav said I don't need to worry about.
-
--   Explaining the tracking object as this how I get catch ?? - MAYBE IN A SECTION SUMMARISING FULL CODE PROCESS?
-
 ### Starting $F_{cod}$ and $F_{had}$
 
 We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from the North Sea Cod and Celtic Sea Haddock advice published in 2020 respectively [@ICES2021Cod028],[@ICES2020HaddockBlim].
 
 ### Creating the Operating model
 
-We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki]**. - DISCUSS CATCHABILITY?**
+We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki]**.**
 
 In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki].
 
@@ -144,11 +136,9 @@ It is important to note that the $F_{cod}$ and $F_{had}$ we choose remain consta
 
 ### Analysing results of the simulation
 
-The `tracking` object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. It also contains simulation performance and diagnostics statistics, which is what we will focus on here [@MixMEwiki].
+The `tracking` object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. As well as this, it contains the catch and the $SSB$ from each year of the simulation, which is how we have been extracting these throughout this document [@MixMEwiki].
 
-We check for management advice failure, effort optimisation failure and the message given if there was any failure [@MixMEwiki]. Effort optimisation failure can be sued to see if we are over-fishing the stocks to a point that they will go extinct [@MixMEwiki].
-
-Other results we can see are the over-quota catches and the quota uptake [@MixMEwiki]. Lastly, we can check which stock is the choke stock [@MixMEwiki].
+It also contains simulation performance and diagnostics statistics, which is what we will focus on here [@MixMEwiki]. We check for management advice failure, effort optimisation failure and the message given if there was any failure [@MixMEwiki]. Effort optimisation failure can be sued to see if we are over-fishing the stocks to a point that they will go extinct [@MixMEwiki]. Other results we can see are the over-quota catches and the quota uptake [@MixMEwiki]. Lastly, we can check which stock is the choke stock [@MixMEwiki].
 
 ### HCR parameters
 
@@ -158,31 +148,11 @@ ARE THERE OTHER hcrpars ALREADY DEFINED?
 
 ### Additions or Differences in the Shortcut Model
 
-NEED CITATIONS FROM SOMEWHERE BUT MAY BE VERY DIFFICULT AS NOT PUBLIC YET
-
 This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the same data here as in the `Optimising_ftarget_in_MixME_mult_points_parallel.R` file, except that we have now also loaded in the Operating Model and Observation Error Model with the data [@MixMewiki].
 
-#### Zero-catch advice
+In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking the year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$. However, if this still fails, we identify these runs in the `zeroTAC` variable and manually set the total annual catch (TAC) to zero. There is not very much information this procedure as the tutorial has not yet been added to the MixME wiki [@MixMEwiki].
 
-CHECK DEFINETLY NOT IN OLD METHOD
-
-In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking the year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$.
-
-However, if this still fails, we identify these runs in the `zeroTAC` variable and manually set the total annual catch (TAC) to zero.
-
-MAYBE NOT ENOUGH INFO ON THESE TWO BELOW TO INCLUDE THEM?
-
-#### `ICES_HCR` function
-
-This is a new way to create the HCR.
-
-#### `forecast_fun` function
-
-This function projects forwards into the next year to set an appropriate TAC. We call this for every year of the simulation and it is similar to the short term forecast we used in the last file.
-
-#### Setting forecast arguments
-
-We set up the forecast arguments in a similar way to before, but make sure to set them separately for each stock.
+We have a new way to create the HCR, the `ICES_HCR` function. We also have a new way to projects forwards into the next year to set an appropriate TAC, the `forecast_fun` function. We call the `forecast_fun` for every year of the simulation and it is similar to the short term forecast we used in the last file. There is not very much information on either of these functions as the tutorials have not yet been added to the MixME wiki [@MixMEwiki]. Lastly, we set up the forecast arguments in a similar way to before, but make sure to set them separately for each stock.
 
 ## Parallelisation
 
