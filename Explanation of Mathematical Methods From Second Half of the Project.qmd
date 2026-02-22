@@ -101,7 +101,7 @@ gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",
                  covtype = "exp")
 ```
 
-These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. - JUSTIFY MORE
+These GPs have remained modelled by the `.^2` function, the same as in the GP for risk in the first half of the project, as this is quite general and avoids mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian][@BayesianOPtimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in [Kernel and Mean Experiments](https://github.com/dtj504-pixel/DissertationWork/blob/main/Kernel%20and%20Mean%20Experiments.qmd) the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKriginDocumentation]
 
 Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space:
 
