@@ -8,7 +8,7 @@ bibliography: kernel_and_mean_references.bib
 
 # Introduction
 
-Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in `case_study8.R` would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in @eq-originalkernel) was not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel. This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
+Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in `case_study8.R` would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in @eq-originalkernel) was not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
 
 $$
 r_i(\phi,\phi',\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1'|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2'|}{\delta_{i,2}}\right)

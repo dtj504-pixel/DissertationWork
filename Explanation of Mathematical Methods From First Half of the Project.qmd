@@ -273,7 +273,7 @@ Once we evaluate another point $x'$ where $x' \neq x$, we are able to use Bayes'
 We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. For the first round, $n=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated.[@Originalpaper] We remove the point $x$ if:
 
 $$
-P(f(x)>a|f(x_{1:n}) = \int_{a}^{\infty}P(f(x)|f(x_{1:n})df(x) <\varepsilon
+P(f(x)>a|f(x_{1:n}) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
 $$ {#eq-removeimplausiblepoint}
 
 for a small $\varepsilon > 0$ until no plausible points remain. Then, the optimum will be $x^*$ such that:
