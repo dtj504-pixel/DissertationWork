@@ -350,13 +350,13 @@ $$ {#eq-KnowledgeGradient}
 
 The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$ and then calculating @eq-increaseinconditionalexpectedvalue. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating @eq-KnowledgeGradient directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial].
 
-Alternatively, we can calculate $\mu_{n+1}$ using the formula below:
+As an alternative to simulation, we can calculate $\mu_{n+1}$ using the formula below:
 
 $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})-\mu_n(x_{n+1}))
 $$ {#eq-updatemuKG}
 
-where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. This allows us to update our posterior mean for a point $x$ based on the previous posterior mean at that point, the new observation $x_{n+1}$ and the noise variable $\sigma_{obs}^2$. - SHOULD THIS BE CAPITAL F? SURELY f IF USING A SAMPLED POINT?
+where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient].
 
 We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
 
