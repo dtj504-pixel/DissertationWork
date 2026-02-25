@@ -334,7 +334,7 @@ Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get
 
 $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})|f(x_{1:n})-\mu_n(x_{n+1}))
-$$
+$$ {#eq-updatemuKG}
 
 where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. Furthermore, the conditional expected value for $F(x_n^*)$ changes to be:
 
@@ -390,7 +390,7 @@ $$
 
 is an indicator function.
 
-To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -409,7 +409,7 @@ $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
 $$
 
-where we rescale for numerical stability in the GP [@Originalpaper].
+as we have rescaled for numerical stability in the GP [@Originalpaper].
 
 Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
 
@@ -524,7 +524,7 @@ prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
 
 where we include `+1e-12` in the above to prevent the variance becoming negative due to imprecision when calculating `pred_risk_g$sd`. This would encounter an error from the `pnorm` function which would stop the code [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
 
-We exclude any points not meeting the precautionary threshold by setting their value of the acquisition function to 0 so that they will not be chosen as a point to sample in the next round.
+We exclude any points not meeting the precautionary threshold by setting their value of the acquisition function to $0$ so that they will not be chosen as a point to sample in the next round.
 
 Then, Bayesian history matching speeds up the process by removing any points that are implausible according to @eq-removeimplausiblepoint. This process is written up in the code as the below, where we have set $\varepsilon = 0.0001$ [@Originalpaper]:
 

@@ -334,7 +334,7 @@ Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get
 
 $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})|f(x_{1:n})-\mu_n(x_{n+1}))
-$$
+$$ {#eq-updatemuKG}
 
 where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. The conditional expected value for $F(x_n^*)$ changes to be:
 
@@ -390,7 +390,7 @@ $$
 
 is an indicator function.
 
-To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from the Spence 2025 paper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -409,7 +409,7 @@ $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
 $$
 
-where we rescale for numerical stability in the GP [@Originalpaper].
+as we have rescaled for numerical stability in the GP [@Originalpaper].
 
 Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
 
@@ -421,7 +421,7 @@ where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of th
 
 We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
-We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $ln(median\ catch)$ and $ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
+We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $ln(median\ catch)$ and $ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
 We have been able to visualise the GPs after the first round in 3D:
 
@@ -499,7 +499,7 @@ rglwidget()
 
 Recall that we have the GP for $ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function.
 
-Firstly, we enforce the threshold in the indicator function by calculating $P(ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(ln(risk)\le\ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to 0. This means they will not be chosen as a point to sample in the next round.
+Firstly, we enforce the threshold in the indicator function by calculating $P(ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(ln(risk)\le ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
 
 To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint.
 
@@ -521,7 +521,7 @@ $$
 AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 $$
 
-to calculate the AEI for every point in the sample space. where we set $\sigma_{obs} = 0$. We again make sure to set any points not meeting the precautionary threshold to have AEI = 0.
+to calculate the AEI for every point in the sample space. where we set $\sigma_{obs} = 0$. We again make sure to set any points not meeting the precautionary threshold to have $AEI = 0$.
 
 ### Knowledge Gradient
 
@@ -537,7 +537,7 @@ This method allows us to search for viable points by looking in the $PS$ but als
 
 ## Updating our GPS
 
-In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points[@Originalpaper].
+In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points [@Originalpaper].
 
 Now, we repeat the full process described in the Application of theory in my project section until there are no points with a $KG > 0$ . Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
