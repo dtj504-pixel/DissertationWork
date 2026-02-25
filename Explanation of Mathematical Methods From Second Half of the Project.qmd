@@ -216,7 +216,7 @@ mixedfishery_MixME_om$stks$had@n[,ac(iy)] <- omfwd$biols$had@n[,ac(iy)]
 mixedfishery_MixME_om$stks$cod@n[,ac(iy)] <- omfwd$biols$cod@n[,ac(iy)]
 ```
 
-We set an arbitrary forecast target for this forecast \[@MixMEwiki\]. This is because the forecast target is designed to tell the simulation what to aim for by the end of 2020, but we want the stock numbers at the beginning of 2020 and so this has no effect on the result we want [@MixMEwiki].
+We set an arbitrary forecast target for this forecast [@MixMEwiki]. This is because the forecast target is designed to tell the simulation what to aim for by the end of 2020, but we want the stock numbers at the beginning of 2020 and so this has no effect on the result we want [@MixMEwiki].
 
 #### Creating the Observation Error Model
 
@@ -342,7 +342,7 @@ res$tracking$choke
 
 ### HCR parameters
 
-We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating it in our current way, or the way MixME defines it.  - NO INFORMATION ON WIKI
+We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating it in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI
 
 ``` r
 ## Define Blim for each stock - required for way 

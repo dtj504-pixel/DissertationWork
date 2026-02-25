@@ -207,7 +207,7 @@ Now, we will look at the mathematics behind the methods above and also at the ac
 A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $i,j\in\{1, ..., n\}$ to find the covariance matrix $\Sigma_{1:n}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_n}$, the marginal probability distribution on $F(x_{1:n}) = (F(x_1),...,F(x_n))$ is given by [@BayesianOptimisationTutorial]:
 
 $$
-F(x_{1:n}) \sim N((\mu_0(x_{1:n}),\Sigma_{1:n})
+F(x_{1:n}) \sim N(\mu_0(x_{1:n}),\Sigma_{1:n})
 $$ {#eq-MultivariateNormalDist}
 
 where
@@ -216,7 +216,7 @@ $$
 \mu_0(x_{1:n}) = (\mu_0(x_1), . . ., \mu_0(x_n))
 $$
 
-We choose a covariance function such that inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper]. This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
+We choose a covariance function such that the inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper]. This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
 
 We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can calculate $F(x)$ for any $x$ in the design space as our estimate of $f(x)$ based on our current beliefs. This is true even for the evaluated points $x_1,...,x_m$ as the emulator is fitted to these points [@Originalpaper].
 
@@ -224,7 +224,7 @@ We use a GP to emulate the objective function because it is much cheaper to eval
 
 When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
 
-We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist . Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood @BayesianOptimisationTutorial\]:
+We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist . Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood [@BayesianOptimisationTutorial]:
 
 $$
  \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
@@ -270,10 +270,10 @@ Once we evaluate another point $x'$ where $x' \neq x$, we are able to use Bayes'
     P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
 \end{equation}
 
-We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. For the first round, $n=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated.[@Originalpaper] We remove the point $x$ if:
+We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. For the first round, $n=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated [@Originalpaper]. We remove the point $x$ if:
 
 $$
-P(f(x)>a|f(x_{1:n}) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
+P(f(x)>a|f(x_{1:n})) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
 $$ {#eq-removeimplausiblepoint}
 
 for a small $\varepsilon > 0$ until no plausible points remain. Then, the optimum will be $x^*$ such that:
@@ -306,23 +306,23 @@ $$
 Z = \frac{\mu_n(x_{n+1})-f_n^*}{\sigma_n(x_{n+1})}
 $$
 
-@eq-EIincode can be gained from @eq-MultivariateNormalDist by setting $k = n+1$ and then studying the distribution of $F(x_{n+1})-f^*_n$. However, we can also consider it as a version of Equation (15) from [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions] where we first flip the signs as we are focused on the maximisation case and then set $f_{min} = f^*_n$, $\hat{y} = \mu_n(x)$ and $s = \sigma_n(x)$.
+@eq-EIincode can be gained from @eq-MultivariateNormalDist by setting $k = n+1$ and then studying the distribution of $F(x_{n+1})-f^*_n$. However, we can also consider it as a version of Equation (15) from @EfficientGlobalOptimizationofExpensiveBlackBoxFunctions where we first flip the signs as we are focused on the maximisation case and then set $f_{min} = f^*_n$, $\hat{y} = \mu_n(x)$ and $s = \sigma_n(x)$.
 
 ## Augmented Expected Improvement
 
-This was included to help make the method perform better for noisy functions which will make it more generally applicable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. To deal with these noisy observations, a change was proposed to standard EI function as detailed below. This change seems mostly to have been justified by empirical performance [@letham2018constrainedbayesianoptimizationnoisy].
+This was included to help make the method perform better for noisy functions which will make it more generally applicable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. To deal with these noisy observations, a change was proposed to the standard EI function as detailed below. This change seems mostly to have been justified by empirical performance [@letham2018constrainedbayesianoptimizationnoisy].
 
-By adjusting Equation (12) found in [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels] to our own notation, we get that:
+By adjusting Equation (12) found in @GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels to our own notation, we get that:
 
 \begin{equation}
-    AEI_n(x_{n+1})=E_n[F(x_{n+1})|f(x_{1:n})-f^*_{eb}]^+\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
+    AEI_n(x_{n+1})=E[F(x_{n+1})|f(x_{1:n})-f^*_{eb}]^+\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 \end{equation}
 
 where $\sigma_{obs}$ is the standard deviation of the noise variable set by the user and $\sigma_n(x)$ is the standard deviation of GP $F$ at the $n^{th}$ iteration, as used beforehand. We have also changed $f^*_n$ to $f^*_{eb}$ which is the highest predicted mean at any sampled point so far so that we take into account that the uncertainty in our observations could cause a large spike [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
 ## Knowledge Gradient
 
-We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. This allows us to do some different computations to the ones in EI. We also now start by saying that the solution we would choose if we have to stop sampling after n points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
+We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. This allows us to do some different computations to the ones in EI. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
 
 \begin{equation}
     \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
@@ -336,31 +336,33 @@ Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get
     \mu_{n+1}^* := max_x\mu_{n+1}(x)
 \end{equation}
 
-So, we can see that the increase in the conditional expected value of $F(x_n^*)$ by sampling the new point $x_{n+1}$ is [@BayesianOptimisationTutorial]:
+So, we can see that the increase in the conditional expected value of $F(x_n^*)$ by sampling the new point $x_{n+1}$ is:
 
 \begin{equation}
     \mu_{n+1}^* - \mu_n^*
 \end{equation}
 
-While this quantity is unknown before we sample $x_{n+1}$ we can calculate it's expected value given our observations $x_1,...,x_n$. The Knowledge Gradient for sampling at a new point $x$ in the design space is defined as [@BayesianOptimisationTutorial]:
+While this quantity is unknown before we sample $x_{n+1}$, we can calculate it's expected value given our observations $x_1,...,x_n$. The Knowledge Gradient (KG) for sampling at a new point $x$ in the design space is defined as [@BayesianOptimisationTutorial]:
 
 $$
-KG_n(x) := E_n[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
+KG_n(x) := E[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
 $$ {#eq-KnowledgeGradient}
 
-where again $E_n$ indicates the expectation taken under the posterior distribution at the $n^{th}$ iteration. We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
+The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$ and then calculating @eq-increaseinconditionalexpectedvalue. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating @eq-KnowledgeGradient directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial].
 
-The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$. Then, we calculate $\mu_{n+1}^*$ and subtract $\mu_n^*$. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating @eq-KnowledgeGradient directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial].
-
-Alternatively, we can calculate $\mu_{n+1}$ using the formula below [@ungredda2022efficientcomputationknowledgegradient]:
+Alternatively, we can calculate $\mu_{n+1}$ using the formula below:
 
 $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})-\mu_n(x_{n+1}))
 $$ {#eq-updatemuKG}
 
-where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. From the GP for median catch, we get $\operatorname{cov}_n(x_{n+1},x)$ and the standard deviation $\sigma_{\mathrm{obs}}^2$.
+where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. This allows us to update our posterior mean for a point $x$ based on the previous posterior mean at that point, the new observation $x_{n+1}$ and the noise variable $\sigma_{obs}^2$. - SHOULD THIS BE CAPITAL F? SURELY f IF USING A SAMPLED POINT?
+
+We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
 
 ## Kmeans process for selecting multiple points
+
+NEEDS MORE SPEARATING INTO THEORY AND APPLICATION
 
 Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using kmeans clustering.
 
@@ -368,7 +370,7 @@ We have now been able to determine which points are possible based on the probab
 
 For sampling only one point next, this would be very simple as you would take the point with the highest value assigned by the acquisition function [@BayesianOptimisationTutorial]. However, we want to sample 8 points next so that we continue the pattern set up in the original paper and we want a good trade-off between exploration and exploitation [@Originalpaper],[@batchspreadinoutjustification].
 
-So, we use the `kmeans` function which is part of the stats package in R (which is automatically loaded into an R session). This function uses the algorithm from Hartigan and Wong, 1979 by default[@AKMeansClusteringAlgorithm],[@kmeansdocumentation]. The k-means clustering method is the most commonly used due to its simplicity compared to other clustering algorithms[@kodinariya2013review.]
+So, we use the `kmeans` function which is part of the stats package in R. This function uses the algorithm from @AKMeansClusteringAlgorithm by default [@kmeansdocumentation]. The k-means clustering method is the most commonly used due to its simplicity compared to other clustering algorithms[@kodinariya2013review.]
 
 This algorithm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters [@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters [@AKMeansClusteringAlgorithm],[@kodinariya2013review].
 

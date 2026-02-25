@@ -140,7 +140,7 @@ It also contains simulation performance and diagnostics statistics, which is wha
 
 ### HCR parameters
 
-We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it.  - NO INFORMATION ON WIKI
+We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI
 
 ### Additions or Differences in the Shortcut Model
 
