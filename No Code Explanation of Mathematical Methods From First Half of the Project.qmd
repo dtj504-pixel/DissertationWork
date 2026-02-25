@@ -523,7 +523,7 @@ $$
 AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 $$
 
-calculate the AEI for every point in the sample space. We again make sure to set any points not meeting the precautionary threshold to have AEI = 0.
+to calculate the AEI for every point in the sample space. where we set $\sigma_{obs} = 0$. We again make sure to set any points not meeting the precautionary threshold to have AEI = 0.
 
 ### Knowledge Gradient
 

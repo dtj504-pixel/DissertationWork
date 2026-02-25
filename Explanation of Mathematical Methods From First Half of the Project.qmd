@@ -591,7 +591,7 @@ As our situation has no noise, in our code we are still using $f^*_n$[@Originalp
     AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 \end{equation}
 
-in the code below:
+to calculate the AEI for every point in the sample space. where we set $\sigma_{obs} = 0$. This can be seen in the code below:
 
 ``` r
 augmented_expected_improvement <- function(mu, sigma, y_best, xi = 0.05, 
