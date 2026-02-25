@@ -324,17 +324,23 @@ where $\sigma_{obs}$ is the standard deviation of the noise variable set by the 
 
 We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. This allows us to do some different computations to the ones in EI. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
 
-\begin{equation}
-    \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
-\end{equation}
+$$
+\mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
+$$
 
 where $x$ is any point in the sample space [@BayesianOptimisationTutorial].
 
-Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ and the conditional expected value for $F(x_n^*)$ changes to be:
+Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ defined as:
 
-\begin{equation}
-    \mu_{n+1}^* := max_x\mu_{n+1}(x)
-\end{equation}
+$$
+\mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})|f(x_{1:n})-\mu_n(x_{n+1}))
+$$
+
+where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient]. Furthermore, the conditional expected value for $F(x_n^*)$ changes to be:
+
+$$
+\mu_{n+1}^* := max_x\mu_{n+1}(x)
+$$
 
 So, we can see that the increase in the conditional expected value of $F(x_n^*)$ by sampling the new point $x_{n+1}$ is:
 
@@ -349,14 +355,6 @@ KG_n(x) := E[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
 $$ {#eq-KnowledgeGradient}
 
 The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$ and then calculating @eq-increaseinconditionalexpectedvalue. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating @eq-KnowledgeGradient directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial].
-
-As an alternative to simulation, we can calculate $\mu_{n+1}$ using the formula below:
-
-$$
-\mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})-\mu_n(x_{n+1}))
-$$ {#eq-updatemuKG}
-
-where $\sigma_{obs}$ is a noise variable which can be determined by the user [@ungredda2022efficientcomputationknowledgegradient].
 
 We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
 
