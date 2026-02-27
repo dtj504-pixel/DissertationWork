@@ -134,7 +134,9 @@ Then, we set the KG of any unsafe points to be zero so that they will not be cho
 
 We can say `ssb < Blim` here instead of `ssb =< Blim` because we are sampling from a continuous normal distribution and so they are equivalent.
 
-By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 5% threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ in [@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
+By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 5% threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ in [@ICES2019WKGMSE2]. - CHECK AND ADD IN ABOUT BEING DETERMINISTIC AT LEAST. OR SAY MEETS PROB2 WHICH IS MORE RESTRICTIVE THAN PROB3
+
+This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
 
 ## The basics of the MixME model
 
