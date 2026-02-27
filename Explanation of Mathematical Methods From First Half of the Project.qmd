@@ -390,7 +390,7 @@ $$
 
 is an indicator function.
 
-To do this, Spence uses two GPs where the risk GP models $ln(risk)$ and the catch GP models $ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+To do this, Spence uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -435,7 +435,7 @@ where `covtype` tells us the type of covariance function we are using and `estim
 
 The `design` variable gives the input parameters of the evaluated points we have so far [@DiceKrigingDocumentation]. Here, `estim.method` is set to `"MLE"` which means we are using the maximum likelihood estimate to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper].
 
-In the code, we predict the $ln(median\ catch)$ and $ln(risk)$ at every point in the design space using the code below:
+In the code, we predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the design space using the code below:
 
 ``` r
 pred_risk_g <- predict(gp_risk,newdata=gridd,type="SK")
@@ -516,7 +516,7 @@ rglwidget()
 
 ## Excluding implausible points
 
-Firstly, we enforce the precautionary threshold of $P(ln(risk)\le0.05)$ by calculating:
+Firstly, we enforce the precautionary threshold of $P(\ln(risk)\le \ln(0.05))$ by calculating:
 
 ``` r
 prisk <- pnorm(log(0.05),pred_risk_g$mean,pred_risk_g$sd+1e-12)
@@ -579,7 +579,7 @@ expected_improvement <- function(mu, sigma, y_best, xi = 0.05, task = "max",
 }
 ```
 
-where `mu` is the mean of the catch GP and `sigma` is the standard deviation of the catch GP. Then we also have `y_best` which is the current best $ln(median\ catch)$, `xi` which is a parameter balancing exploration and exploitation. We set `pred_risk = prisk` and `eps = 1e-4` and these are the same as before.
+where `mu` is the mean of the catch GP and `sigma` is the standard deviation of the catch GP. Then we also have `y_best` which is the current best $\ln(median\ catch)$, `xi` which is a parameter balancing exploration and exploitation. We set `pred_risk = prisk` and `eps = 1e-4` and these are the same as before.
 
 ### Augmented Expected Improvement
 
