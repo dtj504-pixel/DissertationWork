@@ -6,7 +6,9 @@ editor: visual
 bibliography: draft_report_references.bib
 ---
 
-# Abstract 
+# Contents
+
+# Abstract
 
 Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal Harvest Control Rules (HCRs). However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries.
 
@@ -16,7 +18,7 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs. This method delivers timely, evidence-based MSEs that ensures that the stocks remain both economically viable and firmly within safe biological limits.
 
-# Introduction 
+# Introduction
 
 NO CURRENT APPROPRIATE ONE IN SOURCE MATERIAL
 
@@ -336,6 +338,123 @@ This method allows us to search for viable points by looking in the $PS$ but als
 In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points [@Originalpaper].
 
 Now, we repeat the full process described in the Application of theory in my project section until there are no points with a $KG > 0$ . Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
+
+## Experimenting with the kernel and mean
+
+Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in `case_study8.R` would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in @eq-originalkernel) was not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
+
+$$
+r_i(\phi,\phi',\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1'|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2'|}{\delta_{i,2}}\right)
+$$
+
+$$
+r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
+$$
+
+The mean was also identified as a possible issue. By assuming a very specific mean (shown below @eq-gpmean) for the Gaussian Process (GP) we are assuming that we know a lot about the objective function $f$ (which is what we are modeling with our GP) [@williams2006gaussian]. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function [@williams2006gaussian].
+
+$$
+\begin{split}
+m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1))^2+ \\
+\beta_{1,3}(ln(\phi_1+0.1))^3+\beta_{1,4}(\phi_2ln(\phi_1+0.1))+\beta_{1,5}\phi_2
+\end{split}
+$$
+
+where $$\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}$$
+
+and all of the above $\beta_{s,t}$ for $s \in \{1,2\}$ and $t \in \{1,2,3,4,5\}$ are coefficients to be found.
+
+### Experimenting with the kernel
+
+The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth [@williams2006gaussian]. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel [@williams2006gaussian]. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion [@williams2006gaussian]. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen [@williams2006gaussian]. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel [@williams2006gaussian].
+
+My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. Any areas with a probability less than `1e-04` of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.
+
+![Figure 1: Exponential kernel](images/case_study8_exp_kernel_7_rounds.png){alt="Figure 1: Exponential kernel"}
+
+![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds.png){alt="Figure 2: Gaussian kernel"}
+
+![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds.png){alt="Figure 3: Matern 5/2 kernel"}
+
+Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, `looped_ver_case_study8_mult_point_EI.R` converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
+
+![Figure 4: case_study8.R with EI at seven rounds](images/ei_looped_exp_kernel_round_7.png){alt="Figure 4: case_study8.R with EI at seven rounds"}
+
+![Figure 5: case_study8.R with EI using Gauss kernel at seven rounds](images/looped_ei_gauss_kernel_7_rounds.png){alt="Figure 5: case_study8.R with EI using Gauss kernel at seven rounds"}
+
+![Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel](images/looped_EI_matern_5_2_non_converge.png){alt="Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel"}
+
+### Experimenting with the mean
+
+Setting the mean of the GP to zero as in @lst-mean_zero is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations [@williams2006gaussian]. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.
+
+``` {#lst-mean_zero .R lst-cap="Setting the GP Mean to Zero"}
+gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
+response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
+```
+
+We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
+
+![Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round](images/mean_zero_first_roudn_only.png){alt="Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round"}
+
+![Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round](images/mean_zero_all_rounds.png){alt="Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round"}
+
+![Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round at the seventh round](images/looped_kg_mean_zero_first_round_after_7_rounds.png){alt="Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round at the seventh round"}
+
+![Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round](images/looped_kg_mean_zero_every_round_7_rounds.png){alt="Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round"}
+
+## Determining the best acquisition function
+
+### Timing test
+
+The results from this test vary, but only by a few milliseconds. This is likely due to using a different runner (where the code is running) each time on Github as there can be background processes, etc. It could also be due to slightly different loading times for the R packages each time. Any random sampling has been fixed by setting a seed.
+
+On average, after five runs:
+
+``` r
+case_study8: 2.1716514636 
+looped_ver_case_study8_KG: 3.2781787488 
+looped_ver_case_study8_multi_point_AEI: 2.21322831978 
+looped_ver_case_study8_multi_point_EI: 2.13455526
+```
+
+We can see that `looped_ver_case_study8_multi_point_EI` is the quickest to run but is close to `case_study8.R`. `looped_ver_case_study8_multi_point_AEI` is also very close. However, `looped_ver_case_study8_KG` takes much longer to run. We need to bear in mind that these are all with the pre-evaluated objective function. This means we do not have to evaluate the objective function, we only have to look up the pre-evaluated value, which vastly reduces the running time.
+
+### Total evaluations test
+
+These results do not vary, and we get the output:
+
+``` r
+=== Total Evaluations Summary ===
+case_study8 = 54
+looped_ver_case_study8_KG = 50
+looped_ver_case_study8_multi_point_AEI = 56
+looped_ver_case_study8_multi_point_EI = 56
+```
+
+This clearly shows that the KG acquisition function requires the least amount of evaluations of the objective function. When we do not have pre-evaluated points, this will make it the least expensive to run.
+
+### Number of Rounds test
+
+The results from this test don’t change.
+
+``` r
+=== Rounds Completed Summary ===
+case_study8 = 7 rounds
+looped_ver_case_study8_KG = 7 rounds
+looped_ver_case_study8_multi_point_AEI = 7 rounds
+looped_ver_case_study8_multi_point_EI = 7 rounds
+```
+
+As we evaluate the objective function in parallel for however many points we pick each round (normally eight, but it may not be in the last round), this means they will all be even in terms of timing.
+
+### Convergence Test
+
+The results show that all the files converge to the correct answer in 100/100 runs. There may be slight GP fit variation which could lead to slightly different EI ordering and so slightly different selected next points, but after 100 runs we can be relatively confident that this does not lead to the process converging to the wrong point.
+
+### Conclusion
+
+Despite currently taking more time on average than the other methods, the KG acquisition function method will be the best to use here because it requires less evaluations and so is less expensive to run. However, it does have the same number of rounds as the others, which is important because we evaluate the new points each round in parallel, and so it doesn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.
 
 # Applying the framework to a mixed fisheries context
 
