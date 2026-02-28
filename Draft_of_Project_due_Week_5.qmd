@@ -1,5 +1,5 @@
 ---
-title: "Explanation of Mathematical Methods Behind the First Half of the Project"
+title: "Draft of Project Report"
 author: "Emma Bowen"
 format: html 
 editor: visual
@@ -370,19 +370,19 @@ The assumption made by the Gaussian kernel of infinite differentiability can be 
 
 My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. Any areas with a probability less than `1e-04` of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.
 
-![Figure 1: Exponential kernel](images/case_study8_exp_kernel_7_rounds.png){alt="Figure 1: Exponential kernel"}
+![Figure 1: Exponential kernel](images/case_study8_exp_kernel_7_rounds.png)
 
-![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds.png){alt="Figure 2: Gaussian kernel"}
+![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds.png)
 
-![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds.png){alt="Figure 3: Matern 5/2 kernel"}
+![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds.png)
 
 Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, `looped_ver_case_study8_mult_point_EI.R` converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
 
-![Figure 4: case_study8.R with EI at seven rounds](images/ei_looped_exp_kernel_round_7.png){alt="Figure 4: case_study8.R with EI at seven rounds"}
+![Figure 4: case_study8.R with EI at seven rounds](images/ei_looped_exp_kernel_round_7.png)
 
-![Figure 5: case_study8.R with EI using Gauss kernel at seven rounds](images/looped_ei_gauss_kernel_7_rounds.png){alt="Figure 5: case_study8.R with EI using Gauss kernel at seven rounds"}
+![Figure 5: case_study8.R with EI using Gauss kernel at seven rounds](images/looped_ei_gauss_kernel_7_rounds.png)
 
-![Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel](images/looped_EI_matern_5_2_non_converge.png){alt="Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel"}
+![Figure 6: Last round of case_study8.R with EI function using Matern 5/2 kernel](images/looped_EI_matern_5_2_non_converge.png)
 
 ### Experimenting with the mean
 
@@ -395,13 +395,13 @@ response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
 
 We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
 
-![Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round](images/mean_zero_first_roudn_only.png){alt="Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round"}
+![Figure 7: case_study8.R with the mean of the GP set to zero in the first round only at the seventh round](images/mean_zero_first_roudn_only.png)
 
-![Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round](images/mean_zero_all_rounds.png){alt="Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round"}
+![Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round](images/mean_zero_all_rounds.png)
 
-![Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round at the seventh round](images/looped_kg_mean_zero_first_round_after_7_rounds.png){alt="Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round at the seventh round"}
+![Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round at the seventh round](images/looped_kg_mean_zero_first_round_after_7_rounds.png)
 
-![Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round](images/looped_kg_mean_zero_every_round_7_rounds.png){alt="Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round"}
+![Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round](images/looped_kg_mean_zero_every_round_7_rounds.png)
 
 ## Determining the best acquisition function
 
@@ -516,7 +516,7 @@ We also have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020Haddoc
 
 Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. These GPs have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper].
 
-They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian][@BayesianOPtimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in Kernel and Mean Experiments the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKriginDocumentation].
+They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian][@BayesianOptimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in Kernel and Mean Experiments the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation].
 
 Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using the equation below which we already touched on in the first half of the project [@BayesianOptimisationTutorial]:
 
