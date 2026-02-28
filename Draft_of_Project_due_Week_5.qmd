@@ -350,11 +350,11 @@ The assumption made by the Gaussian kernel of infinite differentiability can be 
 
 My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. Any areas with a probability less than `1e-04` of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.
 
-![Figure 1: Exponential kernel](images/case_study8_exp_kernel_7_rounds.png)
+![Figure 1: Exponential kernel](case_study8_exp_kernel_draft_report.png)
 
-![Figure 2: Gaussian kernel](images/case_study8_gauss_kernel_7_rounds.png)
+![Figure 2: Gaussian Kernel](case_study8_gauss_kernel_draft_report.png)
 
-![Figure 3: Matern 5/2 kernel](images/case_study_matern5_2_kernel_7_rounds.png)
+![Figure 3: Matern 5/2 Kernel](case_study8_matern5_2_kernel_draft_report.png)
 
 Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, `looped_ver_case_study8_mult_point_EI.R` converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
 

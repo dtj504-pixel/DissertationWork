@@ -432,8 +432,6 @@ cairo_ps("case_study8_gauss_kernel_draft_report.eps", width = 10, height = 10)
 
 par(mfrow = c(1,1))
 
-cex_arg <- 1.3
-
 image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
 dev.off()

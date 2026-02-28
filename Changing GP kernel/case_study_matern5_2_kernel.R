@@ -420,6 +420,19 @@ pcat7 <- pnorm(log(max7),pred_cat7_g$mean,pred_cat7_g$sd+1e-12)
 
 possible7 <- (apply(cbind((1-pcat7) , prisk7),1,min) >  eps)
 
+# Plotting with eps
+
+# Save high-quality EPS file
+setEPS()
+cairo_ps("case_study8_matern5_2_kernel_draft_report.eps", width = 10, height = 10)
+
+par(mfrow = c(1,1))
+
+image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+
+dev.off()
+
+
 med_cat7 <- exp(pred_cat7_g$mean)
 image2D(matrix(med_cat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt")
 image2D(matrix(1-pcat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
