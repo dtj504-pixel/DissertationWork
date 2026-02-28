@@ -1,12 +1,17 @@
 ---
 title: "Draft of Project Report"
 author: "Emma Bowen"
-format: html 
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    toc-location: body
+    toc-title: "Table of Contents"
+    number-sections: true
+    embed-resources: true
 editor: visual
 bibliography: draft_report_references.bib
 ---
-
-# Contents
 
 # Abstract
 
@@ -24,27 +29,11 @@ NO CURRENT APPROPRIATE ONE IN SOURCE MATERIAL
 
 # Creating the framework in a single stock fisheries context
 
-LIST BELOW LIKELY TO BE MADE OBVIOUS BY CONTENTS TABLE
-
-What mathematical methods will I explain in this section?
-
-Gaussian processes
-
-Bayesian History Matching
-
-Kriging
-
-Expected Improvement
-
-Augmented Expected Improvement
-
-Knowledge Gradient
-
-K-Means Clustering
+Limitations of Mike's paper/method: The paper does not consider fleet dynamics.
 
 ## Context
 
-We are building on the paper \`\`Using history matching to speed up management strategy evaluation grid searches''. This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. The paper does not consider fleet dynamics. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal median catch with the constraint of keeping the risk below 0.05.
+We are building on the paper \`\`Using history matching to speed up management strategy evaluation grid searches''. This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal median catch with the constraint of keeping the risk below 0.05.
 
 To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
@@ -257,11 +246,11 @@ $$
 m_1 (\phi) = \beta_{1,0} + \beta_{1,1} (\operatorname{ln}(\phi_1 + 0.1))+\beta_{1,2}(\operatorname{ln}(\phi_1 + 0.1))^2 + \\
  \beta_{1,3}(\operatorname{ln}(\phi_1 + 0.1))^3+ \beta_{1,4}(\phi_2\operatorname{ln}(\phi_1 + 0.1)) + \beta_{1,5}\phi_2
 \end{split}
-$$
+$$ {#eq-gpmeancatch}
 
 $$
 m_2(\phi) = \beta_{2,0} + \beta_{2,1}\phi_1 + \beta_{2,2}\phi_2 + \beta_{2,3}\phi_1\phi_2
-$$
+$$ {#eq-gpmeanrisk}
 
 where all of the above $\beta_{s,t}$ for $s \in \{1,2\}$ and $t \in \{1,2,3,4,5\}$ are coefficients to be found through maximum likelihood estimation and:
 
@@ -351,18 +340,7 @@ $$
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
 $$ {#eq-GaussianKernel}
 
-The mean was also identified as a possible issue. By assuming a very specific mean (shown below @eq-gpmean) for the Gaussian Process (GP) we are assuming that we know a lot about the objective function $f$ (which is what we are modeling with our GP) [@williams2006gaussian]. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function [@williams2006gaussian].
-
-$$
-\begin{split}
-m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1))^2+ \\
-\beta_{1,3}(ln(\phi_1+0.1))^3+\beta_{1,4}(\phi_2ln(\phi_1+0.1))+\beta_{1,5}\phi_2
-\end{split}
-$$ {#eq-gpmean}
-
-where $$\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}$$
-
-and all of the above $\beta_{s,t}$ for $s \in \{1,2\}$ and $t \in \{1,2,3,4,5\}$ are coefficients to be found.
+The mean was also identified as a possible issue. By assuming a very specific mean (shown in @eq-gpmeancatch or @eq-gpmeanrisk) for the GP we are assuming that we know a lot about the objective function $f$ [@williams2006gaussian]. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function [@williams2006gaussian].
 
 ### Experimenting with the kernel
 
@@ -458,28 +436,6 @@ Despite currently taking more time on average than the other methods, the KG acq
 
 # Applying the framework to a mixed fisheries context
 
-LIKELY TO BE COVERED IN THE CONTENTS TABLE
-
-What mathematical methods will I explain in this document that have not been explained in Explanation of Mathematical Methods from First Half of the Project?
-
--   The basics of the MixME model
-
--   Creating the operating model
-
--   Building the MixME input object
-
--   Running the simulation
-
--   Analysing the results of the simulation
-
--   HCR parameters
-
--   Additions or differences in the shortcut model
-
--   Calculating the risk
-
--   Parallelisation
-
 ## Context
 
 The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the $F_{target}$ for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2]. It also follows ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
@@ -518,13 +474,7 @@ Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of th
 
 They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian][@BayesianOptimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in Kernel and Mean Experiments the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation].
 
-Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using the equation below which we already touched on in the first half of the project [@BayesianOptimisationTutorial]:
-
-$$
-F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
-$$
-
-Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
+Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using @eq-posteriordistributiongivensamples . Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
 By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 5 percent threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ in [@ICES2019WKGMSE2]. - CHECK AND ADD IN ABOUT BEING DETERMINISTIC AT LEAST. OR SAY MEETS PROB2 WHICH IS MORE RESTRICTIVE THAN PROB3
 
