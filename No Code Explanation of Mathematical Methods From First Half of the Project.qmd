@@ -186,11 +186,11 @@ We are building on the paper "Using history matching to speed up management stra
 
 To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
--   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median catch)$
+-   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
 
 -   We can then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have a high probability of having risk below 0.05
 
--   We use the GP which is modelling $\ln(median catch)$ to get the value for the median catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling $\ln(median\ catch)$ to get the value for the median catch at every point in the sample space, which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 

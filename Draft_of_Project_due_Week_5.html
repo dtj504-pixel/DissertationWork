@@ -2439,9 +2439,9 @@ window.Quarto = {
 <p>We are building on the paper ``Using history matching to speed up management strategy evaluation grid searches’’. This paper is looking to find the Harvest Control Rule parametrised by <span class="math inline">\(F_{target}\)</span> and <span class="math inline">\(B_{trigger}\)</span> that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. We have the objective function <a href="#eq-objectivefunctionsinglestock" class="quarto-xref">Equation 8</a> in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median catch with the constraint of keeping the risk below 0.05.</p>
 <p>To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:</p>
 <ul>
-<li><p>We set up or update the Gaussian Process (GP) to model the risk and the GP to model the median catch</p></li>
+<li><p>We set up or update the Gaussian Process (GP) to model <span class="math inline">\(\ln(risk)\)</span> and the GP to model <span class="math inline">\(\ln(median catch)\)</span></p></li>
 <li><p>We can then use the risk as a threshold so that we only consider the values of <span class="math inline">\(F_{target}\)</span> and <span class="math inline">\(B_{trigger}\)</span> that have a high probability of having risk below 0.05</p></li>
-<li><p>We use the GP which is modelling the median catch to get the value for the median catch at every point in the sample space, which will have some uncertainty</p></li>
+<li><p>We use the GP which is modelling <span class="math inline">\(\ln(median catch)\)</span> to get the value for the median catch at every point in the sample space, which will have some uncertainty</p></li>
 <li><p>We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)</p></li>
 <li><p>We select 8 plausible points to sample in the next round</p></li>
 </ul>
