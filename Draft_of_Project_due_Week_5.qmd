@@ -336,7 +336,7 @@ have been ruled out as implausible and are displayed as dark blue.
 
 ![Figure 3: Matern 5/2 Kernel](case_study8_matern5_2_kernel_draft_report.png)
 
-Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, `looped_ver_case_study8_mult_point_EI.R` converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
+Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, the EI method converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
 
 ![Figure 4: case_study8 with EI at seven rounds](case_study8_ei_exp_kernel_draft_report.png)
 
@@ -346,41 +346,29 @@ Similar results occur when we run the method once it has been augmented by an ac
 
 ### Experimenting with the mean
 
-Setting the mean of the GP to zero as in is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations [@williams2006gaussian]. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.
+Setting the mean of the GP to zero is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations [@williams2006gaussian]. My experiments seem to back up this theory as they again show that results are the same or worse than our original approach.
 
 We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
 
 ![Figure 7: case_study8 with the mean of the GP set to zero only in the first round, at the seventh round](case_study8_mean_zero_first_round_only_draft_report.png)
 
-![Figure 8: case_study8.R with the mean of the GP set to zero in all rounds at the seventh round](case_study8_mean_zero_all_rounds_draft_report.png)
+![Figure 8: case_study8 with the mean of the GP set to zero in all rounds at the seventh round](case_study8_mean_zero_all_rounds_draft_report.png)
 
-![Figure 9: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in the first round only, at the seventh round](case_study8_KG_mean_zero_first_round_only_draft_report.png)
+![Figure 9: case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in the first round only, at the seventh round](case_study8_KG_mean_zero_first_round_only_draft_report.png)
 
-![Figure 10: case_study8.R augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round](case_study8_KG_mean_zero_all_rounds_draft_report.png)
+![Figure 10: case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round](case_study8_KG_mean_zero_all_rounds_draft_report.png)
 
 ## Determining the best acquisition function
 
-### Timing test
+GIVE A BRIEF DESCRIPTION AND SOME REASONING AS TO WHY THIS WAS DONE. EXPLAIN MAY NOT BE FULLY APPLICBALE TO THE SECOND HALF BUT I USED IT ANYWAY. EXPLAIN TETES WERE DONE ON GITHUB.
 
-The results from this test vary, but only by a few milliseconds. This is likely due to using a different runner (where the code is running) each time on Github as there can be background processes, etc. It could also be due to slightly different loading times for the R packages each time. Any random sampling has been fixed by setting a seed.
+FIND CITATIONS APPLICABLE THROUGHOUT THE BELOW.
 
-On average, after five runs the EI method is the quickest to run but is close to `case_study8.R` and the AEI method. However, the KG method takes much longer to run. We need to bear in mind that these are all with the pre-evaluated objective function. This means we do not have to evaluate the objective function, we only have to look up the pre-evaluated value, which vastly reduces the running time.
+We ran a timing test, a total evaluations test, a number of rounds test and a convergence test comparing the base method used in the Case Study in @Originalpaper to the base method augmented with the different acquisition functions we have mentioned above. The tests and their results can be seen \[on Github\] - PROVIDE A LINK IN APPENDIX.
 
-### Total evaluations test
+Despite taking more time on average than the other methods in this case, the KG acquisition function method will be the best to use here because it requires less evaluations of the objective function and so is less expensive to run. However, when sampling eight points per round it had the same number of rounds as the other methods for the Case Study. This is important because we evaluate the new points each round in parallel and so KG didn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.
 
-These results do not vary, and we get the output of `case_study8` taking 54 evaluations, the AEI and EI methods both taking 56 evaluations and the KG method taking 50 evaluations. This clearly shows that the KG acquisition function requires the least amount of evaluations of the objective function. When we do not have pre-evaluated points, this will make it the least expensive to run.
-
-### Number of Rounds test
-
-The results from this test don’t change. As we evaluated the objective function in parallel and picked eight points each round, this means they were all the same in terms of number of rounds.
-
-### Convergence Test
-
-The results show that all the files converge to the correct answer in all one hundred runs. There may be slight GP fit variation which could lead to slightly different EI, AEI or KG ordering and so slightly different selected next points. However, after 100 runs we can be relatively confident that this does not lead to the process converging to the wrong point.
-
-### Which acquisition function do we recommend using in this case?
-
-Despite currently taking more time on average than the other methods, the KG acquisition function method will be the best to use here because it requires less evaluations and so is less expensive to run. However, it does have the same number of rounds as the others, which is important because we evaluate the new points each round in parallel, and so it doesn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.
+Due to this decision, we will use KG as our preferred acquisition function throughout the mixed fisheries section of this report.
 
 # Applying the framework to a mixed fisheries context
 
