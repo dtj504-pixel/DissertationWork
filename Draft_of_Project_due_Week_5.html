@@ -21,41 +21,6 @@ width: 0.8em;
 margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
 }
 
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-{ counter-reset: source-line 0; }
-pre.numberSource code > span
-{ position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-{ content: counter(source-line);
-position: relative; left: -1em; text-align: right; vertical-align: baseline;
-border: none; display: inline-block;
--webkit-touch-callout: none; -webkit-user-select: none;
--khtml-user-select: none; -moz-user-select: none;
--ms-user-select: none; user-select: none;
-padding: 0 4px; width: 4em;
-}
-pre.numberSource { margin-left: 3em; padding-left: 4px; }
-div.sourceCode
-{ }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
-
 div.csl-bib-body { }
 div.csl-entry {
 clear: both;
@@ -2428,7 +2393,7 @@ window.Quarto = {
   <li><a href="#total-evaluations-test" id="toc-total-evaluations-test"><span class="header-section-number">3.5.2</span> Total evaluations test</a></li>
   <li><a href="#number-of-rounds-test" id="toc-number-of-rounds-test"><span class="header-section-number">3.5.3</span> Number of Rounds test</a></li>
   <li><a href="#convergence-test" id="toc-convergence-test"><span class="header-section-number">3.5.4</span> Convergence Test</a></li>
-  <li><a href="#conclusion" id="toc-conclusion"><span class="header-section-number">3.5.5</span> Conclusion</a></li>
+  <li><a href="#which-acquisition-function-do-we-recommend-using-in-this-case" id="toc-which-acquisition-function-do-we-recommend-using-in-this-case"><span class="header-section-number">3.5.5</span> Which acquisition function do we recommend using in this case?</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#applying-the-framework-to-a-mixed-fisheries-context" id="toc-applying-the-framework-to-a-mixed-fisheries-context"><span class="header-section-number">4</span> Applying the framework to a mixed fisheries context</a>
@@ -2456,10 +2421,11 @@ window.Quarto = {
 </nav>
 <section id="abstract" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Abstract</h1>
+<p>ADD CITATIONS</p>
 <p>Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal Harvest Control Rules (HCRs). However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries.</p>
 <p>This project introduces a computationally efficient framework for evaluating HCRs. Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space. This drastically reduces the need for expensive simulation runs.</p>
-<p>Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch. By modelling long-term catch, the framework inherently minimizes the risk of stock crashes and this is reinforced by a risk calculation that follows the ICES precautionary standard.</p>
-<p>This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs. This method delivers timely, evidence-based MSEs that ensures that the stocks remain both economically viable and firmly within safe biological limits.</p>
+<p>Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch.</p>
+<p>This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs. This method delivers timely, evidence-based MSEs that ensure that the stocks remain both economically viable and firmly within safe biological limits.</p>
 </section>
 <section id="introduction" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Introduction</h1>
@@ -2470,11 +2436,11 @@ window.Quarto = {
 <p>Limitations of Mike’s paper/method: The paper does not consider fleet dynamics.</p>
 <section id="context" class="level2" data-number="3.1">
 <h2 data-number="3.1" class="anchored" data-anchor-id="context"><span class="header-section-number">3.1</span> Context</h2>
-<p>We are building on the paper ``Using history matching to speed up management strategy evaluation grid searches’’. This paper is looking to find the Harvest Control Rule parametrised by <span class="math inline">\(F_{target}\)</span> and <span class="math inline">\(B_{trigger}\)</span> that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal median catch with the constraint of keeping the risk below 0.05.</p>
+<p>We are building on the paper ``Using history matching to speed up management strategy evaluation grid searches’’. This paper is looking to find the Harvest Control Rule parametrised by <span class="math inline">\(F_{target}\)</span> and <span class="math inline">\(B_{trigger}\)</span> that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. We have the objective function <a href="#eq-objectivefunctionsinglestock" class="quarto-xref">Equation 8</a> in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median catch with the constraint of keeping the risk below 0.05.</p>
 <p>To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:</p>
 <ul>
 <li><p>We set up or update the Gaussian Process (GP) to model the risk and the GP to model the median catch</p></li>
-<li><p>We can then use the risk as a threshold so that we only consider the values of <span class="math inline">\(F_{target}\)</span> and <span class="math inline">\(B_{trigger}\)</span> that have risk below 0.05</p></li>
+<li><p>We can then use the risk as a threshold so that we only consider the values of <span class="math inline">\(F_{target}\)</span> and <span class="math inline">\(B_{trigger}\)</span> that have a high probability of having risk below 0.05</p></li>
 <li><p>We use the GP which is modelling the median catch to get the value for the median catch at every point in the sample space, which will have some uncertainty</p></li>
 <li><p>We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)</p></li>
 <li><p>We select 8 plausible points to sample in the next round</p></li>
@@ -2608,9 +2574,9 @@ KG_n(x) := E[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
 <section id="set-up-the-gaussian-processes" class="level3" data-number="3.3.1">
 <h3 data-number="3.3.1" class="anchored" data-anchor-id="set-up-the-gaussian-processes"><span class="header-section-number">3.3.1</span> Set up the Gaussian Processes</h3>
 <p>We are focusing on maximising the objective function from the paper which is given below <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>:</p>
-<p><span class="math display">\[
+<p><span id="eq-objectivefunctionsinglestock"><span class="math display">\[
 f(\theta) = I_{[0.95,1]}(P(B(\theta)&gt;B_{lim})) \times C(\theta)
-\]</span></p>
+\tag{8}\]</span></span></p>
 <p>where <span class="math inline">\(C(\theta)\)</span> is median long term catch, <span class="math inline">\(B(\theta)\)</span> is long-term <span class="math inline">\(SSB\)</span> and:</p>
 <p><span class="math display">\[
 I_{[0.95,1]}(x) =
@@ -2621,15 +2587,15 @@ I_{[0.95,1]}(x) =
 \]</span></p>
 <p>is an indicator function.</p>
 <p>To do this, Spence uses two GPs where the risk GP models <span class="math inline">\(\ln(risk)\)</span> and the catch GP models <span class="math inline">\(\ln(median\ catch)\)</span> <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. Maintaining the notation from <span class="citation" data-cites="Originalpaper">Spence (<a href="#ref-Originalpaper" role="doc-biblioref">2025</a>)</span>, we use <span class="math inline">\(m_1\)</span> for the mean function of the catch GP and <span class="math inline">\(m_2\)</span> for the mean function of the risk GP <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>:</p>
-<p><span class="math display">\[
+<p><span id="eq-gpmeancatch"><span class="math display">\[
 \begin{split}
 m_1 (\phi) = \beta_{1,0} + \beta_{1,1} (\operatorname{ln}(\phi_1 + 0.1))+\beta_{1,2}(\operatorname{ln}(\phi_1 + 0.1))^2 + \\
 \beta_{1,3}(\operatorname{ln}(\phi_1 + 0.1))^3+ \beta_{1,4}(\phi_2\operatorname{ln}(\phi_1 + 0.1)) + \beta_{1,5}\phi_2
 \end{split}
-\]</span></p>
-<p><span class="math display">\[
+\tag{9}\]</span></span></p>
+<p><span id="eq-gpmeanrisk"><span class="math display">\[
 m_2(\phi) = \beta_{2,0} + \beta_{2,1}\phi_1 + \beta_{2,2}\phi_2 + \beta_{2,3}\phi_1\phi_2
-\]</span></p>
+\tag{10}\]</span></span></p>
 <p>where all of the above <span class="math inline">\(\beta_{s,t}\)</span> for <span class="math inline">\(s \in \{1,2\}\)</span> and <span class="math inline">\(t \in \{1,2,3,4,5\}\)</span> are coefficients to be found through maximum likelihood estimation and:</p>
 <p><span class="math display">\[
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
@@ -2689,22 +2655,14 @@ AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1
 </section>
 <section id="experimenting-with-the-kernel-and-mean" class="level2" data-number="3.4">
 <h2 data-number="3.4" class="anchored" data-anchor-id="experimenting-with-the-kernel-and-mean"><span class="header-section-number">3.4</span> Experimenting with the kernel and mean</h2>
-<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation 8</a>) was not as smooth as the Gaussian kernel (general form shown in <a href="#eq-GaussianKernel" class="quarto-xref">Equation 9</a>). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation 11</a>) was not as smooth as the Gaussian kernel (general form shown in <a href="#eq-GaussianKernel" class="quarto-xref">Equation 12</a>). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <p><span id="eq-originalkernel"><span class="math display">\[
 r_i(\phi,\phi&#39;,\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1&#39;|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2&#39;|}{\delta_{i,2}}\right)
-\tag{8}\]</span></span></p>
+\tag{11}\]</span></span></p>
 <p><span id="eq-GaussianKernel"><span class="math display">\[
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
-\tag{9}\]</span></span></p>
-<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <a href="#eq-gpmean" class="quarto-xref">Equation 10</a>) for the Gaussian Process (GP) we are assuming that we know a lot about the objective function <span class="math inline">\(f\)</span> (which is what we are modeling with our GP) <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
-<p><span id="eq-gpmean"><span class="math display">\[
-\begin{split}
-m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1))^2+ \\
-\beta_{1,3}(ln(\phi_1+0.1))^3+\beta_{1,4}(\phi_2ln(\phi_1+0.1))+\beta_{1,5}\phi_2
-\end{split}
-\tag{10}\]</span></span></p>
-<p>where <span class="math display">\[\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}\]</span></p>
-<p>and all of the above <span class="math inline">\(\beta_{s,t}\)</span> for <span class="math inline">\(s \in \{1,2\}\)</span> and <span class="math inline">\(t \in \{1,2,3,4,5\}\)</span> are coefficients to be found.</p>
+\tag{12}\]</span></span></p>
+<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown in <a href="#eq-gpmeancatch" class="quarto-xref">Equation 9</a> or <a href="#eq-gpmeanrisk" class="quarto-xref">Equation 10</a>) for the GP we are assuming that we know a lot about the objective function <span class="math inline">\(f\)</span> <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <section id="experimenting-with-the-kernel" class="level3" data-number="3.4.1">
 <h3 data-number="3.4.1" class="anchored" data-anchor-id="experimenting-with-the-kernel"><span class="header-section-number">3.4.1</span> Experimenting with the kernel</h3>
 <p>The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
@@ -2749,18 +2707,7 @@ m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1
 </section>
 <section id="experimenting-with-the-mean" class="level3" data-number="3.4.2">
 <h3 data-number="3.4.2" class="anchored" data-anchor-id="experimenting-with-the-mean"><span class="header-section-number">3.4.2</span> Experimenting with the mean</h3>
-<p>Setting the mean of the GP to zero as in <a href="#lst-mean_zero" class="quarto-xref">Listing 1</a> is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.</p>
-<div id="lst-mean_zero" class="R listing quarto-float quarto-figure quarto-figure-left anchored">
-<figure class="quarto-float quarto-float-lst figure">
-<figcaption class="quarto-float-caption-top quarto-float-caption quarto-float-lst" id="lst-mean_zero-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Listing 1: Setting the GP Mean to Zero
-</figcaption>
-<div aria-describedby="lst-mean_zero-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode R code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>gp_cat <span class="ot">&lt;-</span> <span class="fu">km</span>(<span class="sc">~</span><span class="dv">0</span>,<span class="at">design=</span>runs[,<span class="fu">c</span>(<span class="st">&quot;Ftarget&quot;</span>,<span class="st">&quot;Btrigger&quot;</span>)],<span class="at">estim.method=</span><span class="st">&quot;MLE&quot;</span>,</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="at">response =</span> res_cat,<span class="at">nugget=</span><span class="fl">1e-12</span><span class="sc">*</span><span class="fu">var</span>(res_cat),<span class="at">covtype =</span> <span class="st">&quot;exp&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</figure>
-</div>
+<p>Setting the mean of the GP to zero as in is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.</p>
 <p>We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>, <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -2793,39 +2740,22 @@ Listing 1: Setting the GP Mean to Zero
 <section id="timing-test" class="level3" data-number="3.5.1">
 <h3 data-number="3.5.1" class="anchored" data-anchor-id="timing-test"><span class="header-section-number">3.5.1</span> Timing test</h3>
 <p>The results from this test vary, but only by a few milliseconds. This is likely due to using a different runner (where the code is running) each time on Github as there can be background processes, etc. It could also be due to slightly different loading times for the R packages each time. Any random sampling has been fixed by setting a seed.</p>
-<p>On average, after five runs:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>case_study8<span class="sc">:</span> <span class="fl">2.1716514636</span> </span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_KG<span class="sc">:</span> <span class="fl">3.2781787488</span> </span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_multi_point_AEI<span class="sc">:</span> <span class="fl">2.21322831978</span> </span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_multi_point_EI<span class="sc">:</span> <span class="fl">2.13455526</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>We can see that <code>looped_ver_case_study8_multi_point_EI</code> is the quickest to run but is close to <code>case_study8.R</code>. <code>looped_ver_case_study8_multi_point_AEI</code> is also very close. However, <code>looped_ver_case_study8_KG</code> takes much longer to run. We need to bear in mind that these are all with the pre-evaluated objective function. This means we do not have to evaluate the objective function, we only have to look up the pre-evaluated value, which vastly reduces the running time.</p>
+<p>On average, after five runs the EI method is the quickest to run but is close to <code>case_study8.R</code> and the AEI method. However, the KG method takes much longer to run. We need to bear in mind that these are all with the pre-evaluated objective function. This means we do not have to evaluate the objective function, we only have to look up the pre-evaluated value, which vastly reduces the running time.</p>
 </section>
 <section id="total-evaluations-test" class="level3" data-number="3.5.2">
 <h3 data-number="3.5.2" class="anchored" data-anchor-id="total-evaluations-test"><span class="header-section-number">3.5.2</span> Total evaluations test</h3>
-<p>These results do not vary, and we get the output:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="sc">==</span><span class="er">=</span> Total Evaluations Summary <span class="sc">==</span><span class="er">=</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>case_study8 <span class="ot">=</span> <span class="dv">54</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_KG <span class="ot">=</span> <span class="dv">50</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_multi_point_AEI <span class="ot">=</span> <span class="dv">56</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_multi_point_EI <span class="ot">=</span> <span class="dv">56</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>This clearly shows that the KG acquisition function requires the least amount of evaluations of the objective function. When we do not have pre-evaluated points, this will make it the least expensive to run.</p>
+<p>These results do not vary, and we get the output of <code>case_study8</code> taking 54 evaluations, the AEI and EI methods both taking 56 evaluations and the KG method taking 50 evaluations. This clearly shows that the KG acquisition function requires the least amount of evaluations of the objective function. When we do not have pre-evaluated points, this will make it the least expensive to run.</p>
 </section>
 <section id="number-of-rounds-test" class="level3" data-number="3.5.3">
 <h3 data-number="3.5.3" class="anchored" data-anchor-id="number-of-rounds-test"><span class="header-section-number">3.5.3</span> Number of Rounds test</h3>
-<p>The results from this test don’t change.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="sc">==</span><span class="er">=</span> Rounds Completed Summary <span class="sc">==</span><span class="er">=</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>case_study8 <span class="ot">=</span> <span class="dv">7</span> rounds</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_KG <span class="ot">=</span> <span class="dv">7</span> rounds</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_multi_point_AEI <span class="ot">=</span> <span class="dv">7</span> rounds</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>looped_ver_case_study8_multi_point_EI <span class="ot">=</span> <span class="dv">7</span> rounds</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>As we evaluate the objective function in parallel for however many points we pick each round (normally eight, but it may not be in the last round), this means they will all be even in terms of timing.</p>
+<p>The results from this test don’t change. As we evaluated the objective function in parallel and picked eight points each round, this means they were all the same in terms of number of rounds.</p>
 </section>
 <section id="convergence-test" class="level3" data-number="3.5.4">
 <h3 data-number="3.5.4" class="anchored" data-anchor-id="convergence-test"><span class="header-section-number">3.5.4</span> Convergence Test</h3>
-<p>The results show that all the files converge to the correct answer in 100/100 runs. There may be slight GP fit variation which could lead to slightly different EI ordering and so slightly different selected next points, but after 100 runs we can be relatively confident that this does not lead to the process converging to the wrong point.</p>
+<p>The results show that all the files converge to the correct answer in all one hundred runs. There may be slight GP fit variation which could lead to slightly different EI, AEI or KG ordering and so slightly different selected next points. However, after 100 runs we can be relatively confident that this does not lead to the process converging to the wrong point.</p>
 </section>
-<section id="conclusion" class="level3" data-number="3.5.5">
-<h3 data-number="3.5.5" class="anchored" data-anchor-id="conclusion"><span class="header-section-number">3.5.5</span> Conclusion</h3>
+<section id="which-acquisition-function-do-we-recommend-using-in-this-case" class="level3" data-number="3.5.5">
+<h3 data-number="3.5.5" class="anchored" data-anchor-id="which-acquisition-function-do-we-recommend-using-in-this-case"><span class="header-section-number">3.5.5</span> Which acquisition function do we recommend using in this case?</h3>
 <p>Despite currently taking more time on average than the other methods, the KG acquisition function method will be the best to use here because it requires less evaluations and so is less expensive to run. However, it does have the same number of rounds as the others, which is important because we evaluate the new points each round in parallel, and so it doesn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.</p>
 </section>
 </section>
@@ -2914,7 +2844,7 @@ Listing 1: Setting the GP Mean to Zero
 </section>
 <section id="hcr-parameters" class="level3" data-number="4.3.6">
 <h3 data-number="4.3.6" class="anchored" data-anchor-id="hcr-parameters"><span class="header-section-number">4.3.6</span> HCR parameters</h3>
-<p>We add <span class="math inline">\(B_{lim}\)</span> into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI</p>
+<p>We add <span class="math inline">\(B_{lim}\)</span> into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI SO MAYBE REMOVE? TALK TO GUSTAV</p>
 </section>
 <section id="additions-or-differences-in-the-shortcut-model" class="level3" data-number="4.3.7">
 <h3 data-number="4.3.7" class="anchored" data-anchor-id="additions-or-differences-in-the-shortcut-model"><span class="header-section-number">4.3.7</span> Additions or Differences in the Shortcut Model</h3>

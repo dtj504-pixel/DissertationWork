@@ -15,13 +15,15 @@ bibliography: draft_report_references.bib
 
 # Abstract
 
+ADD CITATIONS
+
 Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal Harvest Control Rules (HCRs). However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries.
 
 This project introduces a computationally efficient framework for evaluating HCRs. Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space. This drastically reduces the need for expensive simulation runs.
 
-Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch. By modelling long-term catch, the framework inherently minimizes the risk of stock crashes and this is reinforced by a risk calculation that follows the ICES precautionary standard.
+Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch.
 
-This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs. This method delivers timely, evidence-based MSEs that ensures that the stocks remain both economically viable and firmly within safe biological limits.
+This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs. This method delivers timely, evidence-based MSEs that ensure that the stocks remain both economically viable and firmly within safe biological limits.
 
 # Introduction
 
@@ -33,15 +35,15 @@ Limitations of Mike's paper/method: The paper does not consider fleet dynamics.
 
 ## Context
 
-We are building on the paper \`\`Using history matching to speed up management strategy evaluation grid searches''. This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. We have an objective function in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximal median catch with the constraint of keeping the risk below 0.05.
+We are building on the paper \`\`Using history matching to speed up management strategy evaluation grid searches''. This paper is looking to find the Harvest Control Rule parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk below 0.05 for a single-stock fishery. We have the objective function @eq-objectivefunctionsinglestock in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median catch with the constraint of keeping the risk below 0.05.
 
 To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
--   We set up or update the Gaussian Process (GP) to model the risk and the GP to model the median catch
+-   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median catch)$
 
--   We can then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have risk below 0.05
+-   We can then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have a high probability of having risk below 0.05
 
--   We use the GP which is modelling the median catch to get the value for the median catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling $\ln(median catch)$ to get the value for the median catch at every point in the sample space, which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 
@@ -225,7 +227,7 @@ We are focusing on maximising the objective function from the paper which is giv
 
 $$
 f(\theta) = I_{[0.95,1]}(P(B(\theta)>B_{lim})) \times C(\theta)
-$$
+$$ {#eq-objectivefunctionsinglestock}
 
 where $C(\theta)$ is median long term catch, $B(\theta)$ is long-term $SSB$ and:
 
@@ -364,12 +366,7 @@ Similar results occur when we run the method once it has been augmented by an ac
 
 ### Experimenting with the mean
 
-Setting the mean of the GP to zero as in @lst-mean_zero is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations [@williams2006gaussian]. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.
-
-``` {#lst-mean_zero .R lst-cap="Setting the GP Mean to Zero"}
-gp_cat <- km(~0,design=runs[,c("Ftarget","Btrigger")],estim.method="MLE",
-response = res_cat,nugget=1e-12*var(res_cat),covtype = "exp")
-```
+Setting the mean of the GP to zero as in is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations [@williams2006gaussian]. My experiments seem to back up this theory as they again show results that are the same or worse than our original approach.
 
 We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
 
@@ -387,50 +384,21 @@ We can see from the heatmaps below that the simulations with means changed to ze
 
 The results from this test vary, but only by a few milliseconds. This is likely due to using a different runner (where the code is running) each time on Github as there can be background processes, etc. It could also be due to slightly different loading times for the R packages each time. Any random sampling has been fixed by setting a seed.
 
-On average, after five runs:
-
-``` r
-case_study8: 2.1716514636 
-looped_ver_case_study8_KG: 3.2781787488 
-looped_ver_case_study8_multi_point_AEI: 2.21322831978 
-looped_ver_case_study8_multi_point_EI: 2.13455526
-```
-
-We can see that `looped_ver_case_study8_multi_point_EI` is the quickest to run but is close to `case_study8.R`. `looped_ver_case_study8_multi_point_AEI` is also very close. However, `looped_ver_case_study8_KG` takes much longer to run. We need to bear in mind that these are all with the pre-evaluated objective function. This means we do not have to evaluate the objective function, we only have to look up the pre-evaluated value, which vastly reduces the running time.
+On average, after five runs the EI method is the quickest to run but is close to `case_study8.R` and the AEI method. However, the KG method takes much longer to run. We need to bear in mind that these are all with the pre-evaluated objective function. This means we do not have to evaluate the objective function, we only have to look up the pre-evaluated value, which vastly reduces the running time.
 
 ### Total evaluations test
 
-These results do not vary, and we get the output:
-
-``` r
-=== Total Evaluations Summary ===
-case_study8 = 54
-looped_ver_case_study8_KG = 50
-looped_ver_case_study8_multi_point_AEI = 56
-looped_ver_case_study8_multi_point_EI = 56
-```
-
-This clearly shows that the KG acquisition function requires the least amount of evaluations of the objective function. When we do not have pre-evaluated points, this will make it the least expensive to run.
+These results do not vary, and we get the output of `case_study8` taking 54 evaluations, the AEI and EI methods both taking 56 evaluations and the KG method taking 50 evaluations. This clearly shows that the KG acquisition function requires the least amount of evaluations of the objective function. When we do not have pre-evaluated points, this will make it the least expensive to run.
 
 ### Number of Rounds test
 
-The results from this test don’t change.
-
-``` r
-=== Rounds Completed Summary ===
-case_study8 = 7 rounds
-looped_ver_case_study8_KG = 7 rounds
-looped_ver_case_study8_multi_point_AEI = 7 rounds
-looped_ver_case_study8_multi_point_EI = 7 rounds
-```
-
-As we evaluate the objective function in parallel for however many points we pick each round (normally eight, but it may not be in the last round), this means they will all be even in terms of timing.
+The results from this test don’t change. As we evaluated the objective function in parallel and picked eight points each round, this means they were all the same in terms of number of rounds.
 
 ### Convergence Test
 
-The results show that all the files converge to the correct answer in 100/100 runs. There may be slight GP fit variation which could lead to slightly different EI ordering and so slightly different selected next points, but after 100 runs we can be relatively confident that this does not lead to the process converging to the wrong point.
+The results show that all the files converge to the correct answer in all one hundred runs. There may be slight GP fit variation which could lead to slightly different EI, AEI or KG ordering and so slightly different selected next points. However, after 100 runs we can be relatively confident that this does not lead to the process converging to the wrong point.
 
-### Conclusion
+### Which acquisition function do we recommend using in this case?
 
 Despite currently taking more time on average than the other methods, the KG acquisition function method will be the best to use here because it requires less evaluations and so is less expensive to run. However, it does have the same number of rounds as the others, which is important because we evaluate the new points each round in parallel, and so it doesn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.
 
@@ -544,7 +512,7 @@ It also contains simulation performance and diagnostics statistics, which is wha
 
 ### HCR parameters
 
-We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI
+We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI SO MAYBE REMOVE? TALK TO GUSTAV
 
 ### Additions or Differences in the Shortcut Model
 
