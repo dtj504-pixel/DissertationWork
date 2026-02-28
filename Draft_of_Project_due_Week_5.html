@@ -8,7 +8,7 @@
 
 <meta name="author" content="Emma Bowen">
 
-<title>Explanation of Mathematical Methods Behind the First Half of the Project</title>
+<title>Draft of Project Report</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -132,7 +132,7 @@ window.Quarto = {
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Explanation of Mathematical Methods Behind the First Half of the Project</h1>
+<h1 class="title">Draft of Project Report</h1>
 </div>
 
 
@@ -198,9 +198,9 @@ window.Quarto = {
 <section id="gaussian-processes" class="level3">
 <h3 class="anchored" data-anchor-id="gaussian-processes">Gaussian Processes</h3>
 <p>A Gaussian Process <span class="math inline">\(F\)</span> has a mean function <span class="math inline">\(\mu_0\)</span> and a covariance function <span class="math inline">\(\operatorname{cov}_0(x_i,x_j)\)</span>. We can then evaluate the covariance function <span class="math inline">\(\operatorname{cov}_0(x_i,x_j)\)</span> for every pair <span class="math inline">\(x_i,x_j\)</span> where <span class="math inline">\(i,j\in\{1, ..., n\}\)</span> to find the covariance matrix <span class="math inline">\(\Sigma_{1:n}\)</span> . Then, <span class="math inline">\(F\)</span> is a probability distribution over our objective function <span class="math inline">\(f\)</span> with the property that, for any given collection of points <span class="math inline">\({x_1,...x_n}\)</span>, the marginal probability distribution on <span class="math inline">\(F(x_{1:n}) = (F(x_1),...,F(x_n))\)</span> is given by <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>:</p>
-<p><span class="math display">\[
+<p><span id="eq-MultivariateNormalDist"><span class="math display">\[
 F(x_{1:n}) \sim N(\mu_0(x_{1:n}),\Sigma_{1:n})
-\]</span></p>
+\tag{1}\]</span></span></p>
 <p>where</p>
 <p><span class="math display">\[
 \mu_0(x_{1:n}) = (\mu_0(x_1), . . ., \mu_0(x_n))
@@ -211,17 +211,17 @@ F(x_{1:n}) \sim N(\mu_0(x_{1:n}),\Sigma_{1:n})
 <section id="maximum-likelihood-estimation" class="level3">
 <h3 class="anchored" data-anchor-id="maximum-likelihood-estimation">Maximum Likelihood Estimation</h3>
 <p>When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points <span class="math inline">\(x_1,...,x_n\)</span> <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>.</p>
-<p>We can do this as follows. Firstly, we let the vector <span class="math inline">\(\eta\)</span> represent the hyperparameters that give us <span class="math inline">\(\mu_0\)</span> and <span class="math inline">\(\operatorname{cov}_0\)</span>. Then, given the observations <span class="math inline">\(f(x_{1:n}) = (f(x_1),...,f(x_n))\)</span>, we calculate the likelihood of these observations under the prior given <span class="math inline">\(\eta\)</span> which is denoted as <span class="math inline">\(p(f(x_{1:n})|\eta)\)</span> and modelled by <strong>?@eq-MultivariateNormalDist</strong> . Lastly, we set <span class="math inline">\(\hat{\eta}\)</span> to the value that maximizes this likelihood <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>:</p>
+<p>We can do this as follows. Firstly, we let the vector <span class="math inline">\(\eta\)</span> represent the hyperparameters that give us <span class="math inline">\(\mu_0\)</span> and <span class="math inline">\(\operatorname{cov}_0\)</span>. Then, given the observations <span class="math inline">\(f(x_{1:n}) = (f(x_1),...,f(x_n))\)</span>, we calculate the likelihood of these observations under the prior given <span class="math inline">\(\eta\)</span> which is denoted as <span class="math inline">\(p(f(x_{1:n})|\eta)\)</span> and modelled by <a href="#eq-MultivariateNormalDist" class="quarto-xref">Equation&nbsp;1</a> . Lastly, we set <span class="math inline">\(\hat{\eta}\)</span> to the value that maximizes this likelihood <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>:</p>
 <p><span class="math display">\[
 \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
 \]</span></p>
 </section>
 <section id="kriging" class="level3">
 <h3 class="anchored" data-anchor-id="kriging">Kriging</h3>
-<p>Kriging is a Bayesian statistical method for modelling functions <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>. Again, let <span class="math inline">\(f\)</span> be the objective function and we focus on the design space <span class="math inline">\(X := \{x_1,...,x_k\}\)</span>. Now, if we have evaluated <span class="math inline">\(n\)</span> points such that we have <span class="math inline">\(f(x_{1:n})\)</span> and want to evaluate <span class="math inline">\(x_{n+1}\)</span> we let <span class="math inline">\(k = n+1\)</span> in <strong>?@eq-MultivariateNormalDist</strong> . Then, we can compute the conditional distribution of <span class="math inline">\(F(x_{n+1})\)</span> given <span class="math inline">\(f(x_{1:n})\)</span> using Bayes’ rule:</p>
-<p><span class="math display">\[
+<p>Kriging is a Bayesian statistical method for modelling functions <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>. Again, let <span class="math inline">\(f\)</span> be the objective function and we focus on the design space <span class="math inline">\(X := \{x_1,...,x_k\}\)</span>. Now, if we have evaluated <span class="math inline">\(n\)</span> points such that we have <span class="math inline">\(f(x_{1:n})\)</span> and want to evaluate <span class="math inline">\(x_{n+1}\)</span> we let <span class="math inline">\(k = n+1\)</span> in <a href="#eq-MultivariateNormalDist" class="quarto-xref">Equation&nbsp;1</a> . Then, we can compute the conditional distribution of <span class="math inline">\(F(x_{n+1})\)</span> given <span class="math inline">\(f(x_{1:n})\)</span> using Bayes’ rule:</p>
+<p><span id="eq-posteriordistributiongivensamples"><span class="math display">\[
 F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
-\]</span></p>
+\tag{2}\]</span></span></p>
 <p>where:</p>
 <p><span class="math display">\[
 \mu_n(x_{n+1}) = \operatorname{cov}_0(x_{n+1}, x_{1:n})(\Sigma_{1:n})^{-1}(f(x_{1:n}) - \mu_0(x_{1:n}))  + \mu_0(x_{n+1})
@@ -246,9 +246,9 @@ F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
     P(f(x)&gt;a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
 \end{equation}\]</span></p>
 <p>We now let <span class="math inline">\(a=max\{f(x_1),...,f(x_n)\}\)</span> where <span class="math inline">\(n\)</span> is the number of points we have evaluated so far. For the first round, <span class="math inline">\(n=8\)</span> but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated <span class="citation" data-cites="Originalpaper">(<a href="#ref-Originalpaper" role="doc-biblioref">Spence 2025</a>)</span>. We remove the point <span class="math inline">\(x\)</span> if:</p>
-<p><span class="math display">\[
+<p><span id="eq-removeimplausiblepoint"><span class="math display">\[
 P(f(x)&gt;a|f(x_{1:n})) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) &lt;\varepsilon
-\]</span></p>
+\tag{3}\]</span></span></p>
 <p>for a small <span class="math inline">\(\varepsilon &gt; 0\)</span> until no plausible points remain. Then, the optimum will be <span class="math inline">\(x^*\)</span> such that:</p>
 <p><span class="math display">\[
 f(x^*) = max\{f(x_{1:n})\}
@@ -263,14 +263,14 @@ f(x^*) = max\{f(x_{1:n})\}
 \end{equation}\]</span></p>
 <p>where <span class="math inline">\([F(x_{n+1})-f^*_n]^+\)</span> is the positive part of <span class="math inline">\([F(x_{n+1})-f^*_n]\)</span>. This acquisition function is relatively easy to optimise and many different methods have been developed for doing this <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>.</p>
 <p>There is another expression for <span class="math inline">\(EI_n(x_{n+1})\)</span>:</p>
-<p><span class="math display">\[
+<p><span id="eq-EIincode"><span class="math display">\[
 EI_n(x_{n+1}) =  [(\mu_n(x_{n+1})-f_n^*\cdot\Phi(Z))+(\sigma_n(x_{n+1})\cdot\phi(Z))]^+
-\]</span></p>
+\tag{4}\]</span></span></p>
 <p>where again the notation <span class="math inline">\([\cdot]^+\)</span> means the positive part and where:</p>
 <p><span class="math display">\[
 Z = \frac{\mu_n(x_{n+1})-f_n^*}{\sigma_n(x_{n+1})}
 \]</span></p>
-<p><strong>?@eq-EIincode</strong> can be gained from <strong>?@eq-MultivariateNormalDist</strong> by setting <span class="math inline">\(k = n+1\)</span> and then studying the distribution of <span class="math inline">\(F(x_{n+1})-f^*_n\)</span>. However, we can also consider it as a version of Equation (15) from <span class="citation" data-cites="EfficientGlobalOptimizationofExpensiveBlackBoxFunctions">Jones, Schonlau, and Welch (<a href="#ref-EfficientGlobalOptimizationofExpensiveBlackBoxFunctions" role="doc-biblioref">1998</a>)</span> where we first flip the signs as we are focused on the maximisation case and then set <span class="math inline">\(f_{min} = f^*_n\)</span>, <span class="math inline">\(\hat{y} = \mu_n(x)\)</span> and <span class="math inline">\(s = \sigma_n(x)\)</span>.</p>
+<p><a href="#eq-EIincode" class="quarto-xref">Equation&nbsp;4</a> can be gained from <a href="#eq-MultivariateNormalDist" class="quarto-xref">Equation&nbsp;1</a> by setting <span class="math inline">\(k = n+1\)</span> and then studying the distribution of <span class="math inline">\(F(x_{n+1})-f^*_n\)</span>. However, we can also consider it as a version of Equation (15) from <span class="citation" data-cites="EfficientGlobalOptimizationofExpensiveBlackBoxFunctions">Jones, Schonlau, and Welch (<a href="#ref-EfficientGlobalOptimizationofExpensiveBlackBoxFunctions" role="doc-biblioref">1998</a>)</span> where we first flip the signs as we are focused on the maximisation case and then set <span class="math inline">\(f_{min} = f^*_n\)</span>, <span class="math inline">\(\hat{y} = \mu_n(x)\)</span> and <span class="math inline">\(s = \sigma_n(x)\)</span>.</p>
 </section>
 <section id="augmented-expected-improvement" class="level3">
 <h3 class="anchored" data-anchor-id="augmented-expected-improvement">Augmented Expected Improvement</h3>
@@ -288,23 +288,23 @@ Z = \frac{\mu_n(x_{n+1})-f_n^*}{\sigma_n(x_{n+1})}
 \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
 \]</span></p>
 <p>where <span class="math inline">\(x\)</span> is any point in the sample space <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>.</p>
-<p>Then, we imagine that we are now allowed to sample a new point <span class="math inline">\(x_{n+1}\)</span>. We get a new posterior distribution at the point <span class="math inline">\(x\)</span> which we can calculate using <strong>?@eq-posteriordistributiongivensamples</strong> by replacing <span class="math inline">\(x_{n+1}\)</span> with <span class="math inline">\(x\)</span> and <span class="math inline">\(x_{1:n}\)</span> with <span class="math inline">\(x_{1:n+1}\)</span> to include our new observation. This will have the posterior mean function <span class="math inline">\(\mu_{n+1}(\cdot)\)</span> defined as:</p>
-<p><span class="math display">\[
+<p>Then, we imagine that we are now allowed to sample a new point <span class="math inline">\(x_{n+1}\)</span>. We get a new posterior distribution at the point <span class="math inline">\(x\)</span> which we can calculate using <a href="#eq-posteriordistributiongivensamples" class="quarto-xref">Equation&nbsp;2</a> by replacing <span class="math inline">\(x_{n+1}\)</span> with <span class="math inline">\(x\)</span> and <span class="math inline">\(x_{1:n}\)</span> with <span class="math inline">\(x_{1:n+1}\)</span> to include our new observation. This will have the posterior mean function <span class="math inline">\(\mu_{n+1}(\cdot)\)</span> defined as:</p>
+<p><span id="eq-updatemuKG"><span class="math display">\[
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})|f(x_{1:n})-\mu_n(x_{n+1}))
-\]</span></p>
+\tag{5}\]</span></span></p>
 <p>where <span class="math inline">\(\sigma_{obs}\)</span> is a noise variable which can be determined by the user <span class="citation" data-cites="ungredda2022efficientcomputationknowledgegradient">(<a href="#ref-ungredda2022efficientcomputationknowledgegradient" role="doc-biblioref">Ungredda, Pearce, and Branke 2022</a>)</span>. The conditional expected value for <span class="math inline">\(F(x_n^*)\)</span> changes to be:</p>
 <p><span class="math display">\[
 \mu_{n+1}^* := max_x\mu_{n+1}(x)
 \]</span></p>
 <p>So, we can see that the increase in the conditional expected value of <span class="math inline">\(F(x_n^*)\)</span> by sampling the new point <span class="math inline">\(x_{n+1}\)</span> is:</p>
-<p><span class="math display">\[
+<p><span id="eq-increaseinconditionalexpectedvalue"><span class="math display">\[
 \mu_{n+1}^* - \mu_n^*
-\]</span></p>
+\tag{6}\]</span></span></p>
 <p>While this quantity is unknown before we sample <span class="math inline">\(x_{n+1}\)</span>, we can calculate it’s expected value given our observations <span class="math inline">\(x_1,...,x_n\)</span>. The Knowledge Gradient (KG) for sampling at a new point <span class="math inline">\(x\)</span> in the design space is defined as <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>:</p>
-<p><span class="math display">\[
+<p><span id="eq-KnowledgeGradient"><span class="math display">\[
 KG_n(x) := E[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
-\]</span></p>
-<p>The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for <span class="math inline">\(f(x_{n+1})\)</span> and then calculating <strong>?@eq-increaseinconditionalexpectedvalue</strong>. We iterate this process many times so that we can find the average of <span class="math inline">\(\mu_{n+1}^* - \mu_n^*\)</span> and this allows us to estimate <span class="math inline">\(KG_n(x)\)</span> <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>. This process, or calculating <strong>?@eq-KnowledgeGradient</strong> directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>.</p>
+\tag{7}\]</span></span></p>
+<p>The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for <span class="math inline">\(f(x_{n+1})\)</span> and then calculating <a href="#eq-increaseinconditionalexpectedvalue" class="quarto-xref">Equation&nbsp;6</a>. We iterate this process many times so that we can find the average of <span class="math inline">\(\mu_{n+1}^* - \mu_n^*\)</span> and this allows us to estimate <span class="math inline">\(KG_n(x)\)</span> <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>. This process, or calculating <a href="#eq-KnowledgeGradient" class="quarto-xref">Equation&nbsp;7</a> directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>.</p>
 <p>We would sample the point <span class="math inline">\(x\)</span> with the largest <span class="math inline">\(KG_n(x)\)</span> as our next point <span class="citation" data-cites="BayesianOptimisationTutorial">(<a href="#ref-BayesianOptimisationTutorial" role="doc-biblioref">Frazier 2018</a>)</span>.</p>
 </section>
 <section id="kmeans-process-for-selecting-multiple-points" class="level3">
@@ -363,16 +363,16 @@ r_i(\phi,\phi',\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi'_1|}{\
 <section id="excluding-implausible-points" class="level3">
 <h3 class="anchored" data-anchor-id="excluding-implausible-points">Excluding implausible points</h3>
 <p>Recall that we have the GP for <span class="math inline">\(\ln(median\ catch)\)</span> which is modeling the <span class="math inline">\(C(\theta)\)</span> part of the objective function. As the first half of the objective function <span class="math inline">\(f\)</span> is an indicator function, we can focus on maximising <span class="math inline">\(C(\theta)\)</span> whilst meeting the threshold stated by the indicator function.</p>
-<p>Firstly, we enforce the threshold in the indicator function by calculating <span class="math inline">\(P(\ln(risk)\le\ln(0.05))\)</span>, which is equivalent to the precautionary threshold <span class="math inline">\(P(risk\le0.05)\)</span>. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below <span class="math inline">\(\ln(0.05)\)</span>. This probability can be found using <strong>?@eq-posteriordistributiongivensamples</strong>. Then, we exclude any points with <span class="math inline">\(P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001\)</span> by setting their value for the acquisition function equal to <span class="math inline">\(0\)</span>. This means they will not be chosen as a point to sample in the next round.</p>
-<p>To maximise <span class="math inline">\(C(\theta)\)</span>, we use Bayesian history matching to speed up the process by removing any points that are implausible according to <strong>?@eq-removeimplausiblepoint</strong>.</p>
-<p>This full process ensures that only points that meet the precautionary threshold and and are plausible according <strong>?@eq-removeimplausiblepoint</strong> can be selected.</p>
+<p>Firstly, we enforce the threshold in the indicator function by calculating <span class="math inline">\(P(\ln(risk)\le\ln(0.05))\)</span>, which is equivalent to the precautionary threshold <span class="math inline">\(P(risk\le0.05)\)</span>. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below <span class="math inline">\(\ln(0.05)\)</span>. This probability can be found using <a href="#eq-posteriordistributiongivensamples" class="quarto-xref">Equation&nbsp;2</a>. Then, we exclude any points with <span class="math inline">\(P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001\)</span> by setting their value for the acquisition function equal to <span class="math inline">\(0\)</span>. This means they will not be chosen as a point to sample in the next round.</p>
+<p>To maximise <span class="math inline">\(C(\theta)\)</span>, we use Bayesian history matching to speed up the process by removing any points that are implausible according to <a href="#eq-removeimplausiblepoint" class="quarto-xref">Equation&nbsp;3</a>.</p>
+<p>This full process ensures that only points that meet the precautionary threshold and and are plausible according <a href="#eq-removeimplausiblepoint" class="quarto-xref">Equation&nbsp;3</a> can be selected.</p>
 </section>
 <section id="deciding-on-next-point-to-sample" class="level3">
 <h3 class="anchored" data-anchor-id="deciding-on-next-point-to-sample">Deciding on next point to sample</h3>
 <p>We have three different acquisition functions we have investigated using here.</p>
 <section id="expected-improvement-1" class="level4">
 <h4 class="anchored" data-anchor-id="expected-improvement-1">Expected Improvement</h4>
-<p>We use the <strong>?@eq-EIincode</strong> expression and calculate the EI for every point in the sample space, setting those that don’t meet the precautionary threshold to zero as explained above.</p>
+<p>We use the <a href="#eq-EIincode" class="quarto-xref">Equation&nbsp;4</a> expression and calculate the EI for every point in the sample space, setting those that don’t meet the precautionary threshold to zero as explained above.</p>
 </section>
 <section id="augmented-expected-improvement-1" class="level4">
 <h4 class="anchored" data-anchor-id="augmented-expected-improvement-1">Augmented Expected Improvement</h4>
@@ -384,7 +384,7 @@ AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1
 </section>
 <section id="knowledge-gradient-1" class="level4">
 <h4 class="anchored" data-anchor-id="knowledge-gradient-1">Knowledge Gradient</h4>
-<p>We estimate the KG from 100 simulations and update the KG each round using <strong>?@eq-updatemuKG</strong> . As in the other acquisition functions, we make sure to set the value to zero for any point in the sample space not meeting the precautionary threshold.</p>
+<p>We estimate the KG from 100 simulations and update the KG each round using <a href="#eq-updatemuKG" class="quarto-xref">Equation&nbsp;5</a> . As in the other acquisition functions, we make sure to set the value to zero for any point in the sample space not meeting the precautionary threshold.</p>
 </section>
 <section id="kmeans-process" class="level4">
 <h4 class="anchored" data-anchor-id="kmeans-process">Kmeans process</h4>
@@ -401,20 +401,20 @@ AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1
 </section>
 <section id="experimenting-with-the-kernel-and-mean" class="level2">
 <h2 class="anchored" data-anchor-id="experimenting-with-the-kernel-and-mean">Experimenting with the kernel and mean</h2>
-<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <strong>?@eq-originalkernel</strong>) was not as smooth as the Gaussian kernel (general form shown in <strong>?@eq-GaussianKernel</strong>). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
-<p><span class="math display">\[
+<p>Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in <code>case_study8.R</code> would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in <a href="#eq-originalkernel" class="quarto-xref">Equation&nbsp;8</a>) was not as smooth as the Gaussian kernel (general form shown in <a href="#eq-GaussianKernel" class="quarto-xref">Equation&nbsp;9</a>). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p><span id="eq-originalkernel"><span class="math display">\[
 r_i(\phi,\phi',\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1'|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2'|}{\delta_{i,2}}\right)
-\]</span></p>
-<p><span class="math display">\[
+\tag{8}\]</span></span></p>
+<p><span id="eq-GaussianKernel"><span class="math display">\[
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
-\]</span></p>
-<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <strong>?@eq-gpmean</strong>) for the Gaussian Process (GP) we are assuming that we know a lot about the objective function <span class="math inline">\(f\)</span> (which is what we are modeling with our GP) <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
-<p><span class="math display">\[
+\tag{9}\]</span></span></p>
+<p>The mean was also identified as a possible issue. By assuming a very specific mean (shown below <a href="#eq-gpmean" class="quarto-xref">Equation&nbsp;10</a>) for the Gaussian Process (GP) we are assuming that we know a lot about the objective function <span class="math inline">\(f\)</span> (which is what we are modeling with our GP) <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function <span class="citation" data-cites="williams2006gaussian">(<a href="#ref-williams2006gaussian" role="doc-biblioref">Williams and Rasmussen 2006</a>)</span>.</p>
+<p><span id="eq-gpmean"><span class="math display">\[
 \begin{split}
 m_1(\phi) = \beta_{1,0} + \beta_{1,1}(ln(\phi_1 +0.1))+\beta_{1,2}(ln(\phi_1+0.1))^2+ \\
 \beta_{1,3}(ln(\phi_1+0.1))^3+\beta_{1,4}(\phi_2ln(\phi_1+0.1))+\beta_{1,5}\phi_2
 \end{split}
-\]</span></p>
+\tag{10}\]</span></span></p>
 <p>where <span class="math display">\[\phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}\]</span></p>
 <p>and all of the above <span class="math inline">\(\beta_{s,t}\)</span> for <span class="math inline">\(s \in \{1,2\}\)</span> and <span class="math inline">\(t \in \{1,2,3,4,5\}\)</span> are coefficients to be found.</p>
 <section id="experimenting-with-the-kernel" class="level3">
