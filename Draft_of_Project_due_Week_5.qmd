@@ -408,7 +408,7 @@ Despite currently taking more time on average than the other methods, the KG acq
 
 The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the $F_{target}$ for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. The 20 year projection from 2020-2039 was kept consistent with examples on the MixME documentation and follows guidelines from ICES to create long-term projections based on the biology of the stocks [@MixMEwiki],[@ICES2019WKGMSE2]. It also follows ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
 
-I focused on the datasets from the Fixed fishing mortality management strategy example (mixedfishery_MixME_om) and the Exploring simulation outputs example (mixedfishery_MixME_input) which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset mixedfishery_MixME_input I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is Optimising_ftarget_in_MixME_mult_points_parallel.R and Two_stocks_Optimising_ftarget_in_shortcut_model.R respectively.
+I focused on the datasets from the Fixed fishing mortality management strategy example (`mixedfishery_MixME_om`) and the Exploring simulation outputs example (`mixedfishery_MixME_input`) which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset `mixedfishery_MixME_input` I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is `Optimising_ftarget_in_MixME_mult_points_parallel.R` and `Two_stocks_Optimising_ftarget_in_shortcut_model.R` respectively.
 
 Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. I was told by the same researcher at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESCodFactsheet],[@ICESCodFactsheet]. This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively.
 
@@ -418,17 +418,17 @@ Due to the change in stocks being modelled, I have decided to keep the GP prior 
 
 The process for the first half of the project adapted to our new situation is outlined below. We take a Bayesian History Matching (BHM) approach [@Originalpaper]. Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has [@Originalpaper]. Then, for each round we do the following:
 
-We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
+-   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
-We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(min(SSB)>B_{lim})>0.05$ for all of the last ten years of the simulation (2030-2039)
+-   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(min(SSB)>B_{lim})>0.05$ for all of the last ten years of the simulation (2030-2039)
 
-We use the GP which is modelling the total catch to predict the value for the total catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling the total catch to predict the value for the total catch at every point in the sample space, which will have some uncertainty
 
-We use BHM to remove any points that are implausible (that have a probability less than 0.01% of being higher than the current best total catch)
+-   We use BHM to remove any points that are implausible (that have a probability less than 0.01% of being higher than the current best total catch)
 
-We use the Knowledge Gradient (KG) acquisition function to select $n-1$ plausible points to sample in the next round, as per the discussion in Deciding which acquisition function is best
+-   We use the Knowledge Gradient (KG) acquisition function to select $n-1$ plausible points to sample in the next round, as per the discussion in Deciding which acquisition function is best
 
-We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$.
+-   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$.
 
 ## Calculating the risk
 
@@ -456,7 +456,7 @@ We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values giv
 
 ### Creating the Operating model
 
-We first create the operating model mixedfishery_MixME_om which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki].
+We first create the operating model `mixedfishery_MixME_om` which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki].
 
 In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki].
 
@@ -472,7 +472,7 @@ The steps for fully assembling the operating model for input into the MixME mode
 
 #### Estimate historic quota-share for the two fleets
 
-Firstly, we use mixedfishery_MixME_om to determine the quota share of the catch for each fleet for each year in our projection. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the calculateQuotashare function [@MixMEwiki].
+Firstly, we use `mixedfishery_MixME_om` to determine the quota share of the catch for each fleet for each year in our projection. This is done by assuming for each stock that the quota share corresponds to the proportional share of landings and is carried out by the calculateQuotashare function [@MixMEwiki].
 
 #### Project structures 20 years into the future
 
@@ -492,7 +492,7 @@ To be able to do our projections of catch, we need to know the number of each st
 
 #### Creating the Observation Error Model
 
-This is another important component of the MixME model [@MixMEwiki]. We create the observation error model stk_oem where we apply pre-sampled noise to the catch from each fleet (which we obtain from the mixedfishery_MixME_om object) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki]. - CONCISE AS IS SO NOT SURE IF NEED MORE DETAIL
+This is another important component of the MixME model [@MixMEwiki]. We create the observation error model stk_oem where we apply pre-sampled noise to the catch from each fleet (which we obtain from the `mixedfishery_MixME_om` object) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki]. - CONCISE AS IS SO NOT SURE IF NEED MORE DETAIL
 
 ### Build the MixME input object
 
@@ -516,7 +516,7 @@ We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is help
 
 ### Additions or Differences in the Shortcut Model
 
-This is the Two_stocks_Optimising_ftarget_in_shortcut_model.R file. We use the same data here as in the Optimising_ftarget_in_MixME_mult_points_parallel.R file, except that we have now also loaded in the Operating Model and Observation Error Model with the data [@MixMewiki].
+This is the `Two_stocks_Optimising_ftarget_in_shortcut_model.R` file. We use the same data here as in the `Optimising_ftarget_in_MixME_mult_points_parallel.R` file, except that we have now also loaded in the Operating Model and Observation Error Model with the data [@MixMewiki].
 
 In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking the year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$. However, if this still fails, we identify these runs in the zeroTAC variable and manually set the total annual catch (TAC) to zero. There is not very much information this procedure as the tutorial has not yet been added to the MixME wiki [@MixMEwiki].
 
