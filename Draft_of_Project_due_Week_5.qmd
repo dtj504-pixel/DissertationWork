@@ -308,6 +308,8 @@ Now, we repeat the full process described in the Application of theory in this h
 
 ## Experimenting with the kernel and mean
 
+$Ftargt$ refers to $Ftarget$ in all figures in this section. - BEST TO CHANGE IF POSS
+
 Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
 
 $$
@@ -318,9 +320,15 @@ The mean was also identified as a possible issue. By assuming a very specific me
 
 ### Experimenting with the kernel
 
-The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth [@williams2006gaussian]. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel [@williams2006gaussian]. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion [@williams2006gaussian]. This results in many points that had been deemed implausible returning and this is likely to continue unless different sampling points are chosen [@williams2006gaussian]. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel [@williams2006gaussian].
+The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth [@williams2006gaussian]. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel [@williams2006gaussian]. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion [@williams2006gaussian]. This results in many points that had been deemed implausible returning to the Possible Space and this is likely to continue unless different sampling points are chosen [@williams2006gaussian]. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel [@williams2006gaussian].
 
-My experiments appear to back up this theory. Using the exponential kernel, in our case the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds . In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with higher catch, but still precautionary. Any areas with a probability less than `1e-04` of having a higher catch than the current best and being precautionary have been ruled out as implausible and are displayed as dark blue.
+My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher median catch, but still precautionary. Any areas with:
+
+$$
+P(catch<current\ best\ catch)<0.0001\ \textrm{or}\ P(risk \le 0.05)<0.0001
+$$
+
+have been ruled out as implausible and are displayed as dark blue.
 
 ![Figure 1: Exponential kernel](case_study8_exp_kernel_draft_report.png)
 
