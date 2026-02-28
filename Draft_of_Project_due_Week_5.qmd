@@ -121,7 +121,7 @@ Once we evaluate another point $x'$ where $x' \neq x$, we are able to use Bayes'
     P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
 \end{equation}
 
-We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. For the first round, $n=8$ but as the rounds increase we make sure to include all previous points of the objective function that have been evaluated [@Originalpaper]. We remove the point $x$ if:
+We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. As the rounds increase we make sure to include all previous points of the objective function that have been evaluated in $n$ [@Originalpaper]. We remove the point $x$ if:
 
 $$
 P(f(x)>a|f(x_{1:n})) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
@@ -157,7 +157,7 @@ $$
 Z = \frac{\mu_n(x_{n+1})-f_n^*}{\sigma_n(x_{n+1})}
 $$
 
-@eq-EIincode can be gained from @eq-MultivariateNormalDist by setting $k = n+1$ and then studying the distribution of $F(x_{n+1})-f^*_n$. However, we can also consider it as a version of Equation (15) from @EfficientGlobalOptimizationofExpensiveBlackBoxFunctions where we first flip the signs as we are focused on the maximisation case and then set $f_{min} = f^*_n$, $\hat{y} = \mu_n(x)$ and $s = \sigma_n(x)$.
+@eq-EIincode can be gained from @eq-MultivariateNormalDist by setting $k = n+1$ and then studying the distribution of $F(x_{n+1})-f^*_n$. However, we can also consider it as a version of Equation 15 from @EfficientGlobalOptimizationofExpensiveBlackBoxFunctions where we first flip the signs as we are focused on the maximisation case and then set $f_{min} = f^*_n$, $\hat{y} = \mu_n(x)$ and $s = \sigma_n(x)$.
 
 ### Augmented Expected Improvement
 
@@ -290,7 +290,7 @@ Recall that we have the GP for $\ln(median\ catch)$ which is modeling the $C(\th
 
 Firstly, we enforce the threshold in the indicator function by calculating $P(\ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
 
-To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible according to @eq-removeimplausiblepoint.
+To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible when $a$ is median catch according to @eq-removeimplausiblepoint.
 
 This full process ensures that only points that meet the precautionary threshold and and are plausible according @eq-removeimplausiblepoint can be selected.
 
