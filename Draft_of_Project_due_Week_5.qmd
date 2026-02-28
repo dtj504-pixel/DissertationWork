@@ -161,9 +161,7 @@ $$
 
 ### Augmented Expected Improvement
 
-This was included to help make the method perform better for noisy functions which will make it more generally applicable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. To deal with these noisy observations, a change was proposed to the standard EI function as detailed below. This change seems mostly to have been justified by empirical performance [@letham2018constrainedbayesianoptimizationnoisy].
-
-By adjusting Equation (12) found in @GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels to our own notation, we get that:
+This was included to help make the method perform better for noisy functions which will make it more generally applicable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. To deal with these noisy observations, a change was proposed to the standard EI function as detailed below. This change seems mostly to have been justified by empirical performance [@letham2018constrainedbayesianoptimizationnoisy]. By adjusting Equation 12 found in @GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels to our own notation, we get that:
 
 \begin{equation}
     AEI_n(x_{n+1})=E[F(x_{n+1})|f(x_{1:n})-f^*_{eb}]^+\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
@@ -173,15 +171,13 @@ where $\sigma_{obs}$ is the standard deviation of the noise variable set by the 
 
 ### Knowledge Gradient
 
-We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. This allows us to do some different computations to the ones in EI. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
+We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then we can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
 
 $$
 \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
 $$
 
-where $x$ is any point in the sample space [@BayesianOptimisationTutorial].
-
-Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ defined as:
+where $x$ is any point in the sample space [@BayesianOptimisationTutorial]. Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ defined as:
 
 $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})|f(x_{1:n})-\mu_n(x_{n+1}))
@@ -205,13 +201,11 @@ $$
 KG_n(x) := E[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
 $$ {#eq-KnowledgeGradient}
 
-The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$ and then calculating @eq-increaseinconditionalexpectedvalue. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating @eq-KnowledgeGradient directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial].
+The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$ and then calculating @eq-increaseinconditionalexpectedvalue. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating $KG_n(x)$ directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial]. We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
 
-We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
+### K-means process for selecting multiple points
 
-### Kmeans process for selecting multiple points
-
-Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using kmeans clustering.
+Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using k-means clustering.
 
 Let us have a design space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@Originalpaper],[@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms [@kodinariya2013review].
 
@@ -219,7 +213,7 @@ This algorithm creates $k$ clusters (groups of points) such that the points with
 
 However, before the algorithm can start, we must specify how many clusters we want [@kodinariya2013review]. This can be difficult in many cases [@kodinariya2013review]. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. Lastly, we run the algorithm on $X$ to form the clusters and then we pick the point with the highest value of the acquisition function from each cluster to sample in our next round.
 
-## Application of theory in my project
+## Application of theory in this half of my project
 
 ### Set up the Gaussian Processes
 
@@ -241,7 +235,7 @@ $$
 
 is an indicator function.
 
-To do this, Spence uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+To do this, @Originalpaper uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
 
 $$
 \begin{split}
@@ -260,89 +254,67 @@ $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
 $$
 
-as we have rescaled for numerical stability in the GP [@Originalpaper].
-
-Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
+as we have rescaled for numerical stability in the GP [@Originalpaper]. Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
 
 $$
 r_i(\phi,\phi',\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi'_1|}{\delta_{i,1}} - \frac{|\phi_2 - \phi_2'|}{\delta_{i,2}}\right)
-$$
+$$ {#eq-ornsteinuhlenbeck}
 
-where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the $\phi_1$ and $\phi_2$ terms respectively [@williams2006gaussian].
+where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the terms respectively [@williams2006gaussian].
 
-We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. - LESS THAN OR EQUAL TO INSTEAD OF LESS THAN? Then suggests m_1 ok so check
+
+However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
-We have been able to visualise the GPs after the first round in 3D:
-
-GET THESE IN SOMEHOW - HAVE TO UPLOAD FINAL VER AS PDF SO MAYBE NOT? COULD ADD AS A SEPARATE APPENDIX TO THIS FILE ON THE GITHUB - MAY NEED OT ADD THE FILE FOR JUST THE GRAPH TO GITHUB FIRST
-
-The middle plane is the mean of the risk GP, whereas the bottom and top planes represent the lower and upper bounds of the 95 percent confidence interval respectively. The planes meet at the evaluated points, which are the red dots on the diagram. The scales are odd due to the re-scaling of $F_{target}$ and $B_{trigger}$ and fitting our GPs to log of the values we want throughout the code which helps to keep the GP stable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
-
-We can then also do this for the catch GP:
-
-GET THESE IN SOMEHOW - HAVE TO UPLOAD FINAL VER AS PDF SO MAYBE NOT? COULD ADD AS A SEPARATE APPENDIX TO THIS FILE ON THE GITHUB - MAY NEED OT ADD THE FILE FOR JUST THE GRAPH TO GITHUB FIRST
+GET IN 3D GP VISUALISATION SOMEHOW - LIKELY ADD AS A SEPARATE APPENDIX TO THIS FILE ON THE GITHUB - MAY NEED TO ADD THE FILE FOR JUST THE GRAPH TO GITHUB FIRST
 
 ### Excluding implausible points
 
-Recall that we have the GP for $\ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function.
+Recall that we have the GP for $\ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function. - FIND CITATION
 
-Firstly, we enforce the threshold in the indicator function by calculating $P(\ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for our risk at each point using our risk GP and finding the probability that these predictions for risk are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
+Firstly, we enforce the threshold in the indicator function by calculating $P(\ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for $\ln(risk)$ at each point using our risk GP and finding the probability that these predictions are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
 
 To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible when $a$ is median catch according to @eq-removeimplausiblepoint.
 
-This full process ensures that only points that meet the precautionary threshold and and are plausible according @eq-removeimplausiblepoint can be selected.
+This full process ensures that only points that meet the precautionary threshold and and are plausible according to @eq-removeimplausiblepoint can be selected.
 
-### Deciding on next point to sample
+### Deciding on the next point to sample
 
-We have three different acquisition functions we have investigated using here.
+We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
 
-#### Expected Improvement
+For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the sample space.
 
-We use the @eq-EIincode expression and calculate the EI for every point in the sample space, setting those that don't meet the precautionary threshold to zero as explained above.
-
-#### Augmented Expected Improvement
-
-As our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper]. Thus, we use the equation:
+For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper]. - FIND CITATION FOR USE $f^*_n$ IF NO NOISE Thus, we use the equation:
 
 $$
 AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 $$
 
-to calculate the AEI for every point in the sample space. where we set $\sigma_{obs} = 0$. We again make sure to set any points not meeting the precautionary threshold to have $AEI = 0$.
+to calculate the AEI for every point in the sample space, where we set $\sigma_{obs} = 0$.
 
-#### Knowledge Gradient
+For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
-We estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG . As in the other acquisition functions, we make sure to set the value to zero for any point in the sample space not meeting the precautionary threshold.
+We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
 
-#### Kmeans process
-
-We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using Bayesian History Matching) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
-
-We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and implements our kmeans algorithm described in the General Theory section [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round.
-
-This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
+We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and implements our kmeans algorithm described in the General Theory section [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 ### Updating our GPS
 
-In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round. For the catch GP, we move on to using $m_1(\phi)$ from the second round onwards because by the time we create this GP we have sampled 16 points [@Originalpaper].
+In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from the Kriging section to update the GP with a new mean vector and covariance kernel for our next round.
 
-Now, we repeat the full process described in the Application of theory in my project section until there are no points with a $KG > 0$ . Then, the optimal point is the $x^*$ that has the highest catch out of the precautionary points. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
+Now, we repeat the full process described in the Application of theory in this half of my project section until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
 ## Experimenting with the kernel and mean
 
-Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in `case_study8.R` would have an effect on the value it determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, currently being used in the code (shown in @eq-originalkernel) was not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was pointed out and questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
-
-$$
-r_i(\phi,\phi',\delta_i) = \textrm{exp}\left(-\frac{|\phi_1-\phi_1'|}{\delta_{i,1}} - \frac{|\phi_2-\phi_2'|}{\delta_{i,2}}\right)
-$$ {#eq-originalkernel}
+Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
 
 $$
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
 $$ {#eq-GaussianKernel}
 
-The mean was also identified as a possible issue. By assuming a very specific mean (shown in @eq-gpmeancatch or @eq-gpmeanrisk) for the GP we are assuming that we know a lot about the objective function $f$ [@williams2006gaussian]. Thus, it was suggested that I change the code to a zero mean which is commonly done when we do not want to make any assumptions about our objective function [@williams2006gaussian].
+The mean was also identified as a possible issue. By assuming a very specific mean (shown in @eq-gpmeancatch or @eq-gpmeanrisk) for the GP we are assuming that we know a lot about the objective function $f$ [@williams2006gaussian]. Thus, it was suggested that I try using a zero mean which is commonly done when we do not want to make any assumptions about our objective function [@williams2006gaussian].
 
 ### Experimenting with the kernel
 
