@@ -429,6 +429,19 @@ image2D(matrix(med_cat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btr
 image2D(matrix(1-pcat7,nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 
+# Plotting with eps
+
+  # Save high-quality EPS file
+  setEPS()
+  cairo_ps("case_study8_mean_zero_all_rounds_draft_report.eps", width = 10, height = 10)
+
+  par(mfrow = c(1,1))
+
+  image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+
+  dev.off()
+
+
 pot_points <- gridd[possible7,]
 
 # Now doesn't converge after 7 rounds, so worse than other versions

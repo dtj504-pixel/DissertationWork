@@ -335,6 +335,18 @@ for (iteration in 2:max_rounds) {
   image2D(matrix(1-pcat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   image2D(matrix(possible * (1-pcat), nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt", breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
   
+  # Plotting with eps
+
+  # Save high-quality EPS file
+  setEPS()
+  cairo_ps("case_study8_KG_mean_zero_first_round_only_draft_report.eps", width = 10, height = 10)
+
+  par(mfrow = c(1,1))
+
+  image2D(matrix(possible * (1-pcat),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+
+  dev.off()
+
   #STOPPING CRITERION
   if (sum(possible) == 0) {
     cat("No plausible points remaining. Stopping at round", iteration, "\n")

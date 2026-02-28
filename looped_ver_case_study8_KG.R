@@ -345,6 +345,18 @@ for (iteration in 2:max_rounds) {
 
 
   possible <- (apply(cbind((1 - pcat), prisk), 1, min) > eps)
+
+  # Plotting with eps
+
+  # Save high-quality EPS file
+  setEPS()
+  cairo_ps("case_study8_ei_exp_kernel_draft_report.eps", width = 10, height = 10)
+
+  par(mfrow = c(1,1))
+
+  image2D(matrix(possible * (1-pcat),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftrgt",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+
+  dev.off()
   
   med_cat <- exp(pred_cat_g$mean)
   image2D(matrix(med_cat, nrow=11), y=sort(unique(dat$Ftrgt)), x=sort(unique(dat$Btrigger)), xlab="Btrigger", ylab="Ftrgt")
