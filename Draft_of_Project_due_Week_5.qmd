@@ -464,33 +464,15 @@ To be able to do our projections of catch, we need to know the number of each st
 
 This is another important component of the MixME model [@MixMEwiki]. We create the observation error model where we apply pre-sampled noise to the catch from each fleet (which we obtain from the operating model) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki].
 
-### Build the MixME input object
+### Creating the input object, running the simulation and getting the results
 
-We then use the operating model to make the MixME input object. We have five arguments in the function we use to do this. Two of these are where we input our Operating Model and our Observation Error model. The next two specify how many time steps (in our scenario, years) it takes for the management advice to be enacted and what type of management we are using respectively [@MixMEwiki]. The last argument decides whether or not parallel processing should be used [@MixMEwiki]. We have set this argument to FALSE, mostly as it's usage is not currently well described.
+We then use the operating model to make the MixME input object which we can use to run the simulation [@MixMEwiki]. This is created from the operating model and the observation error model [@MixMEwiki]. Then, we run the simulation. It is important to note that the $F_{cod}$ and $F_{had}$ we choose at the start remain constant throughout the simulation [@MixMEwiki].
 
-### Running the simulation
-
-Before running the simulation, we update some of the management and simulation settings [@MixMEwiki]. We update the arguments for when catches occur, the age range for calculating average fishing mortality and the target fishing mortality we are using for this round of the simulation [@MixMEwiki]. - NOT ENOUGH INFORMATION WHY PROVIDED ON WIKI seems they may have purposefully set things up wrong to show customisation possibilities
-
-We then run the simulation [@MixMEwiki]. It is important to note that the $F_{cod}$ and $F_{had}$ we choose at the start remain constant throughout the simulation [@MixMEwiki].
-
-### Analysing results of the simulation
-
-The tracking object records summary statistics for the modelled stock and fleet dynamics, as well as metrics describing the observed state of the system by the management procedure. As well as this, it contains the catch and the $SSB$ from each year of the simulation, which is how we have been extracting these throughout this document [@MixMEwiki].
-
-It also contains simulation performance and diagnostics statistics [@MixMEwiki]. We can check for management advice failure, effort optimisation failure and the message given if there was any failure [@MixMEwiki]. Effort optimisation failure can be used to see if we are over-fishing the stocks to a point that they will go extinct [@MixMEwiki]. Other results we can see are the over-quota catches and the quota uptake [@MixMEwiki]. Lastly, we can check which stock is the choke stock [@MixMEwiki].
-
-### HCR parameters
-
-We add $B_{lim}$ into the HCR to help us calculate the risk later on. It is helpful for calculating risk in our current way, or the way MixME defines it. - NO INFORMATION ON WIKI SO MAYBE REMOVE? TALK TO GUSTAV
+The tracking object produced by the simulation contains the catch and the $SSB$ from each year of the simulation, which is how we have been extracting these throughout this document [@MixMEwiki]. It also contains simulation performance and diagnostics statistics [@MixMEwiki]. We can check for management advice failure, effort optimisation failure and the message given if there was any failure [@MixMEwiki]. Effort optimisation failure can be used to see if we are over-fishing the stocks to a point that they will go extinct [@MixMEwiki]. Other results we can see are the over-quota catches and the quota uptake [@MixMEwiki]. Lastly, we can check which stock is the choke stock [@MixMEwiki].
 
 ### Additions or Differences in the Shortcut Model
 
-We use the same data as in the Exploring simulation outputs example from the wiki [@MixMEwiki].
-
-In this simulation, we have a condition meaning we return zero-catch advice if the $SSB$ is below $B_{lim}$ in the year after the advice year. We are checking the year after the advice year due to our management lag of one year. Firstly, we identify any simulation where $SSB <B_{lim}$ and re-run these simulations specifically targeting $B_{lim}$. However, if this still fails, we identify these runs and manually set the total annual catch (TAC) to zero. There is not very much information on this procedure as the tutorial has not yet been added to the MixME wiki [@MixMEwiki].
-
-We have a new way to create the HCR and a new way to projects forward into the next year to set an appropriate TAC. This method to predict an appropriate TAC is used for every year of the simulation and it is similar to the short term forecast we have used beforehand. There is not very much information on either of these functions as the tutorials have not yet been added to the MixME wiki [@MixMEwiki]. Lastly, we set up the forecast arguments in a similar way to before, but make sure to set them separately for each stock.
+We use the same data as in the Exploring simulation outputs example from the wiki [@MixMEwiki]. There are some small differences in how we calculate the HCR and do our one-year forecasts in the shortcut model. However, this is not yet up on the wiki and so we will not be describing it in detail [@MixMEwiki].
 
 ## Parallelisation
 
