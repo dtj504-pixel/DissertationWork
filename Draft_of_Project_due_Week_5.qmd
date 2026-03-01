@@ -300,7 +300,7 @@ In our second round, we need to update our GPs with new data [@Originalpaper]. W
 
 Now, we repeat the full process described in the Application of theory in this half of my project section until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
-## Experimenting with the kernel and mean
+## Experimenting with the kernel and mean {#sec-expkerandmean}
 
 $Ftargt$ refers to $Ftarget$ in all figures in this section. - BEST TO CHANGE IF POSS
 
@@ -358,7 +358,7 @@ GIVE A BRIEF DESCRIPTION AND SOME REASONING AS TO WHY THIS WAS DONE. EXPLAIN MAY
 
 FIND CITATIONS APPLICABLE THROUGHOUT THE BELOW.
 
-We ran a timing test, a total evaluations test, a number of rounds test and a convergence test comparing the base method used in the Case Study in @Originalpaper to the base method augmented with the different acquisition functions we have mentioned above. The tests and their results can be seen \[on Github\] - PROVIDE A LINK IN APPENDIX.
+We ran a timing test, a total evaluations test, a number of rounds test and a convergence test comparing the base method used in the Case Study in @Originalpaper to the base method augmented with the different acquisition functions we have mentioned above. The tests and their results can be seen through the links provided in @sec-Appendix.
 
 Despite taking more time on average than the other methods in this case, the KG acquisition function method will be the best to use here because it requires less evaluations of the objective function and so is less expensive to run. However, when sampling eight points per round it had the same number of rounds as the other methods for the Case Study. This is important because we evaluate the new points each round in parallel and so KG didn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.
 
@@ -372,7 +372,7 @@ The aim of this half of the project is to apply the methods from the first half 
 
 The 20 year projection from 2020-2039 follows guidelines from ICES to create long-term projections based on the biology of the stocks [@ICES2019WKGMSE2]. We also follow ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
 
-I focused on the datasets from the Fixed fishing mortality management strategy example and the Exploring simulation outputs example which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is \[provide a GIthub link somewhere\] - PROVIDE A LINK IN APPENDIX.
+I focused on the datasets from the Fixed fishing mortality management strategy example and the Exploring simulation outputs example which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is provided in @sec-Appendix.
 
 Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively. I was told by the same researcher at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESCodFactsheet],[@ICESCodFactsheet].
 
@@ -380,9 +380,7 @@ We create our new sample space to be a grid with all the combinations of $F_{cod
 
 For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but mean that we cannot use the standard ICES definition of risk [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we adopt another process explained in @sec-calculaterisk. We claim that this method satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
 
-Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled by the `~.^2` function in R for every round of the optimisation process. - FIND ACTUAL NAME, SOMETHING LIKE SQUARED PRODUCT
-
-Despite the more complicated prior used in later rounds in case_study8.R being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME],[@ULRICH201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points [@williams2006gaussian].
+Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled by a first order model with interactions for every round of the optimisation process [@FormulaDocumentation],[@firstoderinteractionmodel]. Despite the more complicated prior used in later rounds in case_study8.R being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME],[@ULRICH201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points [@williams2006gaussian].
 
 The process for the first half of the project adapted to our new situation is outlined below. We take a BHM approach [@Originalpaper]. Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has [@Originalpaper]. Then, for each round we do the following:
 
@@ -404,7 +402,7 @@ MixME defines risk as the proportion of iterations in each year where $SSB$ fall
 
 Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. These GPs have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper].
 
-They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian],[@BayesianOptimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in the Experimenting with the kernel and mean section, the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation].
+They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian],[@BayesianOptimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation].
 
 Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
@@ -479,3 +477,7 @@ We have created a framework that ...
 -   Doing a proper risk calculation
 
     -   I now meet precautionary, so would it be much of an improvement to use probabilities instead?
+
+# Appendix {#sec-Appendix}
+
+Mostly for code links.
