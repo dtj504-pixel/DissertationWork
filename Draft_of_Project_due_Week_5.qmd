@@ -378,7 +378,7 @@ Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEw
 
 We create our new sample space to be a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments [@Originalpaper]. This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki],[@MixedFisheriesStatusandManagement2023],[@ICES2019WKGMSE2].
 
-For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but mean that we cannot use the standard ICES definition of risk [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we adopt another process explained in the Calculating the Risk section below. - CAN I CORSS REFERENCE THIS? We claim that this method satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
+For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but mean that we cannot use the standard ICES definition of risk [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we adopt another process explained in @sec-calculaterisk. We claim that this method satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
 
 Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled by the `~.^2` function in R for every round of the optimisation process. - FIND ACTUAL NAME, SOMETHING LIKE SQUARED PRODUCT
 
@@ -398,7 +398,7 @@ The process for the first half of the project adapted to our new situation is ou
 
 -   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$ with probability greater than 0.05
 
-## Calculating the risk
+## Calculating the risk {#sec-calculaterisk}
 
 MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki]. In contrast to the first half of the project, we now calculate the risk using the $SSB$. Note that we also need the $B_{lim}$ for this method. We have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
 
@@ -422,7 +422,7 @@ We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values giv
 
 We first create the operating model which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki].
 
-In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki]. The steps for fully assembling the operating model for input into the MixME model are explained below. - DOUBLE CHECK WIKI? OEM INCLUDED IN THIS STILL SEEMS ODD
+In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki]. The steps for fully assembling the operating model for input into the MixME model are explained below.
 
 #### Estimate historic quota-share for the two fleets
 
@@ -446,7 +446,7 @@ To be able to do our projections of catch, we need to know the number of each st
 
 #### Creating the Observation Error Model
 
-This is another important component of the MixME model [@MixMEwiki]. We create the observation error model where we apply pre-sampled noise to the catch from each fleet (which we obtain from the operating model) [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki].
+This is another important component of the model [@MixMEwiki]. We create the observation error model where we apply pre-sampled noise to the catch from each fleet [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki].
 
 ### Creating the input object, running the simulation and getting the results
 
@@ -462,7 +462,7 @@ We use the same data as in the Exploring simulation outputs example from the wik
 
 This process has been set up so that it is easy to run in parallel. We are able to load the dataset we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock over the years 2030-2039. Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project [@Originalpaper]. We iterate this process until the optimal point(s) are found.
 
-The process above makes up one run of the script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we follow on from the original paper and run this script 1000 times as an array of jobs on the Viking HPC [@Originalpaper],\[@VikingDocumentation\]. These are the results we will analyse in the section below.
+The process above makes up one run of the script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we follow on from the original paper and run this script 1000 times as an array of jobs on the Viking HPC [@Originalpaper],[@VikingDocumentation]. These are the results we will analyse in the section below.
 
 # Analysis of Results
 
