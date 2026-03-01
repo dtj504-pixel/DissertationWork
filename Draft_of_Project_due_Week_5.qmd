@@ -105,15 +105,15 @@ This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior pr
 
 Let $x$ be a point in the sample space. We begin with some uncertainty about our objective function $f(x)$ [@Originalpaper]. However, we can make probabilistic statements such as:
 
-\begin{equation}
-    P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
-\end{equation}
+$$
+P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
+$$
 
 Once we evaluate another point $x'$ where $x' \neq x$, we are able to use Bayes' Theorem improve our integral to:
 
-\begin{equation}
-    P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
-\end{equation}
+$$
+P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
+$$
 
 We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. As the rounds increase we make sure to include all previous points of the objective function that have been evaluated in $n$ [@Originalpaper]. We remove the point $x$ if:
 
@@ -133,9 +133,9 @@ as our index $n$ counts the number of points we have evaluated throughout the wh
 
 The first type of acquisition function we will look at is Expected Improvement (EI). Suppose we have sampled the points $x_1, ... ,x_n$ and observe the values $f(x_{1:n})$. Then, if we were to return a solution at this point, bearing in mind we observe the objective function $f$ without noise and we can only return points we have already evaluated, we would return $f^*_n = max\{f(x_1),...,f(x_n)\}$ [@BayesianOptimisationTutorial]. Imagine we then consider evaluating another point $x_{n+1}$ to get $f(x_{n+1})$. We can then define the Expected Improvement as:
 
-\begin{equation}
-    EI_n(x_{n+1}) := E[F(x_{n+1})|f(x_{1:n})-f^*_n]^+
-\end{equation}
+$$
+EI_n(x_{n+1}) := E[F(x_{n+1})|f(x_{1:n})-f^*_n]^+
+$$
 
 where $[F(x_{n+1})-f^*_n]^+$ is the positive part of $[F(x_{n+1})-f^*_n]$. This acquisition function is relatively easy to optimise and many different methods have been developed for doing this [@BayesianOptimisationTutorial].
 
@@ -157,9 +157,9 @@ $$
 
 This was included to help make the method perform better for noisy functions which will make it more generally applicable [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. To deal with these noisy observations, a change was proposed to the standard EI function as detailed below. This change seems mostly to have been justified by empirical performance [@letham2018constrainedbayesianoptimizationnoisy]. By adjusting Equation 12 found in @GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels to our own notation, we get that:
 
-\begin{equation}
-    AEI_n(x_{n+1})=E[F(x_{n+1})|f(x_{1:n})-f^*_{eb}]^+\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
-\end{equation}
+$$
+AEI_n(x_{n+1})=E[F(x_{n+1})|f(x_{1:n})-f^*_{eb}]^+\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
+$$
 
 where $\sigma_{obs}$ is the standard deviation of the noise variable set by the user and $\sigma_n(x)$ is the standard deviation of GP $F$ at the $n^{th}$ iteration, as used beforehand. We have also changed $f^*_n$ to $f^*_{eb}$ which is the highest predicted mean at any sampled point so far so that we take into account that the uncertainty in our observations could cause a large spike [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
 
@@ -460,20 +460,22 @@ We use the same data as in the Exploring simulation outputs example from the wik
 
 ## Parallelisation
 
-This process has been set up so that it is easy to run in parallel. We are able to load in the data we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock over the years 2030-2039.
+This process has been set up so that it is easy to run in parallel. We are able to load the dataset we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock over the years 2030-2039. Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project [@Originalpaper]. We iterate this process until the optimal point(s) are found.
 
-Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project [@Originalpaper]. We iterate this process until the optimal point(s) are found. - MULTIPLE JUSTIFIED WHEN ANALYSING RESULTS
+The process above makes up one run of the script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we follow on from the original paper and run this script 1000 times as an array of jobs on the Viking HPC [@Originalpaper],\[@VikingDocumentation\]. These are the results we will analyse in the section below.
 
-The process above makes up one run of the script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we want to follow on from the original paper and run this script 1000 times [@Originalpaper]. This requires a new kind of parallelisation. We were able to accomplish this by creating an array of jobs which will run when there is free space on the Viking HPC used by the Univeristy of York [@VikingDocumentation]. This allowed us to submit one job that would run the script 1000 times, making it a lot easier to do this than having to submit 1000 separate jobs [@VikingDocumentation]. We also allowed up to 50 scripts to run at once on separate nodes, speeding up the process significantly [@VikingDocumentation].
+# Analysis of Results
 
-# Conclusions and Results
+ANALYSE RESULTS OF THE SIMULATIONS - LIKELY AFTER DRAFT HAS BEEN HANDED IN
 
-# Further areas for Development
+# Conclusion and Further areas for Development
 
-## Moving to a more complicated dataset
+We have created a framework that ...
 
-Mention the one in the MixME paper.
+-   Moving to a more complicated dataset
 
-## Doing a proper risk calculation
+    -   Mention the one in the MixME paper.
 
-I now meet precautionary, so would it be much of an improvement to use probabilities instead?
+-   Doing a proper risk calculation
+
+    -   I now meet precautionary, so would it be much of an improvement to use probabilities instead?
