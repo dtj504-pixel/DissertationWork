@@ -15,23 +15,17 @@ bibliography: draft_report_references.bib
 
 # Abstract
 
-ADD CITATIONS
+Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal Harvest Control Rules (HCRs) [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023].
 
-Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal Harvest Control Rules (HCRs). However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries.
+This project introduces a computationally efficient framework for evaluating HCRs. Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk [@Originalpaper]. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space [@Originalpaper],[@BayesianOptimisationTutorial],[@AKMeansClusteringAlgorithm]. This drastically reduces the need for expensive simulation runs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions].
 
-This project introduces a computationally efficient framework for evaluating HCRs. Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space. This drastically reduces the need for expensive simulation runs.
-
-Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch.
-
-This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs. This method delivers timely, evidence-based MSEs that ensure that the stocks remain both economically viable and firmly within safe biological limits.
+Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios [@MixME]. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch [@MixedFisheriesStatusandManagement2023],[@ULRICH201238]. This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs [@Originalpaper]. This method delivers timely, evidence-based MSEs that ensure that the stocks remain both economically viable and firmly within safe biological limits [@ICES2019WKGMSE2],[@Harvest_Control_Rules].
 
 # Introduction
 
 NO CURRENT APPROPRIATE ONE IN SOURCE MATERIAL
 
 # Creating the framework in a single stock fisheries context
-
-Limitations of Mike's paper/method: The paper does not consider fleet dynamics.
 
 ## Context
 
@@ -428,17 +422,7 @@ We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values giv
 
 We first create the operating model which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki].
 
-In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki].
-
-The steps for fully assembling the operating model for input into the MixME model are:
-
--   Estimate historic quota-share for the two fleets
-
--   Project structures 20 years into the future
-
--   Calculate numbers of both stocks in initial year
-
--   Generate an observation error model
+In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki]. The steps for fully assembling the operating model for input into the MixME model are explained below. - DOUBLE CHECK WIKI? OEM INCLUDED IN THIS STILL SEEMS ODD
 
 #### Estimate historic quota-share for the two fleets
 
@@ -448,11 +432,11 @@ Firstly, we use the operating model to determine the quota share of the catch fo
 
 To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended [@MixMEwiki]. These are:
 
--   All stock parameters, landings and discards mean individual weights and landed fraction
+1.  All stock parameters, landings and discards mean individual weights and landed fraction
 
--   Catchability and catch selection
+2.  Catchability and catch selection
 
--   Quota-share
+3.  Quota-share
 
 We project the parameters in each of these categories from 2019-2039 using the average from the last three years [@MixMEwiki]. This means we fill in the actual values we will use, instead of calculating a percentage that is then used in a further calculation like in the quota share section [@MixMEwiki].
 
