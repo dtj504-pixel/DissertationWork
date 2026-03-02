@@ -600,7 +600,7 @@ for (iteration in 1:max_rounds) {
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
     # TODO: remove when risk calculations fixed
-    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad","Fwhg")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(log_total_catch)+1e-15,covtype = "exp")
+    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad","Fwhg")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
     gp_cod_risk <- km(~.^2,design=runs[,c("Fcod","Fhad","Fwhg")],estim.method="MLE",response = risk_cod_input,nugget=1e-12*var(risk_cod_input)+1e-15,covtype = "exp")
     gp_had_risk <- km(~.^2,design=runs[,c("Fcod","Fhad","Fwhg")],estim.method="MLE",response = risk_had_input,nugget=1e-12*var(risk_had_input)+1e-15,covtype = "exp")
     gp_whg_risk <- km(~.^2,design=runs[,c("Fcod","Fhad","Fwhg")],estim.method="MLE",response = risk_whg_input,nugget=1e-12*var(risk_whg_input)+1e-15,covtype = "exp")
