@@ -16,7 +16,7 @@ library(foreach)
 library(parallel)
 library(plot3D)
 
-print("This is Optimising_ftarget_in_MixME_mult_points_parallel")
+print(" This is Optimising_ftarget_in_MixME_mult_points_parallel")
 
 
 obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
@@ -24,8 +24,6 @@ obj_func <- function(f_cod, f_had, mixedfishery_MixME_om, stk_oem) {
   # Create the main MixME input object
   # This bundles together all the components needed to run the MSE
   # Set management type to fixedF
-
-  # THERE'S A PARALLEL SETTING HERE?
   input <- makeMixME(om = mixedfishery_MixME_om, catch_obs = stk_oem, management_lag = 0, management_type = "fixedF", parallel = FALSE)
   
   # Set up the observation error model
@@ -100,8 +98,8 @@ doOne <- function(run_id,input_data) {
   res <- obj_func(f_cod = this_Fcod, f_had = this_Fhad, mixedfishery_MixME_om = mixedfishery_MixME_om, stk_oem = stk_oem)
   
   # Get Catch directly from the 'tracking' object
-  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2030:2039)], na.rm = TRUE)
-  catch_had <- sum(res$tracking$had$stk["C.om", ac(2030:2039)], na.rm = TRUE)
+  catch_cod <- sum(res$tracking$cod$stk["C.om", ac(2020:2039)], na.rm = TRUE)
+  catch_had <- sum(res$tracking$had$stk["C.om", ac(2020:2039)], na.rm = TRUE)
   # Calculate total catch
   total_catch <- catch_cod + catch_had
   
@@ -114,7 +112,7 @@ doOne <- function(run_id,input_data) {
     ssb_cod_min <- min(ssb_cod_data, na.rm = TRUE)
     ssb_had_min <- min(ssb_had_data, na.rm = TRUE)
 
-    # Safety Catch for if the simulation failed or produced all NAs
+    # Safety Ctahc for if the simulation failed or produced all NAs
     if(is.infinite(ssb_cod_min) | is.na(ssb_cod_min)) ssb_cod_min <- 0
     if(is.infinite(ssb_had_min) | is.na(ssb_had_min)) ssb_had_min <- 0
   
@@ -155,7 +153,7 @@ knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 1
   for (i in seq_len(m)) {
     # set to 0 for any unsafe points - here has become probability that ssb is =< Blim is > 0.05 in the years 2030-2039
     # i.e. the run is not precautionary in these years
-    if (prisk_cod[i] > 0.05 || prisk_had[i] > 0.05) {
+    if (pssb_cod[i] > 0.05 || pssb_had[i] > 0.05) {
       kg[i] <- 0
       next
     }
@@ -271,8 +269,8 @@ dat <- data.frame(expand.grid(
 # // SETUP FOR LOOP //
 
 # Define Blims
-Blim_cod <- 107000
-Blim_had <- 9227
+  Blim_cod <- 107000
+  Blim_had <- 9227
 
 # Set an intial F target for both stocks so the first loop has something to work with
 # Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
@@ -296,7 +294,7 @@ next_points
 
 
 # Set max runs and initial round number
-max_rounds <- 8
+max_rounds <- 30
 round_num <- 1
 
 # Intiliase runs for safety
@@ -353,33 +351,29 @@ for (iteration in 1:max_rounds) {
 
     # Taking log of the catch so GP models are more stable
     log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-    # Adding a larger constant here as having some very low ssb values that are causing issues with the GP fitting
-    log_ssb_cod_min <- log(runs$SSBCod + 1)
-    log_ssb_had_min <- log(runs$SSBHad + 1)
+    ssb_cod_min <- runs$SSBCod
+    ssb_had_min <- runs$SSBHad
     
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
-    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(log_total_catch)+1e-15,covtype = "exp")
-    gp_log_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_ssb_cod_min,nugget=1e-12*var(log_ssb_cod_min)+1e-15,covtype = "exp")
-    gp_log_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_ssb_had_min,nugget=1e-12*var(log_ssb_had_min)+1e-15,covtype = "exp")
+    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(runs$TotalCatch)+1e-15,covtype = "exp")
+    gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,covtype = "exp")
+    gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,covtype = "exp")
     
     print("GPs done")
     
     # Find the remaining plausible points using BHM
-    pred_ssb_cod <- predict(gp_log_cod_ssb, newdata = dat, type = "SK")
-    pred_ssb_had <- predict(gp_log_had_ssb, newdata = dat, type = "SK")
+    pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
+    pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
     
-    # Get the probability that ssb =< Blim for both cod and haddock - want this to be low!
-
-    # If same as first half I'd want the prob of this prob to be >0.0001
-
-    pssb_cod <- pnorm(log(Blim_cod + 1), pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
-    pssb_had <- pnorm(log(Blim_had + 1), pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
+    # Get the probability that sbb =< Blim for both cod and haddock - want this to be low!
+    pssb_cod <- pnorm(Blim_cod, pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
+    pssb_had <- pnorm(Blim_had, pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
 
     # Filter for valid runs
-    valid_runs <- runs$TotalCatch[log(runs$SSBCod + 1) > log(Blim_cod + 1) & log(runs$SSBHad + 1) > log(Blim_had + 1) & runs$TotalCatch > 1e-3]
+    valid_runs <- runs$TotalCatch[runs$SSBCod > Blim_cod & runs$SSBHad > Blim_had]
     
     print("valid_runs is")
     print(valid_runs)
@@ -390,8 +384,8 @@ for (iteration in 1:max_rounds) {
         current_max <- max(valid_runs, na.rm = TRUE)
     } 
     else {
-        current_max <- 1e-3  # Set to a very low value if no valid runs, to avoid issues with log(0) and to ensure any positive catch is better
-        print("Warning: No runs met the safety criteria (<0.05 risk)")
+        current_max <- 0 
+        print("Warning: No runs met the safety criteria (< 5% risk)")
     }
     
     # Probability catch is =< current max
@@ -406,22 +400,12 @@ for (iteration in 1:max_rounds) {
     # Visualises region that has risk < threshold and better catch than best evaluated so far
     # TODO: Check I am naming this the correct way around
     grid_dim <- sqrt(nrow(dat))
-
-    # Save high-quality EPS file
-    setEPS()
-    cairo_ps("checking_convergence.eps", width = 10, height = 10)
-
-    par(mfrow = c(1,1))
-
     image2D(matrix(possible * (1-pcat),nrow=grid_dim),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
-
-    dev.off()
-
     
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
-    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = pssb_cod, prisk_had = pssb_had, eps = 1e-4)
+    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
     
     print("kg done")
     
@@ -476,7 +460,7 @@ for (iteration in 1:max_rounds) {
     rm(result) 
     
     # Remove the Kriging models (they can be heavy too)
-    rm(gp_log_cat, gp_log_cod_ssb, gp_log_had_ssb)
+    rm(gp_log_cat, gp_cod_ssb, gp_had_ssb)
     
     # Remove the prediction vectors to be safe
     rm(pred_ssb_cod, pred_ssb_had, pred_log_cat)
