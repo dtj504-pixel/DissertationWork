@@ -296,7 +296,7 @@ next_points
 
 
 # Set max runs and initial round number
-max_rounds <- 3
+max_rounds <- 5
 round_num <- 1
 
 # Intiliase runs for safety
@@ -353,29 +353,32 @@ for (iteration in 1:max_rounds) {
 
     # Taking log of the catch so GP models are more stable
     log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-    ssb_cod_min <- runs$SSBCod
-    ssb_had_min <- runs$SSBHad
+    log_ssb_cod_min <- log(runs$SSBCod + 1e-12)
+    log_ssb_had_min <- log(runs$SSBHad + 1e-12)
     
     
     # SET UP THE GPS
     # Adding 1e-15 to nuggets to avoid 0 nugget variance
     gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(log_total_catch)+1e-15,covtype = "exp")
-    gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,covtype = "exp")
-    gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,covtype = "exp")
+    gp_log_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_ssb_cod_min,nugget=1e-12*var(log_ssb_cod_min)+1e-15,covtype = "exp")
+    gp_log_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_ssb_had_min,nugget=1e-12*var(log_ssb_had_min)+1e-15,covtype = "exp")
     
     print("GPs done")
     
     # Find the remaining plausible points using BHM
-    pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
-    pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
+    pred_ssb_cod <- predict(gp_log_cod_ssb, newdata = dat, type = "SK")
+    pred_ssb_had <- predict(gp_log_had_ssb, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
     
-    # Get the probability that sbb =< Blim for both cod and haddock - want this to be low!
-    pssb_cod <- pnorm(Blim_cod, pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
-    pssb_had <- pnorm(Blim_had, pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
+    # Get the probability that ssb =< Blim for both cod and haddock - want this to be low!
+
+    # If same as first half I'd want the prob of this prob to be >0.0001
+
+    pssb_cod <- pnorm(log(Blim_cod), pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
+    pssb_had <- pnorm(log(Blim_had), pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
 
     # Filter for valid runs
-    valid_runs <- runs$TotalCatch[runs$SSBCod > Blim_cod & runs$SSBHad > Blim_had]
+    valid_runs <- runs$TotalCatch[log(runs$SSBCod) > log(Blim_cod) & log(runs$SSBHad) > log(Blim_had)]
     
     print("valid_runs is")
     print(valid_runs)
@@ -387,7 +390,7 @@ for (iteration in 1:max_rounds) {
     } 
     else {
         current_max <- 0 
-        print("Warning: No runs met the safety criteria (< 5% risk)")
+        print("Warning: No runs met the safety criteria (<0.05 risk)")
     }
     
     # Probability catch is =< current max
@@ -407,7 +410,7 @@ for (iteration in 1:max_rounds) {
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
-    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
+    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = pssb_cod, prisk_had = pssb_had, eps = 1e-4)
     
     print("kg done")
     
@@ -462,7 +465,7 @@ for (iteration in 1:max_rounds) {
     rm(result) 
     
     # Remove the Kriging models (they can be heavy too)
-    rm(gp_log_cat, gp_cod_ssb, gp_had_ssb)
+    rm(gp_log_cat, gp_log_cod_ssb, gp_log_had_ssb)
     
     # Remove the prediction vectors to be safe
     rm(pred_ssb_cod, pred_ssb_had, pred_log_cat)
