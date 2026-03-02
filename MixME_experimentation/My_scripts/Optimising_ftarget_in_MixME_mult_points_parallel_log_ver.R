@@ -1,3 +1,26 @@
+# ==============================================================================
+# GP OPTIMIZATION DESIGN NOTES: TRANSFORMATIONS
+#
+# 1. Catch (Objective) -> LOG SCALE
+#    Why: Catch values can range over several orders of magnitude. Logging
+#    smoothes the highly variable, spiky response surface into a continuous hill, 
+#    making it easier for the GP to find the maximum.
+#
+# 2. Minimum SSB (Constraint) -> LINEAR SCALE
+#    Why: We evaluate SSB against a hard boundary (Blim). In crashed runs,
+#    SSB  slowly drops to 0.
+
+#    If we log this, the drop to log(0+1) creates a massive, jagged 
+#    "cliff". This cliff into the unsafe zone is perceived as much more steep by
+#    the GP because the changes within the safe zone are made smaller by taking the log.
+
+#    The GP interprets this cliff as extreme uncertainty across the space, inflating 
+#    the variance. This artificially high variance causes the Knowledge Gradient 
+#    to view the area as 100% unsafe and prematurely stop exploring. However, it then
+#    realsies it has fit the GP incorrectly and inflate sthe variance masisvely.
+# ==============================================================================
+
+
 #IMPORTANT NOTE:
 # " we will assume that we can perfectly observe the stock without error"
 
@@ -370,6 +393,8 @@ for (iteration in 1:max_rounds) {
     pred_ssb_cod <- predict(gp_log_cod_ssb, newdata = dat, type = "SK")
     pred_ssb_had <- predict(gp_log_had_ssb, newdata = dat, type = "SK")
     pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
+
+    med_cat <- exp(pred_log_cat$mean)
     
     # Get the probability that ssb =< Blim for both cod and haddock - want this to be low!
 
@@ -417,7 +442,26 @@ for (iteration in 1:max_rounds) {
 
     dev.off()
 
-    
+    # Save high-quality EPS file
+    setEPS()
+    cairo_ps("checking_catch.eps", width = 10, height = 10)
+
+    par(mfrow = c(1,1))
+
+    image2D(matrix(med_cat,nrow=11),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod")
+
+    dev.off()
+
+    # Save high-quality EPS file
+    setEPS()
+    cairo_ps("checking_prob_of_catch.eps", width = 10, height = 10)
+
+    par(mfrow = c(1,1))
+    image2D(matrix(1-pcat,nrow=11),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
+
+    dev.off()
+
+
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
