@@ -209,7 +209,7 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ## Application of theory in this half of my project
 
-### Set up the Gaussian Processes
+### Set up the Gaussian Processes {#sec-setupGPs}
 
 We are focusing on maximising the objective function from the paper which is given below [@Originalpaper]:
 
@@ -266,7 +266,7 @@ GET IN 3D GP VISUALISATION SOMEHOW - LIKELY ADD AS A SEPARATE APPENDIX TO THIS F
 
 ### Excluding implausible points
 
-Recall that we have the GP for $\ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function. - FIND CITATION
+Recall from @sec-setupGPs that we have the GP for $\ln(median\ catch)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function [@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions].
 
 Firstly, we enforce the threshold in the indicator function by calculating $P(\ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for $\ln(risk)$ at each point using our risk GP and finding the probability that these predictions are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
 
