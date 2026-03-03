@@ -334,13 +334,7 @@ Setting the mean of the GP to zero is more often done in examples to showcase th
 
 We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
 
-![Figure 7: case_study8 with the mean of the GP set to zero only in the first round, at the seventh round](case_study8_mean_zero_first_round_only_draft_report.png)
-
-![Figure 8: case_study8 with the mean of the GP set to zero in all rounds at the seventh round](case_study8_mean_zero_all_rounds_draft_report.png)
-
-![Figure 9: case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in the first round only, at the seventh round](case_study8_KG_mean_zero_first_round_only_draft_report.png)
-
-![Figure 10: case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in all rounds at the seventh round](case_study8_KG_mean_zero_all_rounds_draft_report.png)
+![Figure 3: Comparison of convergence under different priors in the seventh round. In the top left, case_study8 with the mean of the GP set to zero only in the first round. IN the top right, case_study8 with the mean of the GP set to zero in all rounds. In the bottom left, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in the first round only. In the bottom right, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in all rounds](mean_comparison_draft_report.png)
 
 ## Determining the best acquisition function
 
