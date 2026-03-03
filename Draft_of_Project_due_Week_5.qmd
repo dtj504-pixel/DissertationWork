@@ -278,19 +278,15 @@ This full process ensures that only points that meet the precautionary threshold
 
 We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
 
-For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the sample space.
-
-For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper]. - FIND CITATION FOR USE $f^*_n$ IF NO NOISE Thus, we use the equation:
+For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the sample space. For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial]. Thus, we use the equation:
 
 $$
 AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
 $$
 
-to calculate the AEI for every point in the sample space, where we set $\sigma_{obs} = 0$.
+to calculate the AEI for every point in the sample space, where we set $\sigma_{obs} = 0$. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
-For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
-
-We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquistion functions above. Now, we want to decide which 8 points are best to evaluate next.
+We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
 We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and implements our kmeans algorithm described in the General Theory section [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
