@@ -322,19 +322,11 @@ $$
 
 have been ruled out as implausible and are displayed as dark blue.
 
-![Figure 1: Exponential kernel](case_study8_exp_kernel_draft_report.png)
-
-![Figure 2: Gaussian Kernel](case_study8_gauss_kernel_draft_report.png)
-
-![Figure 3: Matern 5/2 Kernel](case_study8_matern5_2_kernel_draft_report.png)
+![Figure 1: Comparison of convergence under different kernels in the seventh round in case_study8. From left to right: the Exponential kernel, the Gaussian kernel and the Matern 5/2 kernel.](case_study8_kernel_comparison_draft_report.png)
 
 Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, the EI method converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
 
-![Figure 4: case_study8 with EI at seven rounds](case_study8_ei_exp_kernel_draft_report.png)
-
-![Figure 5: case_study8.R with EI using Gauss kernel at seven rounds](case_study8_ei_gauss_kernel_draft_report.png)
-
-![Figure 6: Last round of case_study8 with EI function using the Matern 5/2 kernel](case_study8_ei_matern5_2_kernel_draft_report.png)
+![Figure 2: Comparison of convergence under different kernels in case_study8 augmented with the EI acquisition function. From left to right: the Exponential kernel, the Gaussian kernel in the seventh round and the Matern 5/2 kernel in the last round.](case_study8_EI_kernel_comparison_draft_report.png)
 
 ### Experimenting with the mean
 
@@ -455,8 +447,6 @@ We use the same data as in the Exploring simulation outputs example from the wik
 ## Parallelisation
 
 This process has been set up so that it is easy to run in parallel. We are able to load the dataset we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock over the years 2030-2039. Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project [@Originalpaper]. We iterate this process until the optimal point(s) are found.
-
-The process above makes up one run of the script. To ensure that we are consistently receiving the same point(s) as our optimal point(s), we follow on from the original paper and run this script 1000 times as an array of jobs on the Viking HPC [@Originalpaper],[@VikingDocumentation]. These are the results we will analyse in the section below.
 
 # Analysis of Results
 
