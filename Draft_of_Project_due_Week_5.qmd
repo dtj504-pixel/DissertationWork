@@ -278,7 +278,7 @@ This full process ensures that only points that meet the precautionary threshold
 
 We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
 
-For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the sample space. For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial]. Thus, we use the equation:
+For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the sample space. For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, we use the equation:
 
 $$
 AEI_n(x_{n+1})=EI_n(x_{n+1})\left(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\right)
@@ -350,21 +350,17 @@ We can see from the heatmaps below that the simulations with means changed to ze
 
 ## Determining the best acquisition function
 
-GIVE A BRIEF DESCRIPTION AND SOME REASONING AS TO WHY THIS WAS DONE. EXPLAIN MAY NOT BE FULLY APPLICBALE TO THE SECOND HALF BUT I USED IT ANYWAY.
-
-FIND CITATIONS APPLICABLE THROUGHOUT THE BELOW.
+This was done to help us determine which acquisition function was most effective in our specific case as well as highlighting which acquisition function may be most effective in general, which could help us decide which will be most effective in the mixed fisheries context. However, the landscape of the objective function may be different in our mixed fisheries situation due to interactions between different stocks and particularly any choke stocks [@MixedFisheriesStatusandManagement2023],[@MixMEwiki]. This could mean that the acquisition function we choose for the single stock case may not be the most effective acquisition function in the mixed fisheries case [@HumanOutOfTheLoopBayesian].
 
 We ran a timing test, a total evaluations test, a number of rounds test and a convergence test comparing the base method used in the Case Study in @Originalpaper to the base method augmented with the different acquisition functions we have mentioned above. The tests and their results can be seen through the links provided in @sec-Appendix.
 
-Despite taking more time on average than the other methods in this case, the KG acquisition function method will be the best to use here because it requires less evaluations of the objective function and so is less expensive to run. However, when sampling eight points per round it had the same number of rounds as the other methods for the Case Study. This is important because we evaluate the new points each round in parallel and so KG didn’t have an overwhelming lead here. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result.
-
-Due to this decision, we will use KG as our preferred acquisition function throughout the mixed fisheries section of this report.
+Despite taking more time on average than the other methods in this case, the KG acquisition function method will be the best to use here because it requires less evaluations of the objective function and so is less expensive to run [@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@frazier2009knowledge]. However, when sampling eight points per round it had the same number of rounds as the other methods for the Case Study. This is important because we evaluate the new points each round in parallel and so KG didn’t have the overwhelming lead in terms of computation time that would be expected for less evaluations [@HumanOutOfTheLoopBayesian]. The results from the convergence test are essentially irrelevant for this comparison as all methods got the same result. Due to this decision, we will use KG as our preferred acquisition function throughout the mixed fisheries section of this report.
 
 # Applying the framework to a mixed fisheries context
 
 ## Context
 
-The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the $F_{target}$ for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. - DOES MIKE CITE SOMETHIGN WHERE THIS IDEA COMES FROM?
+The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the $F_{target}$ for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. - DOES MATT CITE SOMETHIGN WHERE THIS IDEA COMES FROM?
 
 The 20 year projection from 2020-2039 follows guidelines from ICES to create long-term projections based on the biology of the stocks [@ICES2019WKGMSE2]. We also follow ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
 
