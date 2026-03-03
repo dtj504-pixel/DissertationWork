@@ -256,7 +256,9 @@ $$ {#eq-ornsteinuhlenbeck}
 
 where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the terms respectively [@williams2006gaussian].
 
-We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. - LESS THAN OR EQUAL TO INSTEAD OF LESS THAN? Then suggests m_1 ok so check
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper].
+
+For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. - LESS THAN OR EQUAL TO INSTEAD OF LESS THAN? Then suggests m_1 ok so check
 
 However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
@@ -298,7 +300,7 @@ Now, we repeat the full process described in the Application of theory in this h
 
 ## Experimenting with the kernel and mean {#sec-expkerandmean}
 
-$Ftargt$ refers to $Ftarget$ in all figures in this section. - BEST TO CHANGE IF POSS
+$Ftrgt$ refers to $Ftarget$ in all figures in this section. - BEST TO CHANGE IF POSS
 
 Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
 
@@ -350,7 +352,7 @@ We can see from the heatmaps below that the simulations with means changed to ze
 
 ## Determining the best acquisition function
 
-This was done to help us determine which acquisition function was most effective in our specific case as well as highlighting which acquisition function may be most effective in general, which could help us decide which will be most effective in the mixed fisheries context. However, the landscape of the objective function may be different in our mixed fisheries situation due to interactions between different stocks and particularly any choke stocks [@MixedFisheriesStatusandManagement2023],[@MixMEwiki]. This could mean that the acquisition function we choose for the single stock case may not be the most effective acquisition function in the mixed fisheries case [@HumanOutOfTheLoopBayesian].
+This was done to help us determine which acquisition function was most effective in our specific case as well as highlighting which acquisition function may be most effective in general, which could help us decide which will be most effective in the mixed fisheries context. However, the landscape of the objective function may be different in our mixed fisheries situation due to interactions between different stocks and particularly any choke stocks [@MixedFisheriesStatusandManagement2023],[@MixMEwiki]. This could mean that the acquisition function we choose for the single stock case may not be the most effective acquisition function in the mixed fisheries case [@HumanOutOfTheLoopBayesian]. -JUTSIYF WHY STILL USING IN THIS ACSE
 
 We ran a timing test, a total evaluations test, a number of rounds test and a convergence test comparing the base method used in the Case Study in @Originalpaper to the base method augmented with the different acquisition functions we have mentioned above. The tests and their results can be seen through the links provided in @sec-Appendix.
 
@@ -389,6 +391,8 @@ The process for the first half of the project adapted to our new situation is ou
 -   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$ with probability greater than 0.05
 
 ## Calculating the risk {#sec-calculaterisk}
+
+ADD MORE EQUATIONS
 
 MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki]. In contrast to the first half of the project, we now calculate the risk using the $SSB$. Note that we also need the $B_{lim}$ for this method. We have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
 
@@ -458,9 +462,11 @@ The process above makes up one run of the script. To ensure that we are consiste
 
 ANALYSE RESULTS OF THE SIMULATIONS - LIKELY AFTER DRAFT HAS BEEN HANDED IN
 
+hihglight how stock s in different regiions and toy mdoel so doesn't really amtch rael data. also ices doesn't use mixme.
+
 # Conclusion and Further areas for Development
 
-We have created a framework that ...
+We have created a framework that ... - FILL IN BEFORE DRAFT SUBMISSION
 
 -   Moving to a more complicated dataset
 
