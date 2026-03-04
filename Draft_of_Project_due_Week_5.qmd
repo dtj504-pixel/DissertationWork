@@ -262,9 +262,7 @@ For mathematical stability, these functions should have less than eight coeffici
 
 However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
-We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels].
-
-GET IN 3D GP VISUALISATION SOMEHOW - LIKELY ADD AS A SEPARATE APPENDIX TO THIS FILE ON THE GITHUB - MAY NEED TO ADD THE FILE FOR JUST THE GRAPH TO GITHUB FIRST
+We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
 ### Excluding implausible points
 
@@ -299,8 +297,6 @@ In our second round, we need to update our GPs with new data [@Originalpaper]. W
 Now, we repeat the full process described in the Application of theory in this half of my project section until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
 ## Experimenting with the kernel and mean {#sec-expkerandmean}
-
-$Ftrgt$ refers to $Ftarget$ in all figures in this section. - BEST TO CHANGE IF POSS
 
 Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
 
@@ -338,7 +334,7 @@ We can see from the heatmaps below that the simulations with means changed to ze
 
 ## Determining the best acquisition function
 
-This was done to help us determine which acquisition function was most effective in our specific case as well as highlighting which acquisition function may be most effective in general, which could help us decide which will be most effective in the mixed fisheries context. However, the landscape of the objective function may be different in our mixed fisheries situation due to interactions between different stocks and particularly any choke stocks [@MixedFisheriesStatusandManagement2023],[@MixMEwiki]. This could mean that the acquisition function we choose for the single stock case may not be the most effective acquisition function in the mixed fisheries case [@HumanOutOfTheLoopBayesian]. -JUTSIYF WHY STILL USING IN THIS ACSE
+This was done to help us determine which acquisition function was most effective in our specific case as well as highlighting which acquisition function may be most effective in general, which could help us decide which will be most effective in the mixed fisheries context. However, the landscape of the objective function may be different in our mixed fisheries situation due to interactions between different stocks and particularly any choke stocks [@MixedFisheriesStatusandManagement2023],[@MixMEwiki]. This could mean that the acquisition function we choose for the single stock case may not be the most effective acquisition function in the mixed fisheries case [@HumanOutOfTheLoopBayesian]. However, for now we will use the most effective function in a single–stock context in our mixed fisheries context.
 
 We ran a timing test, a total evaluations test, a number of rounds test and a convergence test comparing the base method used in the Case Study in @Originalpaper to the base method augmented with the different acquisition functions we have mentioned above. The tests and their results can be seen through the links provided in @sec-Appendix.
 
@@ -348,7 +344,7 @@ Despite taking more time on average than the other methods in this case, the KG 
 
 ## Context
 
-The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the $F_{target}$ for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki]. - DOES MATT CITE SOMETHIGN WHERE THIS IDEA COMES FROM?
+The aim of this half of the project is to apply the methods from the first half of the project to mixed fisheries using the MixME R package. I have used the methods from the first half of the project to write code that follows a very similar process, but where the aim is now to find the $F_{target}$ for each stock that is precautionary but maximises total catch over the years 2030 to 2039. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki],[@ICES2019WKGMSE2].
 
 The 20 year projection from 2020-2039 follows guidelines from ICES to create long-term projections based on the biology of the stocks [@ICES2019WKGMSE2]. We also follow ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
 
@@ -363,10 +359,12 @@ Due to the change in stocks being modelled, I have decided to keep the GP prior 
 The process for the first half of the project adapted to our new situation is outlined below. Firslty, note that we are now seeking to maximise the objective function below:
 
 $$
-g(\theta) = I_{[Cod\ B_{lim},\infty]}(P(Cod\ SSB<B_{lim})) \times I_{[Haddock\ B_{lim},\infty]}(P(Haddock\ SSB<B_{lim})) \times C(\theta)
+\begin{split}
+g(\theta) = I_{[Cod\ B_{lim},\infty]}P(SSB_{Cod}<B_{lim}) \times I_{[Haddock\ B_{lim},\infty]}P(SSB_{Haddock}<B_{lim})  \\ \times C(\theta)
+\end{split}
 $$ {#eq-objectivefunctionmultstocks}
 
-where the indicator functions are defined as beforehand, except using these new sets. Thihs follows on intuitively from the @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
+where the indicator functions are defined as beforehand, except using these new sets. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows on intuitively from the @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
 
 Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
@@ -386,9 +384,9 @@ Firstly, to get some initial data, we randomly sample our first set of $n-1$ poi
 
 MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki]. In contrast to the first half of the project, we now calculate the risk using the $SSB$. Note that we also need the $B_{lim}$ for this method. We have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
 
-The GPs for $SSB$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. \]. The $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term \[@DiceKrigingDocumentation\],[@williams2006gaussian],[@BayesianOptimisationTutorial].
+The GPs for $SSB$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. \]. The $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation],[@williams2006gaussian],[@BayesianOptimisationTutorial].
 
-Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],\[@MixME\]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate:
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate:
 
 $$
 Risk = P(min(SSB) < B_{lim})
