@@ -41,9 +41,9 @@ To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly,
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 
--   We select 8 plausible points to sample in the next round - BRIEFLY JUSTIFY, MOSTLY ON COMPUTATION TIME, WHY I SAMPEL EIGHT POINTS EACH ROUND
+-   We select 8 plausible points to sample in the next round
 
-Now, we will look at the mathematics behind the methods above and also at the acquisition functions of Expected Improvement, Augmented Expected Improvement and Knowledge Gradient which I added to the original code.
+We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper]. Now, we will look at the mathematics behind the methods above and also at the acquisition functions of Expected Improvement, Augmented Expected Improvement and Knowledge Gradient which I added to the original code.
 
 ## General theory
 
@@ -368,7 +368,7 @@ $$ {#eq-objectivefunctionmultstocks}
 
 where the indicator functions are defined as beforehand, except using these new sets. Thihs follows on intuitively from the @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
 
-Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has [@Originalpaper]. Then, for each round we do the following:
+Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
