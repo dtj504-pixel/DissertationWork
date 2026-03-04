@@ -1,5 +1,5 @@
 ---
-title: "Draft of Project Report"
+title: "Accelerating Management Strategy Evaluation Grid-Searches Using Bayesian History Matching, Acquisiton Functions and K-Means Clustering"
 author: "Emma Bowen"
 format: 
   html:
@@ -286,7 +286,7 @@ to calculate the AEI for every point in the sample space, where we set $\sigma_{
 
 We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
-We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and implements our kmeans algorithm described in the General Theory section [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
+We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and implements our k-means algorithm described in the General Theory section [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 ### Updating our GPS
 
