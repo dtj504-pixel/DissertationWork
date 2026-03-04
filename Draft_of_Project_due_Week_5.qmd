@@ -41,7 +41,7 @@ To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly,
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 
--   We select 8 plausible points to sample in the next round
+-   We select 8 plausible points to sample in the next round - BRIEFLY JUSTIFY, MOSTLY ON COMPUTATION TIME, WHY I SAMPEL EIGHT POINTS EACH ROUND
 
 Now, we will look at the mathematics behind the methods above and also at the acquisition functions of Expected Improvement, Augmented Expected Improvement and Knowledge Gradient which I added to the original code.
 
@@ -384,19 +384,31 @@ Firstly, to get some initial data, we randomly sample our first set of $n-1$ poi
 
 ## Calculating the risk {#sec-calculaterisk}
 
-ADD MORE EQUATIONS
-
 MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki]. In contrast to the first half of the project, we now calculate the risk using the $SSB$. Note that we also need the $B_{lim}$ for this method. We have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
 
-Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result of the simulation we have run using the tracking object [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. These GPs have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper].
+The GPs for $SSB$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. \]. The $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term \[@DiceKrigingDocumentation\],[@williams2006gaussian],[@BayesianOptimisationTutorial].
 
-They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. This is because Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation [@williams2006gaussian],[@BayesianOptimisationTutorial]. Furthermore, the $SSB$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation].
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],\[@MixME\]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate:
 
-Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate $Risk = P(min(SSB) < B_{lim})$ for each stock. This can be done using a normal distribution because our Gaussian Process is a multivariate normal distribution [@williams2006gaussian]. Explicitly, it can be found using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
+$$
+Risk = P(min(SSB) < B_{lim})
+$$
 
-By ensuring that $P(\textrm{min}(SSB) < B_{lim}) < 0.05$ we ensure that $P(SSB < B_{lim})<0.05$ for every year in the long term forecast (2030-2039). This guarantees that the maximum annual risk in this period remains below the 0.05 threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$[@ICES2019WKGMSE2]. - CHECK AND ADD IN ABOUT BEING DETERMINISTIC AT LEAST. OR SAY MEETS PROB2 WHICH IS MORE RESTRICTIVE THAN PROB3
+for each stock. This can be done using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
-This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
+By ensuring that:
+
+$$
+P(\textrm{min}(SSB) < B_{lim}) \le 0.05
+$$
+
+we ensure that:
+
+$$
+P(SSB < B_{lim}) \le 0.05
+$$
+
+for every year in the long term forecast. This guarantees that the maximum annual risk in this period remains below the 0.05 threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$[@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
 
 ## The basics of the MixME model
 
