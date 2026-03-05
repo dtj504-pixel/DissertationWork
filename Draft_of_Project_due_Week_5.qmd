@@ -357,9 +357,8 @@ Due to the change in stocks being modelled, I have decided to keep the GP prior 
 The process for the first half of the project adapted to our new situation is outlined below. Firslty, note that we are now seeking to maximise the objective function below:
 
 $$
-\begin{split}
-g(\theta) = I_{[Cod\ B_{lim},\infty]}P(SSB_{Cod}<B_{lim}) \times I_{[Haddock\ B_{lim},\infty]}P(SSB_{Haddock}<B_{lim})  \\ \times C(\theta)
-\end{split}
+\small
+g(\theta) = I_{[Cod\ B_{lim},\infty]}P(SSB_{Cod}<B_{lim}) \times I_{[Haddock\ B_{lim},\infty]}P(SSB_{Haddock}<B_{lim}) \times C(\theta)
 $$ {#eq-objectivefunctionmultstocks}
 
 where the indicator functions are defined as beforehand, except using these new sets. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows on intuitively from the @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
