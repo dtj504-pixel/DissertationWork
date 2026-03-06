@@ -170,7 +170,7 @@ best_so_far<- runs[runs$risk3_long < 0.05,][which.max(runs$C_long[runs$risk3_lon
 tmp <-setdiff(pot_points,runs[,1:2])
 pot_points <- tmp
 
-# 3D view of Risk GP mean and sd plot
+print("3D view of Risk GP mean and sd plot")
 
 #load appropriate libraries
 library(DiceView)
@@ -215,12 +215,8 @@ rgl::view3d(theta = 40, phi = 25, zoom = 0.8)
 #converting to a html widget so we can render it through a Quarto document
 rglwidget()
 
+print("3D view of Catch GP mean and sd plot")
 
-```
-
-Case Study 8: Catch GP 3D Visualisation
-
-```{r}
 library(DiceView)
 library(rgl)
 
@@ -247,5 +243,11 @@ rgl::aspect3d("iso")
 rgl::view3d(theta = 40, phi = 25, zoom = 0.8)
 
 rglwidget()
+```
+
+Case Study 8: Catch GP 3D Visualisation
+
+```{r}
+
 
 
