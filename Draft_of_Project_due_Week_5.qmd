@@ -23,23 +23,23 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 # Introduction
 
-NO CURRENT APPROPRIATE ONE IN SOURCE MATERIAL
-
 MAYBE A BIT MORE DEFINING OF TERMS LIKE IN MIKE'S?
 
-This paper describes the framework created above in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults.
+FIND CITATIONS THROUGHOUT
 
-In the @sec-singlestock part of the project, we are building on the @Originalpaper paper. This paper is looking to find the HCR parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk precautionary for a single-stock fishery [@Originalpaper]. The paper uses many different methods to achieve this, which we investigate in detail below and apply to our own work. We have focused on improving these methods by adding acquisition functions and k-means clustering to improve how we choose to sample points between rounds as this was not deeply considered in the original paper [@Originalpaper]. We demonstrate clearly how these methods become applicable in our own work in @sec-application.
+This paper describes the framework created above in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
 
-The aim of the second half of the project in @sec-mixedfisheries is to apply the methods from @sec-singlestock to mixed fisheries. I use the methods from the first half of the project to but change the aim to finding the $F_{target}$ for each stock that is precautionary but maximises long-term catch. We focus on two datasets and receive results for each by running the simulations in parallel on a HIgh Performance Computer as the objective function is no longer pre-evaluated as it was in @Originalpaper. This means we have used a much more realistic example and have been able to demonstrate how effective our method may be if used in the industry.
+In the @sec-singlestock part of the project, we are building on the @Originalpaper paper. This paper is looking to find the HCR parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk precautionary for a single-stock fishery [@Originalpaper]. The paper uses many different methods to achieve this, which we investigate in detail below and apply to our own work. We have focused on improving these methods by adding acquisition functions and k-means clustering to improve how we choose to sample points between rounds as this was not deeply considered in the original paper [@Originalpaper],[@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We demonstrate clearly how these methods become applicable in our own work in @sec-application.
 
-Furthermore, we set up a new objective function to maximise in @eq-objectivefunctionmultstocks and a new risk calculation. We claim that this method of risk calculation satisfies the ICES precautionary standard [@ICES2019WKGMSE2]. Our new risk calculation was mostly developed due to our second dataset having only on iteration, and so is not generally applicable. There is more discussion about this in @sec-conclusionandfurtherdevelopment.
+The aim of the second half of the project in @sec-mixedfisheries is to apply the methods from @sec-singlestock to mixed fisheries. We use the methods from the first half of the project but change the aim to finding the $F_{target}$ for each stock that is precautionary but maximises long-term catch. We focus on two datasets and receive results for each by running the simulations in parallel on a High Performance Computer because the objective function is no longer pre-evaluated as it was in @Originalpaper. This means we have used a much more realistic example and have been able to demonstrate how effective our method may be if used in the industry [@BayesianOptimisationTutorial],[@MixME].
+
+Furthermore, we set up a new objective function to maximise in @eq-objectivefunctionmultstocks and a new risk calculation. We claim that this method of risk calculation satisfies the ICES precautionary standard [@ICES2019WKGMSE2]. Our new risk calculation was mostly developed due to our second dataset having only on iteration, and so is not necessarily generally applicable. There is more discussion about this in @sec-conclusionandfurtherdevelopment.
 
 # Creating the framework in a single stock fisheries context {#sec-singlestock}
 
 ## Context
 
-We have the objective function @eq-objectivefunctionsinglestock in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
+We have the objective function @eq-objectivefunctionsinglestock in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
 
