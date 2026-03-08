@@ -23,7 +23,7 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 # Introduction
 
-MAYBE A BIT MORE DEFINING OF TERMS LIKE IN MIKE'S?
+MAYBE A BIT MORE DEFINING OF TERMS LIKE IN MIKE'S? OR A BIT MORE MOTIVATION - ASK GUSTAV
 
 This paper describes the framework created above in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
 
@@ -473,7 +473,7 @@ FIND CITATIONS THROUGHOUT
 
 We have created a framework that is able to speed up management strategy evaluation grid searches in single stock or multi-stock contexts, significantly reducing the burden of expensive runs of the objective function [@Originalpaper]. This was done by using advanced statistical techniques such as BHM and Gaussian Process Regression as well as providing some of our own insights by using acquisition functions and k-means clustering. We have compared the usefulness of different acquisition functions and decided upon one to implement in our framework. We have also thoroughly explained how the addition of k-means clustering improves the trade off between exploration and exploitation when sampling multiple points [@batchspreadingoutjustification],[@AKMeansClusteringAlgorithm]. In addition, we have successfully demonstrated the usefulness of this framework by showing it takes less evaluations than in @Originalpaper to converge on the optimal point for the Case Study in @sec-analysingresults and by applying our method to a dataset with multiple stocks.
 
-Overall, this framework presents a more computationally efficient way for stakeholders to be able determine management strategies that will keep stocks healthy whilst maximising the long-term catch of the fishery. This is especially relevant at this time because many mixed fisheries are struggling after the collapse of an individual stock causes them to have to severely limit catch of others despite growing demand from consumers. By reducing computation time for MSE grid searches, we make it easier for more simulations to be run, which could allow fisheries advice to be published in a more timely manner. This could allow organisations such as ICES to be able to keep pace with the changes in environment, interactions between species and early maturation. As a result, fisheries advice will be more accurate and relevant, contributing towards a healthier ecosystem and planet.
+Overall, this framework presents a more computationally efficient way for stakeholders to be able determine management strategies that will keep stocks healthy whilst maximising the long-term catch of the fishery [@ICES2019WKGMSE2]. This is especially relevant at this time because many mixed fisheries are struggling after the collapse of an individual stock causes them to have to severely limit catch of others despite growing demand from consumers [@ICES2025chokestockceltic],[@ICES2025chokestocknorth]. By reducing computation time for MSE grid searches, we make it easier for more simulations to be run, which could allow fisheries advice to be published in a more timely manner [@Originalpaper]. This could allow organisations such as ICES to be able to keep pace with the changes in environment, interactions between species and early maturation. As a result, fisheries advice will be more accurate and relevant, contributing towards a healthier ecosystem and planet.
 
 ### Further development
 
