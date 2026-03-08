@@ -407,7 +407,7 @@ for (iteration in 1:max_rounds) {
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
-    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = prisk_cod, prisk_had = prisk_had, eps = 1e-4)
+    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = pssb_cod, prisk_had = pssb_had, eps = 1e-4)
     
     print("kg done")
     
