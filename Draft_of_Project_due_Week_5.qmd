@@ -469,7 +469,7 @@ discuss results form first half briefly - say my method still works basically - 
 
 # Conclusion and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
-FIND CITATIONS THROUGHOUT
+MAYBE A BIT TOO GENERAL AT THE END OR NOT ENOUGH ELABORATION ON CONCEPTS IN THE PAPER?
 
 We have created a framework that is able to speed up management strategy evaluation grid searches in single stock or multi-stock contexts, significantly reducing the burden of expensive runs of the objective function [@Originalpaper]. This was done by using advanced statistical techniques such as BHM and Gaussian Process Regression as well as providing some of our own insights by using acquisition functions and k-means clustering. We have compared the usefulness of different acquisition functions and decided upon one to implement in our framework. We have also thoroughly explained how the addition of k-means clustering improves the trade off between exploration and exploitation when sampling multiple points [@batchspreadingoutjustification],[@AKMeansClusteringAlgorithm]. In addition, we have successfully demonstrated the usefulness of this framework by showing it takes less evaluations than in @Originalpaper to converge on the optimal point for the Case Study in @sec-analysingresults and by applying our method to a dataset with multiple stocks.
 
