@@ -17,7 +17,7 @@ bibliography: draft_report_references.bib
 
 Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal Harvest Control Rules (HCRs) [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023].
 
-This project introduces a computationally efficient framework for evaluating HCRs [@Originlapaper]. Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk [@Originalpaper]. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space [@Originalpaper],[@BayesianOptimisationTutorial],[@AKMeansClusteringAlgorithm]. This drastically reduces the need for expensive simulation runs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions].
+This project introduces a computationally efficient framework for evaluating HCRs [@Originalpaper]. Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk [@Originalpaper]. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space [@Originalpaper],[@BayesianOptimisationTutorial],[@AKMeansClusteringAlgorithm]. This drastically reduces the need for expensive simulation runs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions].
 
 Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios [@MixME]. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch [@MixedFisheriesStatusandManagement2023],[@ULRICH201238]. This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs whilst ensuring that the stocks remain both economically viable and firmly within safe biological limits [@Originalpaper],[@ICES2019WKGMSE2],[@Harvest_Control_Rules].
 
@@ -390,7 +390,7 @@ The GPs for $SSB$ have remained modelled in the same way as risk from the first 
 Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate:
 
 $$
-Risk = P(min(SSB) < B_{lim})
+Risk = P(\textrm{min}(SSB) < B_{lim})
 $$
 
 for each stock. This can be done using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
@@ -407,7 +407,7 @@ $$
 P(SSB < B_{lim}) \le 0.05
 $$
 
-for every year in the long term forecast. This guarantees that the maximum annual risk in this period remains below the 0.05 threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$[@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
+for every year in the long term forecast. This guarantees that the maximum annual risk in this period remains below the 0.05 threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ [@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
 
 ## The basics of the MixME model
 
@@ -461,8 +461,6 @@ This process has been set up so that it is easy to run in parallel. We are able 
 
 # Analysis of Results {#sec-analysingresults}
 
-ANALYSE RESULTS OF THE SIMULATIONS - LIKELY AFTER DRAFT HAS BEEN HANDED IN
-
 The convergence tests I ran once augmenting the original method in @Originalpaper with different acquisition functions confirmed that my method still led to convergence to the correct point identified in the paper for every acquisition function. This can be found in @sec-Appendix.
 
 From running our simulation for the shortcut model form the second half of the project on the Viking HPC, we were able to obtain some results [@VikingDocumentation]. The shortcut model initially gave us a long list of parameters, each with $F_{cod} = 0.42$ and $F_{had} \ge 0.34$. As $F_{had} = 0.34$ was given as an optimal parameter in the list, it means that this results in the same long-term catch of haddock as if we were to fish at any $F_{had} > 0.34$, as we were maximising the total long-term catch. Remembering that cod is the choke stock, this list also suggests that when we fish at $F_{cod} = 0.42$ this causes us to fish at $F_{had} = 0.34$ due to the ratio of cod to haddock that we are catching across the fleets [@MixMEwiki]. Thus, $F_{cod} = 0.42$ and $F_{had} = 0.34$ are the optimal parameters suggested by the shortcut simulation.
@@ -471,9 +469,9 @@ These appear to be relatively high. ICES documents regularly suggest lower value
 
 On the other hand, for Celtic Sea haddock the optimal parameter given by the shortcut model $F_{had} = 0.34$ is below the $F_{MSY} = 0.353$ and the $F_{PA} = 0.708$ given in the latest advice and sits in a similar area historically [@ICES2025HaddockAdvice],[@ICES2019HaddockAdvice],[@ICES2020HaddockBlim]. This shows that the shortcut model has produced a safe value for $F_{had}$ for Celtic Sea haddock according to the latest ICES guidelines.
 
-These anomalous results could in part be explained by the stocks being form different regions. This could make the simulations unrealistic as these stocks will not interact in real life and so any inter-species interactions will be different to those in the real world which are being modelled by ICES and thus used in their advice. - CHECK IF ICES AND MIXEME TAKE INTERSPECIES INTERACTIONS INTO ACCOUNT
+These anomalous results could in part be explained by the stocks being from different regions. This could make the simulations unrealistic as these stocks will not interact in real life and so any inter-species interactions will be different to those in the real world which are being modelled by ICES and thus used in their advice. - CHECK IF ICES AND MIXEME TAKE INTERSPECIES INTERACTIONS INTO ACCOUNT
 
-highlight how stocks are in different regions and so toy model doesn't really match real data.
+MORE TO DO: highlight how stocks are in different regions and so toy model doesn't really match real data.
 
 # Conclusion and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
