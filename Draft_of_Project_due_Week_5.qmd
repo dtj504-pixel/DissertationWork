@@ -471,7 +471,7 @@ On the other hand, for Celtic Sea haddock the optimal parameter given by the sho
 
 These anomalous results could in part be explained by the stocks being from different regions. This could make the simulations unrealistic as these stocks will not interact in real life and so any inter-species interactions will be different to those in the real world which are being modelled by ICES and thus used in their advice. - CHECK IF ICES AND MIXEME TAKE INTERSPECIES INTERACTIONS INTO ACCOUNT
 
-MORE TO DO: highlight how stocks are in different regions and so toy model doesn't really match real data.
+This will also make the simulations unrealistic due to using different types of gear in different regions. This mean for example that far more cod per haddock could be caught by the fleets used in the simulation than those that actually operate in the North Sea. Thus, the fleets would have to stop fishing earlier than expected. - AGAIN, CHECK MIX ME FOR IF FLEETS ARE SOMEHOW SIMILAR
 
 # Conclusion and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
