@@ -463,15 +463,17 @@ This process has been set up so that it is easy to run in parallel. We are able 
 
 ANALYSE RESULTS OF THE SIMULATIONS - LIKELY AFTER DRAFT HAS BEEN HANDED IN
 
-From running our simulation for the shortcut model on the Viking HPC, we were able to obtain some results [@VikingDocumentation]. The shortcut model initially gave us a long list of parameters, each with $F_{cod} = 0.42$ and $F_{had} \ge 0.34$. As $F_{had} = 0.34$ was given as an optimal parameter in the list, it means that this results in the same long-term catch of haddock as if we were to fish at any $F_{had} > 0.34$ as we were maximising total long-term catch. Remembering that cod is the choke stock, this list also suggests that when we fish at $F_{cod} = 0.42$ this causes us to fish at $F_{had} = 0.34$ due to the ratio of cod to haddock that we are catching across the fleets [@MixMEwiki]. Thus, $F_{cod} = 0.42$ and $F_{had} = 0.34$ are the optimal parameters suggested by the shortcut simulation.
+The convergence tests I ran once augmenting the original method in @Originalpaper with different acquisition functions confirmed that my method still led to convergence to the correct point identified in the paper for every acquisition function. This can be found in @sec-Appendix.
 
-These appear to be relatively high. ICES documents regularly suggest values lower values for $F_{cod}$ in the North Sea region for their $F_{MSY}$ values [@ICES2019CodAdvice],[@ICES2020CodBlim]. Looking at the most recent advice, the model's output of $F_{cod}=0.42$ is significantly above the $F_{MSY} = 0.231$ but below $F_{PA} = 0.464$ [@ICES2025CodAdvice]. - FIND THE DEFINITIONS OF THESE AND EXPLAIN WHETHER THIS IS BAD OR NOT
+From running our simulation for the shortcut model form the second half of the project on the Viking HPC, we were able to obtain some results [@VikingDocumentation]. The shortcut model initially gave us a long list of parameters, each with $F_{cod} = 0.42$ and $F_{had} \ge 0.34$. As $F_{had} = 0.34$ was given as an optimal parameter in the list, it means that this results in the same long-term catch of haddock as if we were to fish at any $F_{had} > 0.34$, as we were maximising the total long-term catch. Remembering that cod is the choke stock, this list also suggests that when we fish at $F_{cod} = 0.42$ this causes us to fish at $F_{had} = 0.34$ due to the ratio of cod to haddock that we are catching across the fleets [@MixMEwiki]. Thus, $F_{cod} = 0.42$ and $F_{had} = 0.34$ are the optimal parameters suggested by the shortcut simulation.
 
-On the other hand, for haddock the optimal parameter given the shortcut model $F_{had} = 0.34$ is below the $F_{MSY} = 0.353$ and the $F_{PA} = 0.708$ [@ICES2025HaddockAdvice]. This shows that the shortcut model has produced a safe value for $F_{had}$ according to the latest ICES guidelines.
+These appear to be relatively high. ICES documents regularly suggest lower values for $F_{cod}$ in the North Sea region for their $F_{MSY}$ values [@ICES2019CodAdvice],[@ICES2020CodBlim]. Looking at the most recent advice, the model's output of $F_{cod}=0.42$ is significantly above the $F_{MSY} = 0.231$ but below $F_{PA} = 0.464$ [@ICES2025CodAdvice]. - FIND THE DEFINITIONS OF THESE AND EXPLAIN WHETHER THIS IS BAD OR NOT
+
+On the other hand, for Celtic Sea haddock the optimal parameter given by the shortcut model $F_{had} = 0.34$ is below the $F_{MSY} = 0.353$ and the $F_{PA} = 0.708$ given in the latest advice and sits in a similar area historically [@ICES2025HaddockAdvice],[@ICES2019HaddockAdvice],[@ICES2020HaddockBlim]. This shows that the shortcut model has produced a safe value for $F_{had}$ for Celtic Sea haddock according to the latest ICES guidelines.
+
+These anomalous results could in part be explained by the stocks being form different regions. This could make the simulations unrealistic as these stocks will not interact in real life and so any inter-species interactions will be different to those in the real world which are being modelled by ICES and thus used in their advice. - CHECK IF ICES AND MIXEME TAKE INTERSPECIES INTERACTIONS INTO ACCOUNT
 
 highlight how stocks are in different regions and so toy model doesn't really match real data.
-
-discuss results form first half briefly - say my method still works basically - before mixme results
 
 # Conclusion and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
