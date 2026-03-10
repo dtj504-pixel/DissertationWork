@@ -497,8 +497,6 @@ Overall, this framework presents a more computationally efficient way for stakeh
 
 # Appendix {#sec-Appendix}
 
-Mostly for code links.
-
 The code is all contained in the DissertationWork repository on Github [@myrepo].
 
 The visualisations of the GPs from the first half of the project can be seen in Gaussian Process Visualisation and Experimentation folder in the `case_study8_3D.qmd` file.
