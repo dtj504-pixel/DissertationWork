@@ -21,8 +21,6 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 # Introduction
 
-RE-READ BEFORE SUBMISSION BUT MOSTLY FOCUS ON ANALYSING RESULTS SECTION FROM NOW ON
-
 Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal HCRs [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023],[@MixME].
 
 There has been lots of previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management, being used by ICES to implement single-stock Total Annual Catches (TACs) and thus are widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
@@ -467,8 +465,6 @@ This process has been set up so that it is easy to run in parallel. We are able 
 
 # Analysis of Results {#sec-analysingresults}
 
-DO ANALYSIS OF OPTIMISING_FTARGET_IN_MIX_ME_MULT_POINTS_PARALLEL WHEN RUN IS DONE
-
 The convergence tests I ran after augmenting the original method in @Originalpaper with different acquisition functions confirmed that my method still led to convergence to the correct point identified in the paper for every acquisition function. The convergence tests can be found in the code in @sec-Appendix.
 
 From running our simulation for the shortcut model from the second half of the project on the Viking HPC, we were able to obtain some results [@VikingDocumentation]. The shortcut model initially gave us a long list of parameters, each with $F_{cod} = 0.42$ and $F_{had} \ge 0.34$. As $F_{had} = 0.34$ was given as an optimal parameter in the list, it means that this results in the same long-term catch of haddock as if we were to fish at any $F_{had} > 0.34$, as we were maximising the total long-term catch. Remembering that cod is the choke stock, this list also suggests that when we fish at $F_{cod} = 0.42$ this causes us to fish at $F_{had} = 0.34$ due to the ratio of cod to haddock that we are catching across the fleets [@MixMEwiki]. Thus, $F_{cod} = 0.42$ and $F_{had} = 0.34$ are the optimal parameters suggested by the shortcut simulation.
@@ -479,9 +475,7 @@ On the other hand, for Celtic Sea haddock the optimal parameter given by the sho
 
 The discrepancy in the $F_{cod}$ given by the shortcut model and those suggested by @ICES2025CodAdvice could be due to ICES maximising the long-term single-stock catch for cod whilst my simulation aims to maximise the long-term total catch for both cod and haddock. This could lead to the quota for cod being raised, whilst remaining precautionary, so that we can fish more haddock. Allowing this could result in a lower long-term catch for cod, but this reduction in cod catch could be made up for by the increase in haddock catch. Thus, the model may be trying to balance the trade off of reducing the long term catch of cod by fishing above the $F_{MSY}$ for cod with catching more haddock if it does this. This would result in a value between $F_{MSY}$ and $F_{PA}$ for cod which is exactly what we see above.
 
-These anomalous results could in part be explained by the stocks being from different regions. This could make the simulations unrealistic as these stocks will not interact in real life and so any inter-species interactions will be different to those in the real world which are being modelled by ICES and thus used in their advice. - CHECK IF ICES AND MIXEME TAKE INTERSPECIES INTERACTIONS INTO ACCOUNT, mixme doesn't account for interactions between species
-
-This will also make the simulations unrealistic due to using different types of gear in different regions. This mean for example that far more cod per haddock could be caught by the fleets used in the simulation than those that actually operate in the North Sea. Thus, the fleets would have to stop fishing earlier than expected. - AGAIN, CHECK MIX ME FOR IF FLEETS ARE SOMEHOW SIMILAR
+The simulation could also be unrealistic due to using different types of gear in different regions. This means, for example, that the ratio of cod to haddock caught by the fleets used in the simulation could be very different than those that actually operate in the North Sea. Thus, the fleets would have to stop fishing earlier than expected.
 
 # Conclusion and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
@@ -489,25 +483,7 @@ We have created a framework that is able to speed up management strategy evaluat
 
 Overall, this framework presents a more computationally efficient way for stakeholders to be able determine management strategies that will keep stocks healthy whilst maximising the long-term catch of the fishery [@ICES2019WKGMSE2]. This is especially relevant at this time because many mixed fisheries are struggling after the collapse of an individual stock causes them to have to severely limit catch of others despite growing demand from consumers [@ICES2025chokestockceltic],[@ICES2025chokestocknorth],[@aquaculture2024state]. By reducing computation time for MSE grid searches, we make it easier for more simulations to be run, which could allow fisheries advice to be published in a more timely manner [@Originalpaper],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. This could allow organisations such as ICES to be able to keep pace with the changes in environment and in interactions between species [@holsman2019]. As a result, fisheries advice could be more accurate and relevant, contributing towards a healthier ecosystem and planet.
 
-### Further development
-
--   Moving to a more complicated dataset
-
-    -   Mention the one in the MixME paper.
-
--   Higher dimension?
-
-    -   Haven't done above maximising two at the same time
-
--   Doing a proper risk calculation
-
-    -   Do it the standard way on multiple iterations and show that I know what this is - equations
-
--   Actually model the uncertainty of the SSB values outputted by the simulation
-
-    -   Maybe we get this somewhere in the tracking object?
-
--   Inter-species/Trophic interactions
+Some ideas for further development could be moving to a more complicated dataset; apply the framework to an example with more stocks to determine whether it still works well in high dimensions; doing the risk calculation when there are iterations (i.e. the standard way MixME suggests); model the uncertainty of the SSB values outputted by the simulation as talked about earlier on and considering trophic interactions [@MixMEwiki].
 
 # Appendix {#sec-Appendix}
 
