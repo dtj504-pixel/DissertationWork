@@ -21,8 +21,6 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 # Introduction
 
-RE-READ BEFORE SUBMISSION BUT MOSTLY FOCUS ON ANALYSING RESULTS SECTION FROM NOW ON
-
 Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal HCRs [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating the complex, interconnected dynamics found in fisheries is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023],[@MixME].
 
 There has been much previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management, being used by ICES to implement single-stock Total Annual Catches (TACs) and thus are widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
