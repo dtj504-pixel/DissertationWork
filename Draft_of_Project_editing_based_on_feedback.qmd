@@ -15,7 +15,7 @@ bibliography: draft_report_references.bib
 
 # Abstract
 
-This project introduces a computationally efficient framework for evaluating Harvest Control Rules (HCRs). Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space. This drastically reduces the need for expensive simulation runs.
+This project introduces a computationally efficient framework for evaluating Harvest Control Rules (HCRs). Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the parameter space. This drastically reduces the need for expensive simulation runs.
 
 Building on this foundation, we scale up this framework to complex mixed-fisheries scenarios. Here, the objective becomes identifying the fishing mortality for each of the interacting stocks that safely maximizes total long-term catch. This framework provides a powerful tool for marine policy by significantly reducing the computational burden of mixed-fishery MSEs whilst ensuring that the stocks remain both economically viable and firmly within safe biological limits. However, there are limitations to our current work which we discuss throughout and summarise when suggesting further developments.
 
@@ -55,9 +55,9 @@ $$
 
 We choose a covariance function such that the inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper] - UNCLEAR, FIND A BETTER WAY TO EXPRESS.
 
-This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$.
+This is equivalent to saying that if for some $x,x',x''$ in the parameter space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$.
 
-We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ for any $x$ in the sample space as our estimate of $f(x)$ based on our current beliefs. - UNCLEAR
+We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ for any $x$ in the parameter space as our estimate of $f(x)$ based on our current beliefs. - UNCLEAR
 
 This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to these points [@Originalpaper].
 
@@ -75,7 +75,7 @@ $$
 
 ### Gaussian Process Regression {#sec-gaussianprocessregression}
 
-Gaussian process regression is a Bayesian statistical method for modelling functions. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
+Gaussian process regression is a Bayesian statistical method for modelling functions. Again, let $f$ be the objective function and we focus on the parameter space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
 
 Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
 
@@ -101,13 +101,13 @@ $$
 
 This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution for $x_{n+1}$. - CHECK IF THIS IS FOR F(x\_{n+1}) INSTEAD
 
-We can calculate this distribution for every point in the design space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
+We can calculate this distribution for every point in the parameter space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
 
 ### Bayesian History Matching
 
 For the theory here, please see @Originalpaper.
 
-Let $x$ be a point in the sample space. We begin with some uncertainty about our objective function $f(x)$. However, we can make probabilistic statements such as:
+Let $x$ be a point in the parameter space. We begin with some uncertainty about our objective function $f(x)$. However, we can make probabilistic statements such as:
 
 $$
 P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
@@ -169,7 +169,7 @@ where $\sigma_{obs}$ is the standard deviation of the noise variable set by the 
 
 ### Knowledge Gradient
 
-We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. - WHY IS mu_n A VECTOR?
+We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the parameter space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. - WHY IS mu_n A VECTOR?
 
 We call this maximum ${x_n^*}$ and then we can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
 
@@ -177,7 +177,7 @@ $$
 \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
 $$
 
-where $x$ is any point in the sample space [@BayesianOptimisationTutorial]. Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ defined as:
+where $x$ is any point in the parameter space [@BayesianOptimisationTutorial]. Then, we imagine that we are now allowed to sample a new point $x_{n+1}$. We get a new posterior distribution at the point $x$ which we can calculate using @eq-posteriordistributiongivensamples by replacing $x_{n+1}$ with $x$ and $x_{1:n}$ with $x_{1:n+1}$ to include our new observation. This will have the posterior mean function $\mu_{n+1}(\cdot)$ defined as:
 
 $$
 \mu_{n+1}(x) = \mu_n(x) + \frac{\operatorname{cov}_n(x_{n+1},x)}{\operatorname{var}_n(x_{n+1}) + \sigma_{\mathrm{obs}}^2}(F(x_{n+1})|f(x_{1:n})-\mu_n(x_{n+1}))
@@ -195,7 +195,7 @@ $$
 \mu_{n+1}^* - \mu_n^*
 $$ {#eq-increaseinconditionalexpectedvalue}
 
-While this quantity is unknown before we sample $x_{n+1}$, we can calculate it's expected value given our observations $x_1,...,x_n$. The Knowledge Gradient (KG) for sampling at a new point $x$ in the design space is defined as [@BayesianOptimisationTutorial]:
+While this quantity is unknown before we sample $x_{n+1}$, we can calculate it's expected value given our observations $x_1,...,x_n$. The Knowledge Gradient (KG) for sampling at a new point $x$ in the parameter space is defined as [@BayesianOptimisationTutorial]:
 
 $$
 KG_n(x) := E[\mu_{n+1}^* - \mu_n^*|x_{n+1} = x]
@@ -207,7 +207,7 @@ The easiest way to calculate the KG is via simulation. This can be done by simul
 
 Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using k-means clustering. For the general theory on k-means processes and an algorithm for implementing a k-means process on computers, please see @kodinariya2013review and @AKMeansClusteringAlgorithm.
 
-Let us have a design space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms.
+Let us have the parameter space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms.
 
 This algorithm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters. We repeat this process until no points change clusters.
 
@@ -217,15 +217,15 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ### Context
 
-We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
+We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
 
--   We use the GP modelling $\ln(risk)$ to get the value for the risk at each point in the sample space
+-   We use the GP modelling $\ln(risk)$ to get the value for the risk at each point in the parameter space
 
 -   We then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have a high probability of having risk below 0.05
 
--   We use the GP which is modelling $\ln(median\ catch)$ to get the value for the median catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling $\ln(median\ catch)$ to get the value for the median catch at every point in the parameter space, which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 
@@ -284,7 +284,7 @@ We need to sample our first round of eight points before setting up the GPs so t
 
 For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of @Originalpaper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$.
 
-We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
+We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the parameter space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
 ### Excluding implausible points
 
@@ -300,13 +300,13 @@ This full process ensures that only points that meet the precautionary threshold
 
 We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
 
-For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the sample space. For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, we use the equation:
+For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, we use the equation:
 
 $$
 AEI_n(x_{n+1})=EI_n(x_{n+1})\Biggl(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\Biggr)
 $$
 
-to calculate the AEI for every point in the sample space, where we set $\sigma_{obs} = 0$. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
+to calculate the AEI for every point in the parameter space, where we set $\sigma_{obs} = 0$. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
 We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
@@ -374,7 +374,7 @@ The aim of the second half of the project is to apply the methods from @sec-sing
 
 I focused on the datasets from the Fixed fishing mortality management strategy example and the Exploring simulation outputs example which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is provided in @sec-Appendix. Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively. I was told by the same researcher at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESCodFactsheet],[@ICESCodFactsheet].
 
-We create our new sample space to be a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments [@Originalpaper]. This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this sample space is appropriate [@MixMEwiki],[@MixedFisheriesStatusandManagement2023],[@ICES2019WKGMSE2].
+We create our new parameter space to be a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments [@Originalpaper]. This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this parameter space is appropriate [@MixMEwiki],[@MixedFisheriesStatusandManagement2023],[@ICES2019WKGMSE2].
 
 For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but mean that we cannot use the standard ICES definition of risk [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we adopt another process explained in @sec-calculaterisk. We claim that this method satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
 
@@ -395,7 +395,7 @@ Firstly, to get some initial data, we randomly sample our first set of $2(n-1)$ 
 
 -   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(min(SSB)>B_{lim})>0.05$ for all of the years 2030-2039
 
--   We use the GP which is modelling the total catch to predict the value for the total catch at every point in the sample space, which will have some uncertainty
+-   We use the GP which is modelling the total catch to predict the value for the total catch at every point in the parameter space, which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a probability less than 0.0001 of being higher than the current best total catch)
 
@@ -411,7 +411,7 @@ Throughout this section, we have assumed that the $SSB$ for each stock for each 
 
 The GPs for $min(SSB)$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. \]. The $min(SSB)$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation],[@williams2006gaussian],[@BayesianOptimisationTutorial].
 
-Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the sample space and calculate:
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the parameter space and calculate:
 
 $$
 Risk = P(\textrm{min}(SSB) < B_{lim})
