@@ -55,11 +55,13 @@ We have the objective function @eq-objectivefunctionsinglestock in @Originalpape
 
 We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper]. Now, we will look at the mathematics behind the methods above and also at the acquisition functions which I added to the original code.
 
+For the general theory on Gaussian processes, Maximum Likelihood Estimation and Gaussian process Regression see @BayesianOptimisationTutorial.
+
 ## General theory
 
 ### Gaussian Processes
 
-A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $i,j\in\{1, ..., n\}$ to find the covariance matrix $\Sigma_{1:n}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_n}$, the marginal probability distribution on $F(x_{1:n}) = (F(x_1),...,F(x_n))$ is given by [@BayesianOptimisationTutorial]:
+A Gaussian Process $F$ has a mean function $\mu_0$ and a covariance function $\operatorname{cov}_0(x_i,x_j)$. We can then evaluate the covariance function $\operatorname{cov}_0(x_i,x_j)$ for every pair $x_i,x_j$ where $i,j\in\{1, ..., n\}$ to find the covariance matrix $\Sigma_{1:n}$ . Then, $F$ is a probability distribution over our objective function $f$ with the property that, for any given collection of points ${x_1,...x_n}$, the marginal probability distribution on $F(x_{1:n}) = (F(x_1),...,F(x_n))$ is given by:
 
 $$
 F(x_{1:n}) \sim N(\mu_0(x_{1:n}),\Sigma_{1:n})
@@ -73,7 +75,7 @@ $$
 
 We choose a covariance function such that the inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper] - UNCLEAR, FIND A BETTER WAY TO EXPRESS.
 
-This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
+This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$.
 
 We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ for any $x$ in the sample space as our estimate of $f(x)$ based on our current beliefs. - UNCLEAR
 
@@ -81,13 +83,11 @@ This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to 
 
 ### Maximum Likelihood Estimation
 
-When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
+When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$.
 
-We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. - UNDER THE PRIO
+We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. - UNDER THE PRIOR IS UNCLEAR
 
-R IS UNCLEAR
-
-Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood [@BayesianOptimisationTutorial]:
+Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
 
 $$
  \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
@@ -95,7 +95,7 @@ $$
 
 ### Gaussian Process Regression {#sec-gaussianprocessregression}
 
-Gaussian process regression is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
+Gaussian process regression is a Bayesian statistical method for modelling functions. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
 
 Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
 
@@ -121,11 +121,13 @@ $$
 
 This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution for $x_{n+1}$. - CHECK IF THIS IS FOR F(x\_{n+1}) INSTEAD
 
-We can calculate this distribution for every point in the design space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$ [@BayesianOptimisationTutorial]. So, we can update our GP every round based on the new points we have evaluated.
+We can calculate this distribution for every point in the design space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
 
 ### Bayesian History Matching
 
-Let $x$ be a point in the sample space. We begin with some uncertainty about our objective function $f(x)$ [@Originalpaper]. However, we can make probabilistic statements such as:
+For the theory here, please see @Originalpaper.
+
+Let $x$ be a point in the sample space. We begin with some uncertainty about our objective function $f(x)$. However, we can make probabilistic statements such as:
 
 $$
 P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
@@ -137,7 +139,7 @@ $$
 P(f(x)>a|f(x'))= \int_{a}^{\infty}P(f(x)|f(x'))df(x)
 $$
 
-We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. As the rounds increase we make sure to include all previous points of the objective function that have been evaluated in $n$ [@Originalpaper]. We remove the point $x$ if:
+We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. As the rounds increase we make sure to include all previous points of the objective function that have been evaluated in $n$. We remove the point $x$ if:
 
 $$
 P(f(x)>a|f(x_{1:n})) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
@@ -223,13 +225,13 @@ The easiest way to calculate the KG is via simulation. This can be done by simul
 
 ### K-means process for selecting multiple points
 
-Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using k-means clustering.
+Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using k-means clustering. For the general theory on k-means processes, please see @kodinariya2013review and @AKMeansClusteringAlgorithm
 
-Let us have a design space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@Originalpaper],[@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms [@kodinariya2013review].
+Let us have a design space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@Originalpaper],[@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms.
 
-This algorithm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other [@kodinariya2013review]. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid [@kodinariya2013review]. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters [@AKMeansClusteringAlgorithm]. We repeat this process until no points change clusters [@AKMeansClusteringAlgorithm],[@kodinariya2013review].
+This algorithm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters. We repeat this process until no points change clusters.
 
-However, before the algorithm can start, we must specify how many clusters we want [@kodinariya2013review]. This can be difficult in many cases [@kodinariya2013review]. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. Lastly, we run the algorithm on $X$ to form the clusters and then we pick the point with the highest value of the acquisition function from each cluster to sample in our next round.
+However, before the algorithm can start, we must specify how many clusters we want. This can be difficult in many cases. In our case, it is relatively simple as we know how many points we want to sample next and so we set this to be the number of clusters. Lastly, we run the algorithm on $X$ to form the clusters and then we pick the point with the highest value of the acquisition function from each cluster to sample in our next round.
 
 ## Application of theory in this half of my project {#sec-application}
 
@@ -387,7 +389,7 @@ $$ {#eq-objectivefunctionmultstocks}
 
 where the indicator functions are defined as beforehand, except using these new sets. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows on intuitively from the @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
 
-Firstly, to get some initial data, we randomly sample our first set of $n-1$ points, where $n$ is the number of cores the system we are on has. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
+Firstly, to get some initial data, we randomly sample our first set of $2(n-1)$ points, where $n$ is the number of cores the system we are on has. This is a slight quirk that has carried over from when we were running the simulation locally and we will CHANGE IT ONCE WE HAVE RUN ONE VERSION OF 1 RUN LIKE THIS ON THE VIKING COMPUTER. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
@@ -397,7 +399,7 @@ Firstly, to get some initial data, we randomly sample our first set of $n-1$ poi
 
 -   We use BHM to remove any points that are implausible (that have a probability less than 0.0001 of being higher than the current best total catch)
 
--   We use the KG acquisition function to select $n-1$ plausible points to sample in the next round
+-   We use the KG acquisition function to select $2(n-1)$ plausible points to sample in the next round
 
 -   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$ with probability greater than 0.05
 
