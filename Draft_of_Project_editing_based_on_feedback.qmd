@@ -23,15 +23,17 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal HCRs [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating the complex, interconnected dynamics found in fisheries is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023],[@MixME].
 
+## Key Concepts
+
+Introduce risk, catch single stock fisheries versus mixed fisheries  - TODO
+
+## Previous Work and Structure of this Paper
+
 There has been much previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management, being used by ICES to implement single-stock Total Annual Catches (TACs) and thus are widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
 
 However, for many years researchers have realised that a single-stock approach is not sufficient [@ULRICH201238],[@MixedFisheriesStatusandManagement2023]. This has led to a growth in literature relating to how to manage mixed fisheries, which we are building on in @sec-mixedfisheries of our report [@ULRICH201238],[@MixedFisheriesStatusandManagement2023],[@MixME]. The MSEs for mixed fisheries tend to be more complicated than for single-stock fisheries as they take more factors into account [@ULRICH201238],[@MixME]. Thus, finding ways to improve MSE grid searches in a single stock context and then applying this method to mixed fisheries contexts could be beneficial for the fishing industry [@Originalpaper],[@MixME],[@ParallelandOtherSimulationsInRMadeEasy]. This is our intention throughout this paper. We describe the framework outlined in the abstract in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
 
-In the @sec-singlestock part of the project, we build on @Originalpaper. This paper is looking to find the HCR parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk precautionary for a single-stock fishery [@Originalpaper]. The paper uses many different methods to achieve this, which we investigate in detail below and apply to our own work. We have focused on enhancing these methods by adding acquisition functions and k-means clustering to improve how we choose to sample points between rounds as this was not deeply considered in the original paper [@Originalpaper],[@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We demonstrate clearly how these methods become applicable in our own work in @sec-application.
-
-The aim of the second half of the project in @sec-mixedfisheries is to apply the methods from @sec-singlestock to mixed fisheries. We use the methods from the first half of the project but change the aim to finding the $F_{target}$ for each stock that is precautionary but maximises long-term catch. We focus on two datasets and receive results for each by running the simulations on a High Performance Computer because the objective function is no longer pre-evaluated as it was in @Originalpaper. This means we have applied our method to the more realistic situation of a mixed fishery and have been able to demonstrate how effective our method may be if used in the industry [@BayesianOptimisationTutorial],[@MixME],[@MixedFisheriesStatusandManagement2023]. These results are discussed in @sec-analysingresults.
-
-Furthermore, we set up a new objective function to maximise in @eq-objectivefunctionmultstocks and a new risk calculation. We claim that this method of risk calculation satisfies the ICES precautionary standard [@ICES2019WKGMSE2]. Our new risk calculation was mostly developed due to our second dataset having only on iteration, and so is not necessarily generally applicable. There is more discussion about this in @sec-conclusionandfurtherdevelopment.
+In the @sec-singlestock part of the project, we build on @Originalpaper. We focus on enhancing the methods in the paper by adding acquisition functions and k-means clustering to improve how we choose to sample points between rounds as this was not deeply considered in the original paper [@Originalpaper],[@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. The aim of the second half of the project in @sec-mixedfisheries is to apply the methods from @sec-singlestock to a more realistic mixed fisheries scenario and to demonstrate how effective our method may be if used in the industry [@BayesianOptimisationTutorial],[@MixME],[@MixedFisheriesStatusandManagement2023].
 
 # Creating the framework in a single stock fisheries context {#sec-singlestock}
 
@@ -217,7 +219,7 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ### Context
 
-We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
+We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of $Risk \le 0.05$. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
 
@@ -229,9 +231,9 @@ We have the objective function @eq-objectivefunctionsinglestock in @Originalpape
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median catch)
 
--   We select 8 plausible points to sample in the next round
+-   We create eight clusters and select the point with the highest value of the acquisition function from each cluster. These are the eight points we sample in the next round.
 
-We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper].
+We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper]. This can be increased if we increase the number of cores we have available, as seen in the second half of this paper [@HumanOutOfTheLoopBayesian].
 
 ### Set up the Gaussian Processes {#sec-setupGPs}
 
@@ -282,7 +284,7 @@ where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of th
 
 We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper].
 
-For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of @Originalpaper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$.
+For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of [@Originalpaper; @EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$.
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the parameter space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
@@ -310,7 +312,7 @@ to calculate the AEI for every point in the parameter space, where we set $\sigm
 
 We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
-We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in @sec-kmeansgeneral [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
+We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in [@sec-kmeansgeneral; @kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 ### Updating our GPS
 
