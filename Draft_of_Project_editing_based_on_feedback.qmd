@@ -437,23 +437,25 @@ for every year in the long term forecast. This guarantees that the maximum annua
 
 ## The basics of the MixME model
 
+The vast majority of this description is drawn from @MixMEwiki, but I repeat it here to ensure description of my specific case.
+
 ### Starting $F_{cod}$ and $F_{had}$
 
-We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from North Sea Cod and Celtic Sea Haddock advice [@ICES2021Cod028],[@ICES2020HaddockBlim]. We still sampled $n-2$ other points in the first round as well.
+We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki. These were drawn from North Sea Cod and Celtic Sea Haddock advice [@ICES2021Cod028],[@ICES2020HaddockBlim]. We still sampled $n-2$ other points in the first round as well.
 
 ### Creating the Operating model
 
-We first create the operating model which contains the true data for the stocks and fleets in the dataset [@MixME]. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019 [@MixMEwiki]. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability [@MixMEwiki].
+We first create the operating model which contains the true data for the stocks and fleets in the dataset. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability.
 
-In both of our files, this is loaded with the dataset [@MixMEwiki]. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks [@MixMEwiki]. For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year [@MixMEwiki]. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step [@MixMEwiki]. The steps for fully assembling the operating model for input into the MixME model are explained below.
+In both of our files, this is loaded with the dataset. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year . It also contains a stock-recruitment model and recruitment is done at the beginning of each time step. The steps for fully assembling the operating model for input into the MixME model are explained below.
 
 #### Estimate historic quota-share for the two fleets
 
-Firstly, we use the operating model to determine the quota share of the catch for each fleet for each year in our projection. This is done by assuming in each fleet that the quota share for each stock corresponds to the proportion of landings of that stock by that fleet [@MixMEwiki].
+Firstly, we use the operating model to determine the quota share of the catch for each fleet for each year in our projection. This is done by assuming in each fleet that the quota share for each stock corresponds to the proportion of landings of that stock by that fleet.
 
 #### Project structures 20 years into the future
 
-To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended [@MixMEwiki]. These are:
+To carry out our 20 year projection, we need to extend the stock and fishery structures forward from 2019 into 2039. There are three categories of parameters that are not estimated dynamically and so need to be extended. These are:
 
 1.  All stock parameters, landings and discards mean individual weights and landed fraction
 
@@ -461,25 +463,25 @@ To carry out our 20 year projection, we need to extend the stock and fishery str
 
 3.  Quota-share
 
-We project the parameters in each of these categories from 2019-2039 using the average from the last three years [@MixMEwiki]. This means we fill in the actual values we will use, instead of calculating a percentage that is then used in a further calculation like in the quota share section [@MixMEwiki].
+We project the parameters in each of these categories from 2019-2039 using the average from the last three years. This means we fill in the actual values we will use, instead of calculating a percentage that is then used in a further calculation like in the quota share section.
 
 #### Calculate numbers of both stocks in initial year
 
-To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package [@MixMEwiki]. We set an arbitrary forecast target for this forecast [@MixMEwiki]. This is because the forecast target is designed to tell the simulation what to aim for by the end of 2020, but we want the stock numbers at the beginning of 2020 and so this has no effect on the result we want [@MixMEwiki].
+To be able to do our projections of catch, we need to know the number of each stock in each age class at the beginning of the first projection year, 2020. This requires us to do a 1-year short term forecast from our starting point of 2019 using the FLasher package. We set an arbitrary forecast target for this forecast. This is because the forecast target is designed to tell the simulation what to aim for by the end of 2020, but we want the stock numbers at the beginning of 2020 and so this has no effect on the result we want.
 
 #### Creating the Observation Error Model
 
-This is another important component of the model [@MixMEwiki]. We create the observation error model where we apply pre-sampled noise to the catch from each fleet [@MixMEwiki]. We generate future stock and management advice from this object [@MixMEwiki].
+This is another important component of the model. We create the observation error model where we apply pre-sampled noise to the catch from each fleet. We generate future stock and management advice from this object.
 
 ### Creating the input object, running the simulation and getting the results
 
-We then use the operating model to make the MixME input object which we can use to run the simulation [@MixMEwiki]. This is created from the operating model and the observation error model [@MixMEwiki]. Then, we run the simulation. It is important to note that the $F_{cod}$ and $F_{had}$ we choose at the start remain constant throughout the simulation [@MixMEwiki].
+We then use the operating model to make the MixME input object which we can use to run the simulation. This is created from the operating model and the observation error model. Then, we run the simulation. It is important to note that the $F_{cod}$ and $F_{had}$ we choose at the start remain constant throughout the simulation.
 
-The tracking object produced by the simulation contains the catch and the $SSB$ from each year of the simulation, which is how we have been extracting these throughout this document [@MixMEwiki]. It also contains simulation performance and diagnostics statistics [@MixMEwiki]. We can check for management advice failure, effort optimisation failure and the message given if there was any failure [@MixMEwiki]. Effort optimisation failure can be used to see if we are over-fishing the stocks to a point that they will go extinct [@MixMEwiki]. Other results we can see are the over-quota catches and the quota uptake [@MixMEwiki]. Lastly, we can check which stock is the choke stock [@MixMEwiki].
+The tracking object produced by the simulation contains the catch and the $SSB$ from each year of the simulation, which is how we have been extracting these throughout this document. It also contains simulation performance and diagnostics statistics. We can check for management advice failure, effort optimisation failure and the message given if there was any failure. Effort optimisation failure can be used to see if we are over-fishing the stocks to a point that they will go extinct. Other results we can see are the over-quota catches and the quota uptake. Lastly, we can check which stock is the choke stock.
 
 ### Additions or Differences in the Shortcut Model
 
-We use the same data as in the Exploring simulation outputs example from the wiki [@MixMEwiki]. There are some small differences in how we calculate the HCR and do our one-year forecasts in the shortcut model. However, this is not yet up on the wiki and so we will not be describing it in detail [@MixMEwiki].
+We use the same data as in the Exploring simulation outputs example from the wiki. There are some small differences in how we calculate the HCR and do our one-year forecasts in the shortcut model. However, this is not yet up on the wiki and so we will not be describing it in detail.
 
 ## Parallelisation
 
