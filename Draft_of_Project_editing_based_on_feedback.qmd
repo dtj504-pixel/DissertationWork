@@ -320,7 +320,7 @@ Now, we repeat the full process described in the Application of theory section u
 
 ## Experimenting with the kernel and mean {#sec-expkerandmean}
 
-For an - WHAT? IN DEPTH DISCUSSION? OF WHAT? MAYBE PROPERTIES AND USES OF DIFFERENT KERNELS AND MEANS BUT NEED TO CHECK DOCUMENT FIRST - see @williams2006gaussian.
+For an in depth discussion of the different properties and uses of different kernels and means, see @williams2006gaussian. This source is the basis for the majority of this section.
 
 Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used.
 
@@ -435,7 +435,7 @@ for every year in the long term forecast. This guarantees that the maximum annua
 
 ## The basics of the MixME model
 
-The vast majority of this description is drawn from @MixMEwiki, but I repeat it here to ensure description of my specific case.
+The vast majority of this description is drawn from @MixMEwiki, but I repeat it here to ensure description of my specific case. More in depth statistical details can be found in @MixME and its accompanying supplementary materials.
 
 ### Starting $F_{cod}$ and $F_{had}$
 
