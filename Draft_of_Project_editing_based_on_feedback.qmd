@@ -37,7 +37,7 @@ Furthermore, we set up a new objective function to maximise in @eq-objectivefunc
 
 ## General theory
 
-We will look at the mathematics behind the methods in @Originalpaper above and also at the acquisition functions which I have added to the original code.
+We will look at the mathematics behind the methods in @Originalpaper above and also at the acquisition functions which I have added to the original code. For a comprehensive introduction to the general theory on Gaussian processes, Maximum Likelihood Estimation and Gaussian Process Regression see @BayesianOptimisationTutorial.
 
 ### Gaussian Processes
 
@@ -215,7 +215,7 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ## Application of theory in this half of my project {#sec-application}
 
-## Context
+### Context
 
 We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
@@ -231,7 +231,7 @@ We have the objective function @eq-objectivefunctionsinglestock in @Originalpape
 
 -   We select 8 plausible points to sample in the next round
 
-We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper]. For a comprehensive introduction to the general theory on Gaussian processes, Maximum Likelihood Estimation and Gaussian Process Regression see @BayesianOptimisationTutorial.
+We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper].
 
 ### Set up the Gaussian Processes {#sec-setupGPs}
 
