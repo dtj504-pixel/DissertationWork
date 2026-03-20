@@ -55,7 +55,7 @@ We have the objective function @eq-objectivefunctionsinglestock in @Originalpape
 
 We are sampling eight points per round to reduce computation time [@HumanOutOfTheLoopBayesian],[@Originalpaper]. Now, we will look at the mathematics behind the methods above and also at the acquisition functions which I added to the original code.
 
-For the general theory on Gaussian processes, Maximum Likelihood Estimation and Gaussian process Regression see @BayesianOptimisationTutorial.
+For a comprehensive introduction to the general theory on Gaussian processes, Maximum Likelihood Estimation and Gaussian Process Regression see @BayesianOptimisationTutorial.
 
 ## General theory
 
@@ -223,11 +223,11 @@ $$ {#eq-KnowledgeGradient}
 
 The easiest way to calculate the KG is via simulation. This can be done by simulating one possible value for $f(x_{n+1})$ and then calculating @eq-increaseinconditionalexpectedvalue. We iterate this process many times so that we can find the average of $\mu_{n+1}^* - \mu_n^*$ and this allows us to estimate $KG_n(x)$ [@BayesianOptimisationTutorial]. This process, or calculating $KG_n(x)$ directly from the properties of the normal distribution, both work well in discrete, low dimensional problems which is the situation we are in for the first half of the project [@BayesianOptimisationTutorial]. We would sample the point $x$ with the largest $KG_n(x)$ as our next point [@BayesianOptimisationTutorial].
 
-### K-means process for selecting multiple points
+### K-means process for selecting multiple points {#sec-kmeansgeneral}
 
-Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using k-means clustering. For the general theory on k-means processes, please see @kodinariya2013review and @AKMeansClusteringAlgorithm
+Combining a clustering method with an acquisition function was an idea I had early on in the project. I was then able to find literature on the subject, including using k-means clustering. For the general theory on k-means processes and an algorithm for implementing a k-means process on computers, please see @kodinariya2013review and @AKMeansClusteringAlgorithm.
 
-Let us have a design space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@Originalpaper],[@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms.
+Let us have a design space $X$ as before. We want to be able to select multiple points to sample in our next round so that we continue the pattern set up in the original paper, whilst keeping a good trade off between exploration and exploitation [@batchspreadingoutjustification]. So, we use the k-means clustering method, which is the most commonly used due to its simplicity compared to other clustering algorithms.
 
 This algorithm creates $k$ clusters (groups of points) such that the points within each cluster have the sum of squares to the centre of their cluster smaller than it would be to the centre of any other cluster [@kmeansdocumentation]. It starts by defining $k$ centroids which should be placed as much as possible far away from each other. Then, we take each point in the space and associate it to the nearest centroid. We stop when every point has been assigned to a centroid. At this point, we re-calculate $k$ new centroids as the centers of the clusters created by the previous step. This may result in some points changing clusters. We repeat this process until no points change clusters.
 
@@ -237,7 +237,7 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ### Set up the Gaussian Processes {#sec-setupGPs}
 
-We are focusing on maximising the objective function from the paper which is given below [@Originalpaper]:
+This process was described briefly in @Originalpaper and I repeat it here in more detail to help the reader. We are focusing on maximising the objective function from the paper which is given below:
 
 $$
 f(\theta) = I_{[0.95,1]}(P(B(\theta)>B_{lim})) \times C(\theta)
@@ -255,7 +255,7 @@ $$
 
 is an indicator function.
 
-To do this, @Originalpaper uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(median\ catch)$ [@Originalpaper]. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP [@Originalpaper]:
+To do this, @Originalpaper uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(median\ catch)$. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP:
 
 $$
 \begin{split}
@@ -274,7 +274,7 @@ $$
 \phi_1 = \frac{F_{target}-0.1}{0.4} \quad \textrm{and} \quad \phi_2 = \frac{B_{trigger}-110000}{90000}
 $$
 
-as we have rescaled for numerical stability in the GP [@Originalpaper]. Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function [@Originalpaper]:
+as we have rescaled for numerical stability in the GP. Our covariance function $c$ for both GPs is the variance $\sigma_i^2$ (which is acting as a scalar) times the Ornstein-Uhlenbeck correlation function:
 
 $$
 r_i(\phi,\phi',\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi'_1|}{\delta_{i,1}} - \frac{|\phi_2 - \phi_2'|}{\delta_{i,2}}\right)
@@ -282,9 +282,9 @@ $$ {#eq-ornsteinuhlenbeck}
 
 where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the terms respectively [@williams2006gaussian].
 
-We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper].
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper].
 
-For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of the Spence 2025 paper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Originalpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
+For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of @Originalpaper [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$.
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict the $\ln(median\ catch)$ and $\ln(risk)$ at every point in the design space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
@@ -312,27 +312,29 @@ to calculate the AEI for every point in the sample space, where we set $\sigma_{
 
 We have now been able to determine which points are possible based on the probability that their median catch is higher than the current maximum median catch (using BHM) and the probability that their risk is less than 0.05. These points will be called the Possible Space, $PS$. We have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
-We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and implements our k-means algorithm described in the General Theory section [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
+We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in @sec-kmeansgeneral [@kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 ### Updating our GPS
 
 In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from @sec-gaussianprocessregression to update the GP with a new mean vector and covariance kernel for our next round.
 
-Now, we repeat the full process described in the Application of theory in this half of my project section until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
+Now, we repeat the full process described in the Application of theory section until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
 ## Experimenting with the kernel and mean {#sec-expkerandmean}
 
-Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used [@williams2006gaussian].
+For an - WHAT? IN DEPTH DISCUSSION? OF WHAT? MAYBE PROPERTIES AND USES OF DIFFERENT KERNELS AND MEANS BUT NEED TO CHECK DOCUMENT FIRST - see @williams2006gaussian.
+
+Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used.
 
 $$
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
 $$ {#eq-GaussianKernel}
 
-The mean was also identified as a possible issue. By assuming a very specific mean (shown in @eq-gpmeancatch or @eq-gpmeanrisk) for the GP we are assuming that we know a lot about the objective function $f$ [@williams2006gaussian]. Thus, it was suggested that I try using a zero mean which is commonly done when we do not want to make any assumptions about our objective function [@williams2006gaussian].
+The mean was also identified as a possible issue. By assuming a very specific mean (shown in @eq-gpmeancatch or @eq-gpmeanrisk) for the GP we are assuming that we know a lot about the objective function $f$. Thus, it was suggested that I try using a zero mean which is commonly done when we do not want to make any assumptions about our objective function.
 
 ### Experimenting with the kernel
 
-The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth [@williams2006gaussian]. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel [@williams2006gaussian]. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion [@williams2006gaussian]. This results in many points that had been deemed implausible returning to the Possible Space and this is likely to continue unless different sampling points are chosen [@williams2006gaussian]. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel [@williams2006gaussian].
+The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion. This results in many points that had been deemed implausible returning to the Possible Space and this is likely to continue unless different sampling points are chosen. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel.
 
 My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher median catch, but still precautionary. Any areas with:
 
@@ -352,9 +354,9 @@ Similar results occur when we run the method once it has been augmented by an ac
 
 ### Experimenting with the mean
 
-Setting the mean of the GP to zero is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations [@williams2006gaussian]. My experiments seem to back up this theory as they again show that results are the same or worse than our original approach.
+Setting the mean of the GP to zero is more often done in examples to showcase the key concepts than when implementing these methods in real-world situations. My experiments seem to back up this theory as they again show that results are the same or worse than our original approach.
 
-We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper], [@williams2006gaussian].
+We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper].
 
 ![Figure 3: Comparison of convergence under different priors in the seventh round. In the top left, case_study8 with the mean of the GP set to zero only in the first round. In the top right, case_study8 with the mean of the GP set to zero in all rounds. In the bottom left, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in the first round only. In the bottom right, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in all rounds](mean_comparison_draft_report.png)
 
