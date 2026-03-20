@@ -13,6 +13,8 @@ editor: visual
 bibliography: draft_report_references.bib
 ---
 
+MAKE TITLE SHORTER AND LESS TECHNICAL - MAYBE MORE WHAT THE PROJECT HELPS WITH
+
 # Abstract
 
 This project introduces a computationally efficient framework for evaluating Harvest Control Rules (HCRs). Initially applied to a single-stock fishery, the framework utilises Gaussian process regression to independently model both catch and risk. Then, by combining the methods of Bayesian history matching, acquisition functions and k-means clustering, we are able to systematically map the sample space. This drastically reduces the need for expensive simulation runs.
@@ -23,13 +25,11 @@ Building on this foundation, we scale up this framework to complex mixed-fisheri
 
 RE-READ BEFORE SUBMISSION BUT MOSTLY FOCUS ON ANALYSING RESULTS SECTION FROM NOW ON
 
-Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal HCRs [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating these complex, interconnected dynamics is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023],[@MixME].
+Sustainable fisheries management requires a delicate balance of maximising long-term catch whilst keeping the risk of stock depletion below precautionary thresholds [@ICES2021precautionary]. Traditionally, Management Strategy Evaluation (MSE) grid searches are used to find optimal HCRs [@Harvest_Control_Rules],[@ICES2019WKGMSE2]. However, simulating the complex, interconnected dynamics found in fisheries is computationally expensive and time-consuming, particularly as management shifts from single-stock assessments to more realistic, multispecies mixed fisheries [@Originalpaper],[@MixedFisheriesStatusandManagement2023],[@MixME].
 
-There has been lots of previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management, being used by ICES to implement single-stock Total Annual Catches (TACs) and thus are widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
+There has been much previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management, being used by ICES to implement single-stock Total Annual Catches (TACs) and thus are widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
 
-However, for many years researchers have realised that a single-stock approach is not sufficient [@ULRICH201238],[@MixedFisheriesStatusandManagement2023]. This has led to a growth in literature relating to how to manage mixed fisheries, including that which we are building on in @sec-mixedfisheries of our report [@ULRICH201238],[@MixedFisheriesStatusandManagement2023],[@MixME]. The MSEs for mixed fisheries tend to be more complicated than for single-stock fisheries as they take more factors into account [@ULRICH201238],[@MixME]. Thus, finding ways to improve MSE grid searches in a single stock context and then applying this method to mixed fisheries contexts could be beneficial for the fishing industry [@Originalpaper],[@MixME],[@ParallelandOtherSimulationsInRMadeEasy].
-
-This is our intention throughout this paper. We describe the framework outlined in the abstract in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
+However, for many years researchers have realised that a single-stock approach is not sufficient [@ULRICH201238],[@MixedFisheriesStatusandManagement2023]. This has led to a growth in literature relating to how to manage mixed fisheries, which we are building on in @sec-mixedfisheries of our report [@ULRICH201238],[@MixedFisheriesStatusandManagement2023],[@MixME]. The MSEs for mixed fisheries tend to be more complicated than for single-stock fisheries as they take more factors into account [@ULRICH201238],[@MixME]. Thus, finding ways to improve MSE grid searches in a single stock context and then applying this method to mixed fisheries contexts could be beneficial for the fishing industry [@Originalpaper],[@MixME],[@ParallelandOtherSimulationsInRMadeEasy]. This is our intention throughout this paper. We describe the framework outlined in the abstract in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
 
 In the @sec-singlestock part of the project, we build on @Originalpaper. This paper is looking to find the HCR parametrised by $F_{target}$ and $B_{trigger}$ that maximises the median long-term catch whilst keeping the risk precautionary for a single-stock fishery [@Originalpaper]. The paper uses many different methods to achieve this, which we investigate in detail below and apply to our own work. We have focused on enhancing these methods by adding acquisition functions and k-means clustering to improve how we choose to sample points between rounds as this was not deeply considered in the original paper [@Originalpaper],[@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We demonstrate clearly how these methods become applicable in our own work in @sec-application.
 
@@ -41,11 +41,13 @@ Furthermore, we set up a new objective function to maximise in @eq-objectivefunc
 
 ## Context
 
-We have the objective function @eq-objectivefunctionsinglestock in the paper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
+We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of keeping the risk below 0.05. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample our first eight points which are spaced evenly throughout the sample space to get some initial data. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
 
--   We can then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have a high probability of having risk below 0.05
+-   We use the GP modelling $\ln(risk)$ to get the value for the risk at each point in the sample space
+
+-   We then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have a high probability of having risk below 0.05
 
 -   We use the GP which is modelling $\ln(median\ catch)$ to get the value for the median catch at every point in the sample space, which will have some uncertainty
 
@@ -71,15 +73,23 @@ $$
 \mu_0(x_{1:n}) = (\mu_0(x_1), . . ., \mu_0(x_n))
 $$
 
-We choose a covariance function such that the inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper]. This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
+We choose a covariance function such that the inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper] - UNCLEAR, FIND A BETTER WAY TO EXPRESS.
 
-We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can calculate $F(x)$ for any $x$ in the design space as our estimate of $f(x)$ based on our current beliefs. This is true even for the evaluated points $x_1,...,x_m$ as the emulator is fitted to these points [@Originalpaper].
+This is equivalent to saying that if for some $x,x',x''$ in the design space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$ [@BayesianOptimisationTutorial].
+
+We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ for any $x$ in the sample space as our estimate of $f(x)$ based on our current beliefs. - UNCLEAR
+
+This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to these points [@Originalpaper].
 
 ### Maximum Likelihood Estimation
 
 When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
 
-We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist . Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood [@BayesianOptimisationTutorial]:
+We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist.  - UNDER THE PRIO
+
+R IS UNCLEAR
+
+Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood [@BayesianOptimisationTutorial]:
 
 $$
  \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
@@ -87,7 +97,9 @@ $$
 
 ### Gaussian Process Regression {#sec-gaussianprocessregression}
 
-Gaussian process regression is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
+Gaussian process regression is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist .  - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
+
+Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
 
 $$
 F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
@@ -109,7 +121,9 @@ $$
 \operatorname{cov}_0(x_{n+1}, x_{1:n}) = (\operatorname{cov}_0(x_{n+1}, x_1), ... , \operatorname{cov}_0(x_{n+1}, x_n))
 $$
 
-This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution for $x_{n+1}$. We can calculate this distribution for every point in the design space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$ [@BayesianOptimisationTutorial]. So, we can update our GP every round based on the new points we have evaluated.
+This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution for $x_{n+1}$. - CHECK IF THIS IS FOR F(x\_{n+1}) INSTEAD
+
+We can calculate this distribution for every point in the design space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$ [@BayesianOptimisationTutorial]. So, we can update our GP every round based on the new points we have evaluated.
 
 ### Bayesian History Matching
 
@@ -175,7 +189,9 @@ where $\sigma_{obs}$ is the standard deviation of the noise variable set by the 
 
 ### Knowledge Gradient
 
-We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. We call this maximum ${x_n^*}$ and then we can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
+We remove the assumption of EI that we have to return a pre-evaluated point as our best point [@BayesianOptimisationTutorial]. We also now start by saying that the solution we would choose if we have to stop sampling after $n$ points would be the point in the design space with the largest $\mu_n(\cdot)$ value, where $\mu_n(\cdot)$ is the mean vector of the posterior probability distribution after $n$ iterations. - WHY IS mu_n A VECTOR?
+
+We call this maximum ${x_n^*}$ and then we can say that $F(x_n^*)$ is random under the posterior distribution and has the mean vector after sampling $f(x_{1:n})$ of:
 
 $$
 \mu_n^* := \mu_n(x_n^*) = max_{x}\mu_n(x)
@@ -320,8 +336,10 @@ The assumption made by the Gaussian kernel of infinite differentiability can be 
 
 My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher median catch, but still precautionary. Any areas with:
 
+CHECK THE RISK EQUATION BELOW - DEFINETLY NOT SUPPOSED TO BE \< BUT ENSURE I HAVE CHANGED IT CORRECTLY
+
 $$
-P(catch<current\ best\ catch)<0.0001\ \textrm{or}\ P(risk \le 0.05)<0.0001
+P(catch<current\ best\ catch)<0.0001\ \textrm{or}\ P(risk \le 0.05)>0.0001
 $$
 
 have been ruled out as implausible and are displayed as dark blue.
@@ -419,7 +437,7 @@ for every year in the long term forecast. This guarantees that the maximum annua
 
 ### Starting $F_{cod}$ and $F_{had}$
 
-We started with $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from North Sea Cod and Celtic Sea Haddock advice [@ICES2021Cod028],[@ICES2020HaddockBlim].
+We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki [@MixMEwiki]. These were drawn from North Sea Cod and Celtic Sea Haddock advice [@ICES2021Cod028],[@ICES2020HaddockBlim]. We still sampled $n-2$ other points in the first round as well.
 
 ### Creating the Operating model
 
