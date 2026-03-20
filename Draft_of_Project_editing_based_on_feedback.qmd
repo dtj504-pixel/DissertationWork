@@ -1,5 +1,5 @@
 ---
-title: "Accelerating Management Strategy Evaluation Grid-Searches Using Bayesian History Matching, Acquisiton Functions and K-Means Clustering"
+title: "An Efficient Framework for Management Strategy Evaluation Grid-Searches"
 author: "Emma Bowen"
 format: 
   html:
@@ -12,8 +12,6 @@ format:
 editor: visual
 bibliography: draft_report_references.bib
 ---
-
-MAKE TITLE SHORTER AND LESS TECHNICAL - MAYBE MORE WHAT THE PROJECT HELPS WITH
 
 # Abstract
 
@@ -85,7 +83,7 @@ This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to 
 
 When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$ [@BayesianOptimisationTutorial].
 
-We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist.  - UNDER THE PRIO
+We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. - UNDER THE PRIO
 
 R IS UNCLEAR
 
@@ -97,7 +95,7 @@ $$
 
 ### Gaussian Process Regression {#sec-gaussianprocessregression}
 
-Gaussian process regression is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist .  - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
+Gaussian process regression is a Bayesian statistical method for modelling functions [@BayesianOptimisationTutorial]. Again, let $f$ be the objective function and we focus on the design space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
 
 Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
 
