@@ -25,7 +25,9 @@ Sustainable fisheries management requires a delicate balance of maximising long-
 
 ## Key Concepts
 
-We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals \[@ICES2019CodAdvice\]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account. We will try to make clear when this is happening in this paper. - ACTUALLY NEED TO DO
+FTARGET AND BTRIGGER??
+
+We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals [@ICES2019CodAdvice]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account. We will try to make clear when this is happening in this paper. - ACTUALLY NEED TO DO
 
 Risk is another key concept. We define risk using the ICES Prob3 definition as the maximum probability that $SSB$ is below $B_{lim}$, where the maximum (of the annual probabilities) is taken over a certain number of years [@ICES2019WKGMSE2]. There have also been different definitions of this term, but we will use the definition of risk above throughout this paper as it is the version recommended by ICES [@ICES2019WKGMSE2].
 
@@ -300,9 +302,7 @@ $$ {#eq-ornsteinuhlenbeck}
 
 where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the terms respectively [@williams2006gaussian].
 
-We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper].
-
-For mathematical stability, these functions should have less than eight coefficients between them in our first round as we are only sampling eight points per round due to computational limitations encountered at the time of [@Originalpaper; @EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$.
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict $\ln(C(\theta))$ and $\ln(risk)$ at every point in the parameter space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
@@ -394,30 +394,45 @@ Despite taking more time on average than the other methods in this case, the KG 
 
 WHICH TYPE OF CATCH DOES MIXME USE?
 
-The aim of the second half of the project is to apply the methods from @sec-singlestock to mixed fisheries. I use the methods from the first half of the project to but change the aim to finding the $F_{target}$ for each stock that is precautionary but maximises long-term catch. I set this goal because MixME is designed to run projections into the future, and looking at catch in the long term will minimise the chance that a simulation where a stock fails is chosen [@MixME],[@MixMEwiki],[@ICES2019WKGMSE2]. We conduct 20 year projections into the future using the MixME package [@MixME]. The 20 year projection from 2020-2039 follows guidelines from ICES to create long-term projections based on the biology of the stocks [@ICES2019WKGMSE2]. We also follow ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
+We base the second half of the project around @MixME, which presents a software package which can be used to project fisheries into the future and is designed to study mixed fisheries. This allows us to run Management Strategy Evaluations for different HCRs that we will parametrise with the $F_{target}$s of each species we are considering. We optimise based on the catch and ensure that risk is at or below the precautionary threshold. I use the methods from the first half of the project to perform this optimisation.
 
-I focused on the datasets from the Fixed fishing mortality management strategy example and the Exploring simulation outputs example which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the simulation. The code for these datasets is provided in @sec-Appendix. Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively. I was told by the same researcher at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESCodFactsheet],[@ICESCodFactsheet].
+To be able to simulate the fishery into the future, we use historic data to set up some of the parameters for our model [@MixME]. I focused on the datasets from the Fixed fishing mortality management strategy example and the Exploring simulation outputs example which are both in the MixME documentation [@MixMEwiki]. However, for the second dataset I was given a shortcut method by a researcher at Cefas which takes a more direct approach to the projection. The code for these datasets is provided in @sec-Appendix. Both of these datasets have two stocks (cod and haddock) and two fleets [@MixMEwiki]. This allows me to use the same methods as in the first half of the project by replacing $F_{target}$ with $F_{cod}$ and $B_{trigger}$ with $F_{had}$, where $F_{cod}$ and $F_{had}$ are the fishing mortalities for cod and haddock respectively. I was told by the same researcher at Cefas that the stocks are North Sea cod and Celtic Sea haddock, but using citations I can only back up that they are Atlantic cod and haddock [@MixMEwiki],[@ICESHaddockFactsheet],[@ICESCodFactsheet].
 
 We create our new parameter space to be a grid with all the combinations of $F_{cod}$ and $F_{had}$ both ranging from $0$ to $0.6$ in $0.02$ increments [@Originalpaper]. This range ensures that we are able to model stock collapse for cod by modelling values above $F_{lim}$ and that we can model stock recovery for cod by including very low values [@ICES2019CodAdvice]. It also allows us to model unsafe fishing for haddock by modelling values above $F_{MSY}$ [@ICES2019HaddockAdvice]. Recalling that cod is the choke stock for both of our datasets, this parameter space is appropriate [@MixMEwiki],[@MixedFisheriesStatusandManagement2023],[@ICES2019WKGMSE2].
 
-For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but mean that we cannot use the standard ICES definition of risk [@MixMESupp],[@ICES2019WKGMSE2]. Instead, we adopt another process explained in @sec-calculaterisk. We claim that this method satisfies the ICES precautionary standard [@ICES2019WKGMSE2].
+Due to the change in stocks being modelled, I have decided to keep the prior for the catch GP modelled in the same form as in @eq-gpmeanrisk. Despite the more complicated prior used in later rounds for the catch GP in @Originalpaper being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME],[@ULRICH201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points \[\@williams2006gaussian\].
 
-Due to the change in stocks being modelled, I have decided to keep the GP prior for catch modelled as the same form as in @eq-gpmeanrisk. Despite the more complicated prior used in later rounds for the catch GP in @Originalpaper being designed to approximate yield curves, it may not be appropriate in a mixed fisheries context where the catch of one species is affected by the catch of another [@Originalpaper],[@MixME],[@ULRICH201238]. Leaving the GP more general avoids mis-specification, ensuring that the GP can be appropriately fitted to the points [@williams2006gaussian].
+For this half of the project, we have switched to modelling SSB directly instead of calculating the risk. We will model $\textrm{min}(SSB)$ for each stock, which is the minimum value for the $SSB$ of that stock over the years 2030-2039. This is due to the simulation being deterministic as both datasets only have one iteration and the noise for this is pre-calculated [@MixMESupp]. These conditions simplify the simulation but mean that we cannot use the standard ICES definition of risk [@MixMESupp],[@ICES2021precautionary]. Instead, we adopt another process explained in @sec-calculaterisk. We claim that this method satisfies the ICES precautionary standard [@ICES2021precautionary].
 
-The process for the first half of the project adapted to our new situation is outlined below. Firslty, note that we are now seeking to maximise the objective function below:
+In summary, we have the variables below which are important:
+
+| Variable | Explanation |
+|------------------------------------|------------------------------------|
+| $F_{cod}$ | The fishing mortality for cod. Ranges from $0$ to $0.6$ in $0.02$ increments. |
+| $F_{had}$ | The fishing mortality for haddock. Ranges from $0$ to $0.6$ in $0.02$ increments. |
+| $\textrm{min}(SSB)$ for each stock | The minimum value for the $SSB$ of that stock over the years 2030-2039. |
+
+We now can conduct 20 year projections into the future using the MixME package [@MixME]. The 20 year projection from 2020-2039 follows guidelines from ICES to create long-term projections based on the biology of the stocks [@ICES2019WKGMSE2]. We also follow ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
+
+### The Optimisation Framework
+
+The process for the first half of the project adapted to our new situation is outlined below. Firstly, note that we are now seeking to maximise the objective function below:
 
 $$
-\small
-g(\theta) = I_{[Cod\ B_{lim},\infty]}P(SSB_{Cod}<B_{lim}) \times I_{[Haddock\ B_{lim},\infty]}P(SSB_{Haddock}<B_{lim}) \times C(\theta)
-$$ {#eq-objectivefunctionmultstocks}
+\small g(\theta) = I_{[Cod\ B_{lim},\infty]}(P(SSB_{Cod}<B_{lim})) \times I_{[Haddock\ B_{lim},\infty]}(P(SSB_{Haddock}<B_{lim})) \times C(\theta) 
+$$where the indicator functions are:
 
-where the indicator functions are defined as beforehand, except using these new sets. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows on intuitively from the @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
+$$
+I_{[0.95,1]}(P(SSB_{Cod}<B_{lim})) = \begin{cases} 1 & \text{if } SSB_{Cod}\in[Cod\ B_{lim},\infty] \\ 0 & \text{otherwise } \end{cases} 
+$$
+
+and similarly for haddock. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows intuitively from the @eq-objectivefunctionsinglestock case once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
 
 Firstly, to get some initial data, we randomly sample our first set of $2(n-1)$ points, where $n$ is the number of cores the system we are on has. This is a slight quirk that has carried over from when we were running the simulation locally and we will CHANGE IT ONCE WE HAVE RUN ONE VERSION OF 1 RUN LIKE THIS ON THE VIKING COMPUTER. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
--   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(min(SSB)>B_{lim})>0.05$ for all of the years 2030-2039
+-   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(\textrm{min}(SSB)<B_{lim})\le0.05$ for all of the years 2030-2039
 
 -   We use the GP which is modelling the total catch to predict the value for the total catch at every point in the parameter space, which will have some uncertainty
 
@@ -425,7 +440,7 @@ Firstly, to get some initial data, we randomly sample our first set of $2(n-1)$ 
 
 -   We use the KG acquisition function to select $2(n-1)$ plausible points to sample in the next round
 
--   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the $SSB$ above $B_{lim}$ with probability greater than 0.05
+-   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the risk below or equal to 0.05
 
 ## Calculating the risk {#sec-calculaterisk}
 
@@ -433,7 +448,7 @@ MixME defines risk as the proportion of iterations in each year where $SSB$ fall
 
 Throughout this section, we have assumed that the $SSB$ for each stock for each year outputted by the simulation is the true value. In reality there may be some uncertainty about this value and so we would need to take this into account [@MixME]. This would still allow $\textrm{min}(SSB)$ to be modelled as a GP and the risk calculation to be the same so that the rest of the process can be carried out as above (as the KG acquisition function can handle noisy situations) [@BayesianOptimisationTutorial]. However, this is beyond the scope of my project and so I have not implemented this and will not discuss it in detail.
 
-The GPs for $min(SSB)$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. \]. The $min(SSB)$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation],[@williams2006gaussian],[@BayesianOptimisationTutorial].
+The GPs for $\textrm{min}(SSB)$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. \]. The $\textrm{min}(SSB)$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation],[@williams2006gaussian],[@BayesianOptimisationTutorial].
 
 Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the parameter space and calculate:
 
@@ -552,6 +567,10 @@ Overall, this framework presents a more computationally efficient way for stakeh
     -   Maybe we get this somewhere in the tracking object?
 
 -   Inter-species/Trophic interactions
+
+-   Better ways to optimise
+
+    -   i.e. using the considerations that should get Maximum Economic Yield instead of just catch
 
 # Appendix {#sec-Appendix}
 
