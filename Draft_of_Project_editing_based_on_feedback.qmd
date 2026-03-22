@@ -225,7 +225,7 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 WHICH TYPE OF CATCH DOES MIKE USE?
 
-We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of $Risk \le 0.05$. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
+We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of $risk \le 0.05$. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
 
@@ -265,11 +265,15 @@ I_{[0.95,1]}(x) =
 \end{cases}
 $$
 
-is an indicator function.
+is an indicator function. Here, @Originalpaper defines $risk$ as:
 
-To do this, @Originalpaper uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(C(\theta))$. - MAY NEED TO CAPITALISE risk HERE AFTERT DEFINITION
+$$
+risk = P(B(\theta)<B_{lim})
+$$
 
-Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP:
+Hence, this indicator function tells us if $1-risk \ge 0.95$ and so if $risk \le 0.05$ which is what we desire for our precautionary threshold.
+
+To maximise the objective function, @Originalpaper uses two GPs where the risk GP models $\ln(risk)$ and the catch GP models $\ln(C(\theta))$. Maintaining the notation from @Originalpaper, we use $m_1$ for the mean function of the catch GP and $m_2$ for the mean function of the risk GP:
 
 $$
 \begin{split}
@@ -327,7 +331,7 @@ to calculate the AEI for every point in the parameter space, where we set $\sigm
 We have now been able to determine which points are possible based:
 
 $$
-P(C(\theta)>C(\theta^*)) > 0.0001 \ \textrm{and} \ P(Risk\le0.05) > 0.0001
+P(C(\theta)>C(\theta^*)) > 0.0001 \ \textrm{and} \ P(risk\le0.05) > 0.0001
 $$The points meeting these conditions will be called the Possible Space, $PS$. We have then assigned a value to each point in the $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
 We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in [@sec-kmeansgeneral; @kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
@@ -355,8 +359,6 @@ The mean was also identified as a possible issue. By assuming a very specific me
 The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion. This results in many points that had been deemed implausible returning to the Possible Space and this is likely to continue unless different sampling points are chosen. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel.
 
 My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher median catch, but still precautionary. Any areas with:
-
-CHECK THE RISK EQUATION BELOW - DEFINETLY NOT SUPPOSED TO BE \< BUT ENSURE I HAVE CHANGED IT CORRECTLY
 
 $$
 P(catch<current\ best\ catch)<0.0001\ \textrm{or}\ P(risk \le 0.05)>0.0001
@@ -436,7 +438,7 @@ The GPs for $min(SSB)$ have remained modelled in the same way as risk from the f
 Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs we will use to model $\textrm{min}(SSB)$ for each stock. Next, we predict the $\textrm{min}(SSB)$ for every point in the parameter space and calculate:
 
 $$
-Risk = P(\textrm{min}(SSB) < B_{lim})
+risk = P(\textrm{min}(SSB) < B_{lim})
 $$
 
 for each stock. This can be done using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
