@@ -25,13 +25,11 @@ Sustainable fisheries management requires a delicate balance of maximising long-
 
 ## Key Concepts
 
-FTARGET AND BTRIGGER??
-
 We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals [@ICES2019CodAdvice]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account. We will try to make clear when this is happening in this paper. - ACTUALLY NEED TO DO
 
 Risk is another key concept. We define risk using the ICES Prob3 definition as the maximum probability that $SSB$ is below $B_{lim}$, where the maximum (of the annual probabilities) is taken over a certain number of years [@ICES2019WKGMSE2]. There have also been different definitions of this term, but we will use the definition of risk above throughout this paper as it is the version recommended by ICES [@ICES2019WKGMSE2].
 
-Some important concepts in fisheries management are fishing mortality and the biomass limit reference point. The fishing mortality of a specific stock, normally denoted as $F_{target}$, is defined as what proportion of fish are killed due to fishing form that specific stock [@lart2026guide]. The biomass limit reference point, often denoted as $B_{lim}$, is defined as the limit where stocks with a spawning stock biomass ($SSB$) below this level may not have high enough recruitment to sustain a fishery [@lart2026guide].
+Some other important concepts in fisheries management are fishing mortality and the biomass limit reference point. The fishing mortality of a specific stock, normally denoted as $F_{target}$, is defined as what proportion of fish are killed due to fishing form that specific stock [@lart2026guide]. The biomass limit reference point, often denoted as $B_{lim}$, is defined as the limit where stocks with a spawning stock biomass ($SSB$) below this level may not have high enough recruitment to sustain a fishery [@lart2026guide].
 
 Furthermore, we need to discuss the difference between single-stock and mixed fisheries. Single-stock fisheries consist of only one stock and can be fished by any number of fleets [@ICES2021precautionary]. On the other hand, mixed fisheries consist of multiple stock and can be fished by any number of fleets [@MixedFisheriesStatusandManagement2023]. Both types of fishery are normally constrained to a specific geographic area [@ICES2021precautionary]. Mixed fisheries are more difficult to manage due to interspecies (trophic) interactions and because gear often catches multiple species at once, which can lead to choke stocks [@MixedFisheriesStatusandManagement2023],[@MixME]. Choke stocks are where the amount we are allowed to catch (the quota) of one stock means that the quota for other stocks cannot be met [@MixedFisheriesStatusandManagement2023].
 
@@ -115,30 +113,30 @@ This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior pr
 
 We can calculate this distribution for every point in the parameter space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
 
-### Bayesian History Matching
+### Bayesian History Matching {#sec-bhm}
 
-For the theory here, please see @Originalpaper. Let $x$ be a point in the parameter space. We begin with some uncertainty about our objective function $f(x)$. However, we can make probabilistic statements such as:
+For the theory here, please see @Originalpaper. Let $x$ be a point in the parameter space. We begin with some uncertainty about a function we are emulating with a GP, say $\alpha(x)$, and want to find it's maximum. We can make probabilistic statements such as:
 
 $$
-P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
+P(\alpha(x)>a)= \int_{a}^{\infty}P(\alpha(x))d\alpha(x)
 $$
 
 Once we evaluate another point $x_1$ where $x_1 \neq x$, we are able to use Bayes' Theorem improve our integral to:
 
 $$
-P(f(x)>a|f(x_1))= \int_{a}^{\infty}P(f(x)|f(x_1))df(x)
+P(\alpha(x)>a|\alpha(x_1))= \int_{a}^{\infty}P(\alpha(x)|\alpha(x_1))d\alpha(x)
 $$
 
 We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. As the rounds increase we make sure to include all previous points of the objective function that have been evaluated. We remove the point $x$ from the list of plausible points if:
 
 $$
-P(f(x)>a|f(x_{1:n})) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
+P(\alpha(x)>a|\alpha(x_{1:n})) = \int_{a}^{\infty}P(\alpha(x)|\alpha(x_{1:n}))d\alpha(x) <\varepsilon
 $$ {#eq-removeimplausiblepoint}
 
 for a small $\varepsilon > 0$ until no plausible points remain. Then, the optimum will be $x^*$ such that:
 
 $$
-f(x^*) = max\{f(x_{1:n})\}
+\alpha(x^*) = max\{\alpha(x_{1:n})\}
 $$
 
 as our index $n$ counts the number of points we have evaluated throughout the whole simulation.
@@ -273,7 +271,7 @@ is an indicator function. Here, @Originalpaper defines $risk$ as:
 
 $$
 risk = P(B(\theta)<B_{lim})
-$$
+$$ {#eq-risk}
 
 Hence, this indicator function tells us if $1-risk \ge 0.95$ and so if $risk \le 0.05$ which is what we desire for our precautionary threshold.
 
@@ -306,15 +304,22 @@ where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of th
 
 We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
-We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. Then, we use them to predict $\ln(C(\theta))$ and $\ln(risk)$ at every point in the parameter space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
+We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. These GPS are as below:
+
+| Gaussian Process | What it models |
+|----|----|
+| $LC(\theta)$ | The natural log of the long-term median catch, i.e. $ln(C(\theta))$. |
+| $LR(\theta)$ | The natural log of $risk$, where $risk$ is as in @eq-risk. |
+
+Then, we use $LC(\theta)$ and $LR(\theta)$ respectively to predict $\ln(C(\theta))$ and $\ln(risk)$ at every point in the parameter space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
 ### Excluding implausible points
 
-Recall from @sec-setupGPs that we have the GP for $\ln(C(\theta))$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function [@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions].
+Recall from @sec-setupGPs that we have the GP $LC(\theta)$ which is modeling the $C(\theta)$ part of the objective function. As the first half of the objective function $f$ is an indicator function, we can focus on maximising $C(\theta)$ whilst meeting the threshold stated by the indicator function [@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions].
 
-Firstly, we enforce the threshold in the indicator function by calculating $P(\ln(risk)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for $\ln(risk)$ at each point using our risk GP and finding the probability that these predictions are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(\ln(risk)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
+Firstly, we enforce the threshold in the indicator function by calculating $P(LR(\theta)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for $\ln(risk)$ at each point using $LR(\theta)$and finding the probability that these predictions are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(LR(\theta)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
 
-To maximise $C(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible when $a$ is median catch according to @eq-removeimplausiblepoint.
+To maximise $LC(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible. We do this by setting $LC(\theta) = \alpha(x)$ and letting $a$ be the natural log of our current maximum long-term median catch, both in @eq-removeimplausiblepoint. We then carry out the process described in @sec-bhm.
 
 This full process ensures that only points that meet the precautionary threshold and and are plausible according to @eq-removeimplausiblepoint can be selected.
 
@@ -322,13 +327,7 @@ This full process ensures that only points that meet the precautionary threshold
 
 We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
 
-For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement, as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, we use the equation:
-
-$$
-AEI_n(x_{n+1})=EI_n(x_{n+1})\Biggl(1- \frac{\sigma_{obs}}{\sqrt{\sigma_n^2(x_{n+1})+\sigma_{obs}^2}}\Biggr)
-$$
-
-to calculate the AEI for every point in the parameter space, where we set $\sigma_{obs} = 0$. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
+For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement (AEI), as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, our equation for AEI becomes the same as for EI. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
 We have now been able to determine which points are possible based:
 
@@ -544,7 +543,7 @@ These anomalous results could in part be explained by the stocks being from diff
 
 The simulation could also be unrealistic due to using different types of gear in different regions [@ULRICH201238]. This means for example that far more cod per haddock could be caught by the fleets used in the simulation than those that actually operate in the North Sea. Thus, the fleets would have to stop fishing earlier or later than expected [@ICES2019CodAdvice],[@ICES2025chokestocknorth]. - AGAIN, CHECK MIX ME FOR IF FLEETS ARE SOMEHOW SIMILAR
 
-# Conclusion and Further areas for Development {#sec-conclusionandfurtherdevelopment}
+# Summary and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
 We have created a framework that is able to speed up management strategy evaluation grid searches in single stock or multi-stock contexts, significantly reducing the burden of expensive runs of the objective function [@Originalpaper]. This was done by using advanced statistical techniques such as BHM and Gaussian Process Regression as well as providing some of our own insights by using acquisition functions and k-means clustering. We have compared the usefulness of different acquisition functions and decided upon one to implement in our framework. We have also thoroughly explained how the addition of k-means clustering improves the trade off between exploration and exploitation when sampling multiple points [@batchspreadingoutjustification],[@AKMeansClusteringAlgorithm]. In addition, we have successfully demonstrated the usefulness of this framework by showing it takes less evaluations than in @Originalpaper to converge on the optimal point for the Case Study in @sec-analysingresults and by applying our method to a dataset with multiple stocks.
 
