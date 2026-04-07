@@ -21,4 +21,4 @@ module purge
 module load R/4.5.2-gfbf-2025b
 
 # Commands to run
-Rscript ./MixME_experimentation/My_scripts/Optimising_ftarget_in_MixME_mult_points_parallel.R
+Rscript ./MixME_experimentation/Find_optimum_using_grid_search/Optimising_ftarget_in_MixME_mult_points_parallel_grid_search.R

@@ -21,4 +21,4 @@ module purge
 module load R/4.5.2-gfbf-2025b
 
 # Commands to run
-Rscript ./MixME_experimentation/My_scripts/Two_stocks_Optimising_ftarget_in_shortcut_model.R
+Rscript ./MixME_experimentation/Find_optimum_using_grid_search/Two_stocks_Optimising_ftarget_in_shortcut_model_grid_search.R
