@@ -260,221 +260,75 @@ stk_oem <- FLStocks(lapply(mixedfishery_MixME_om$stks, function(x) {
 
 
 
-# Define Design Space as discrete with 0.05 increments
-# Can change to 0.01 to be more granular once finished testing
+# Define Design Space as discrete with 0.02 increments
 dat <- data.frame(expand.grid(
-  Fcod = seq(0.0, 0.6, by=0.02), # Starts at 0 to capture low F
-  Fhad = seq(0.0, 0.6, by=0.02)  # Starts at 0 to capture low F
+  Fcod = seq(0.0, 0.6, by=0.02),
+  Fhad = seq(0.0, 0.6, by=0.02) 
 ))
 
-
-# // SETUP FOR LOOP //
-
-# Define Blims
+# Define Blims (Keeping these for your reference or later filtering)
 Blim_cod <- 107000
 Blim_had <- 9227
 
-# Set an intial F target for both stocks so the first loop has something to work with
-# Sticking to Ftargets given in fixed fishing mortality example: https://github.com/CefasRepRes/MixME/wiki/Fixed-fishing-mortality-management-strategy
-f_cod_1 <- 0.28
-f_had_1 <- 0.353
-point_1 <- data.frame(Fcod = f_cod_1, Fhad = f_had_1)
-
-# CHANGED: Pick 5 other RANDOM points from your grid to initialize the model with a set seed for reproducibility
-# TODO: Could space apart equally as in Mike's code to explore the space more 
-set.seed(123) 
-
 # To prep for running in parallel, check how many cores you have
 n_cores <- parallel::detectCores() - 1 
-n_warmup <- 2 * n_cores - 1
 
-warmup_indices <- sample(nrow(dat),n_warmup)
-warmup_points <- dat[warmup_indices, ]
-next_points <- rbind(point_1, warmup_points)
-next_points
+print(paste("Running", nrow(dat), "simulations across", n_cores, "cores. This might take a while!"))
 
-
-
-# Set max runs and initial round number
-max_rounds <- 30
-round_num <- 1
-
-# Intiliase runs for safety
-runs <- NULL
-
-# // START OF LOOP //
-
-for (iteration in 1:max_rounds) {
+# Set up the run queue for EVERY point in the grid
+points_to_run <- varlist(
+  # The "Grid" - counts from 1 to the total number of rows in 'dat' (961)
+  run_id = list(type = "grid", value = 1:nrow(dat)),
   
-    # CHANGED: Provide eight rows of points to run (due to nature of varlist function)
-    points_to_run <- varlist(
-    # The "Grid" - counts from 1 to 3
-    run_id = list(type = "grid", value = 1:nrow(next_points)),
-    
-    # The "Frozen" Data - the table of pairs available to all workers which we can pick by run_id
-    input_data = list(type = "frozen", value = next_points)
-    )
+  # The "Frozen" Data - the entire grid table available to all workers
+  input_data = list(type = "frozen", value = dat)
+)
 
-    # Run all the points in parallel, one at a time one each core
-    result <- doMclapply(points_to_run,doOne = doOne,cores = n_cores)
+# Run all the points in parallel
+result <- doMclapply(points_to_run, doOne = doOne, cores = n_cores)
 
-    # Make a data frame with each result as a row
-    data_frame_initial <- as.data.frame(do.call(rbind, result))
+# === PROCESS THE RESULTS ===
 
-    # Extract the values which are currently a list
-    vals <- do.call(rbind, data_frame_initial$value)
+# Make a data frame with each result as a row
+data_frame_initial <- as.data.frame(do.call(rbind, result))
 
-    # Bind them with the other columns (excluding the original 'value' column to avoid duplicating)
-    data_frame_result <- cbind(as.data.frame(vals), data_frame_initial[, c("error", "warning", "time")])
+# Extract the values which are currently a list
+vals <- do.call(rbind, data_frame_initial$value)
 
-    names(data_frame_result) <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch","error","warning","time")
+# Bind them with the other columns (errors, warnings, time)
+data_frame_result <- cbind(as.data.frame(vals), data_frame_initial[, c("error", "warning", "time")])
 
+# Name the columns
+names(data_frame_result) <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch","error","warning","time")
 
-    # Set up data frame to store data from current run - only keeping values that I want
-    # NOte: TotalCatch is in the middle now
-    dat_run <- data.frame(
-    Fcod = c(data_frame_result$Fcod),
-    Fhad = c(data_frame_result$Fhad),
-    SSBCod = c(data_frame_result$SSBCod),
-    SSBHad = c(data_frame_result$SSBHad),
-    TotalCatch = c(data_frame_result$TotalCatch)
-    )
+# Set up the final clean data frame with just the parameters and metrics we care about
+all_runs <- data.frame(
+  Fcod = as.numeric(data_frame_result$Fcod),
+  Fhad = as.numeric(data_frame_result$Fhad),
+  SSBCod = as.numeric(data_frame_result$SSBCod),
+  SSBHad = as.numeric(data_frame_result$SSBHad),
+  TotalCatch = as.numeric(data_frame_result$TotalCatch)
+)
 
-    dat_run
+print("Grid search complete!")
+head(all_runs)
 
-    # Adding names to reference in GPs and for readability
-    names(dat_run) <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch")
+# Optional: If you want to immediately filter for the safe/valid runs like you did before
+valid_runs <- subset(all_runs, SSBCod > Blim_cod & SSBHad > Blim_had)
+print(paste("Found", nrow(valid_runs), "runs that stayed above Blim."))
 
+# 1. Filter for all runs where the stocks NEVER dropped below Blim
+safe_runs <- subset(all_runs, SSBCod > Blim_cod & SSBHad > Blim_had)
 
-    # Runs variable to count all runs so far and all their associated data
-    runs <- rbind(runs, dat_run)
-
-    runs
-
-    # Taking log of the catch so GP models are more stable
-    log_total_catch <- log(runs$TotalCatch + 1e-12) # add small constant to avoid log(0)
-    ssb_cod_min <- runs$SSBCod
-    ssb_had_min <- runs$SSBHad
-    
-    
-    # SET UP THE GPS
-    # Adding 1e-15 to nuggets to avoid 0 nugget variance
-    gp_log_cat <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = log_total_catch,nugget=1e-12*var(log_total_catch)+1e-15,covtype = "exp")
-    gp_cod_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_cod_min,nugget=1e-12*var(ssb_cod_min)+1e-15,covtype = "exp")
-    gp_had_ssb <- km(~.^2,design=runs[,c("Fcod","Fhad")],estim.method="MLE",response = ssb_had_min,nugget=1e-12*var(ssb_had_min)+1e-15,covtype = "exp")
-    
-    print("GPs done")
-    
-    # Find the remaining plausible points using BHM
-    pred_ssb_cod <- predict(gp_cod_ssb, newdata = dat, type = "SK")
-    pred_ssb_had <- predict(gp_had_ssb, newdata = dat, type = "SK")
-    pred_log_cat <- predict(gp_log_cat, newdata = dat, type = "SK")
-    
-    # Get the probability that sbb =< Blim for both cod and haddock - want this to be low!
-    pssb_cod <- pnorm(Blim_cod, pred_ssb_cod$mean, pred_ssb_cod$sd + 1e-12)
-    pssb_had <- pnorm(Blim_had, pred_ssb_had$mean, pred_ssb_had$sd + 1e-12)
-
-    # Filter for valid runs
-    valid_runs <- runs$TotalCatch[runs$SSBCod > Blim_cod & runs$SSBHad > Blim_had]
-    
-    print("valid_runs is")
-    print(valid_runs)
-    
-    # Check if any valid runs exist before calculating current max
-    # TODO: Put in due to an error but can't remember why needed
-    if(length(valid_runs) > 0) {
-        current_max <- max(valid_runs, na.rm = TRUE)
-    } 
-    else {
-        current_max <- 0 
-        print("Warning: No runs met the safety criteria (< 5% risk)")
-    }
-    
-    # Probability catch is =< current max
-    pcat <- pnorm(log(current_max), pred_log_cat$mean, pred_log_cat$sd + 1e-12)
-    
-    # Set epsilon for plausibility threshold
-    eps <- 1e-4
-    # Determine plausible points where possibility of catch being greater than current max is > eps
-    # and where probability that ssb<Blim for cod and haddock is less than 0.05
-    possible <- (1 - pcat) > eps & pmax(pssb_cod, pssb_had) < 0.05
-
-    # Visualises region that has risk < threshold and better catch than best evaluated so far
-    # TODO: Check I am naming this the correct way around
-    grid_dim <- sqrt(nrow(dat))
-    image2D(matrix(possible * (1-pcat),nrow=grid_dim),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
-    
-    # Calculate KG
-    mu <- pred_log_cat$mean
-    sigma <- pred_log_cat$sd
-    kg <- knowledge_gradient_sim(mu, sigma, gp_log_cat, obs_noise_var = 0, nsim = 100, prisk_cod = pssb_cod, prisk_had = pssb_had, eps = 1e-4)
-    
-    print("kg done")
-    
-    # Calculate the remaining points
-    dat_with_kg <- dat
-    dat_with_kg$kg <- kg
-    dat_with_kg$possible <- possible
-    names(dat_with_kg) <- c("Fcod","Fhad", "kg","possible"  )
-    
-    # Filter to only plausible points with positive KG
-    cand <- subset(dat_with_kg, possible == TRUE & kg > 0)
-    
-    # Create keys for filtering
-    cand$key <- paste(cand$Fcod, cand$Fhad, sep = "_")
-    runs$key <- paste(runs$Fcod, runs$Fhad, sep = "_")
-    
-    # Remove already evaluated points
-    cand <- cand[!(cand$key %in% runs$key), ]
-    
-    # Check if candidates exhausted - get loop to end when none left
-    if (nrow(cand) == 0) {
-        cat("No unevaluated candidates with positive KG. Stopping at round", iteration, "\n")
-        pot_points_final <- dat[possible, ]
-        cat("\nOptimal parameters:\n")
-        print(pot_points_final)
-        break
-    }
-    
-    # Print how many points are left
-    cat("Unevaluated candidates with KG > 0:", nrow(cand), "\n")
-    
-    # Select next points - keeping consistent with number of random points selected at the start
-    if (nrow(cand) <= n_warmup) {
-        next_points <- cand[order(-cand$kg), c("Fcod", "Fhad")]
-    } else {
-        top_candidates <- cand[order(-cand$kg), ][1:nrow(cand), ]
-        set.seed(123)
-        km_result <- kmeans(top_candidates[, c("Fcod", "Fhad")], centers = n_warmup)
-        top_candidates$cluster <- km_result$cluster
-        next_points <- do.call(rbind, lapply(split(top_candidates, top_candidates$cluster), function(df) {
-        df[which.max(df$kg), c("Fcod", "Fhad", "kg")]
-        }))
-    }
-    
-    print("next points are")
-    print(next_points)
-    
-
-    # CRITICAL MEMORY CLEANUP - added in due to RStudio running out of storage without this
-    
-    # Remove the heavy simulation result
-    rm(result) 
-    
-    # Remove the Kriging models (they can be heavy too)
-    rm(gp_log_cat, gp_cod_ssb, gp_had_ssb)
-    
-    # Remove the prediction vectors to be safe
-    rm(pred_ssb_cod, pred_ssb_had, pred_log_cat)
-
-    # KEEP ONLY WANTED COLUMNS IN runs
-    # Define the columns we actually care about, otherwise we can't do rbind to runs properly next iteration
-    important_cols <- c("Fcod","Fhad","SSBCod","SSBHad","TotalCatch")
-    
-    # Only keep those columns before binding
-    runs <- runs[, important_cols]
-    
-    # // LOOP ENDS //
-    round_num <- iteration
-
+# 2. Check if we actually found any safe runs
+if(nrow(safe_runs) > 0) {
+  
+  # 3. Find the exact row with the maximum TotalCatch among the safe runs
+  best_run <- safe_runs[which.max(safe_runs$TotalCatch), ]
+  
+  print("Here is the optimal setup with the maximum catch that stays above Blim:")
+  print(best_run)
+  
+} else {
+  print("Warning: None of the runs in the grid managed to keep both stocks above Blim!")
 }

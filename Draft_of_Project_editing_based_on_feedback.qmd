@@ -307,7 +307,7 @@ We need to sample our first round of eight points before setting up the GPs so t
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. These GPS are as below:
 
 | Gaussian Process | What it models |
-|----|----|
+|------------------------------------|------------------------------------|
 | $LC(\theta)$ | The natural log of the long-term median catch, i.e. $ln(C(\theta))$. |
 | $LR(\theta)$ | The natural log of $risk$, where $risk$ is as in @eq-risk. |
 
