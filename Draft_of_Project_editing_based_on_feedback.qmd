@@ -551,27 +551,21 @@ Overall, this framework presents a more computationally efficient way for stakeh
 
 ### Further development
 
--   Moving to a more complicated dataset
+One prominent area for further development would be moving on to using the dataset seen in the Proof of Concept section in @MixME. This is a realistic scenario based in the Celtic Sea and would help demonstrate the applicability of my method in more complex scenarios [@MixME]. It would also be an example of my method in higher dimensions as there would now be three stocks (cod, haddock and whiting) and so I would be looking to find the optimum $F_{target}$ for each. This means I would be optimising three variables as well as the catch and so it will be advisable to check if my method is still as comparatively fast in higher dimensions.
 
-    -   Mention the one in the MixME paper.
+Furthermore, as there are 1000 iterations in this dataset, I will then be able to do the risk calculation as described in @MixME and as is it is typically done across the industry [@MixMESupp],[@ICES2019WKGMSE2].
 
--   Higher dimension?
+THIS  - show that I know what this is - equations
 
-    -   Haven't done above maximising two at the same time
+Another area for improvement would be considering other metrics to optimise. For example, instead of maximising for long-term median catch, I could aim for Maximum Economic Yield which also takes into account the effort expended by the fleet to catch the stock. We could also consider the change in TAC. It is common for fisheries to want a relatively stable TAC so that they can predict their finances for the years ahead. This is occasionally taken into consideration by ICES.
 
--   Doing a proper risk calculation
+Trophic interactions (interactions between species in a mixed fishery) are not considered in the MixME model. However, there is evidence to suggest that these are still important factors even in areas dominated by fishing activity (?). This means we should be inputting this data into our model as well to provide better projections into the future. EVENIF NOT IN AREAS DOMINATED BY FISHING, COULD REASON THAT SOME MIXED FISHERIES AREN'T AND SO COULD BE USEFUL IN THEIR CASES
 
-    -   Do it the standard way on multiple iterations and show that I know what this is - equations
+A last thing to consider would be modeling the uncertainty of the $SSB$ values outputted by the MixME simulation and including this uncertainty in our GPs. MixME gives us this pre-computed uncertainty - WHERE AND DOES IT?? GUSTAV MADE A COMMENT ABOUT THIS SOMEWHERE
 
--   Actually model the uncertainty of the SSB values outputted by the simulation
+We would include the uncertainty for the $SSB$ value at each point in the GP as an appropriate input. - IS IT ACTUALLY AN OVERALL OBSERVATIONO ERROR? THINK THIS IS INDICATED BY DICEKRIGING PACKAGE
 
-    -   Maybe we get this somewhere in the tracking object?
-
--   Inter-species/Trophic interactions
-
--   Better ways to optimise
-
-    -   i.e. using the considerations that should get Maximum Economic Yield instead of just catch
+Then, the GP would take this into account when modelling $SSB$ and so we would be able to estimate the $SSB$ value for each point in the grid from the GP as normal. It is important to note that the uncertainty for the $SSB$ value for a point means we do not know the true value at that point, and so we may want to sample the same point again to become more confident in what the true $SSB$ value is at that point. The EI acquisition function does not allow this, as the EI of a point becomes zero once you have sampled it. Hence, if we make sure we are using an acquisition function that can model sampling noise such as AEI or KG, we can continue the framework as beforehand, whilst accounting for the uncertainty of the $SSB$ values.
 
 # Appendix {#sec-Appendix}
 
