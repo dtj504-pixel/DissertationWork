@@ -527,8 +527,6 @@ This process has been set up so that it is easy to run in parallel. We are able 
 
 # Analysis of Results {#sec-analysingresults}
 
-DO ANALYSIS OF OPTIMISING_FTARGET_IN_MIX_ME_MULT_POINTS_PARALLEL WHEN RUN IS DONE
-
 The convergence tests I ran after augmenting the original method in @Originalpaper with different acquisition functions confirmed that my method still led to convergence to the correct point identified in the paper for every acquisition function. The convergence tests can be found in the code in @sec-Appendix.
 
 From running our simulation for the shortcut model from the second half of the project on the Viking HPC, we were able to obtain some results [@VikingDocumentation]. The shortcut model initially gave us a long list of parameters, each with $F_{cod} = 0.42$ and $F_{had} \ge 0.34$. As $F_{had} = 0.34$ was given as an optimal parameter in the list, it means that this results in the same long-term catch of haddock as if we were to fish at any $F_{had} > 0.34$, as we were maximising the total long-term catch. Remembering that cod is the choke stock, this list also suggests that when we fish at $F_{cod} = 0.42$ this causes us to fish at $F_{had} = 0.34$ due to the ratio of cod to haddock that we are catching across the fleets [@MixMEwiki]. Thus, $F_{cod} = 0.42$ and $F_{had} = 0.34$ are the optimal parameters suggested by the shortcut simulation.
@@ -537,15 +535,11 @@ These appear to be relatively high. ICES documents regularly suggest lower value
 
 On the other hand, for Celtic Sea haddock the optimal parameter given by the shortcut model $F_{had} = 0.34$ is below the $F_{MSY} = 0.353$ and the $F_{PA} = 0.708$ given in the latest advice and sits in a similar area historically [@ICES2025HaddockAdvice],[@ICES2019HaddockAdvice],[@ICES2020HaddockBlim]. This shows that the shortcut model has produced a safe value for $F_{had}$ for Celtic Sea haddock according to the latest ICES guidelines.
 
-From running our simulation based on the fixed fishing mortality example o n the MixME wiki we receive similar results, despite using the same dataset (?).  - IS IT?
-
-Again, we obtain a list of parameters and are able to determine because cod is the choke stock that $F_{cod} = 0.38$ and $F_{had} = 0.28$ are the optimal parameters [@MixMEwiki]. The $F_{cod}$ falls slightly closer to the $F_{MSY}$ value recommended by ICES and is still below $F_{PA}$ [@ICES2025CodAdvice]. The $F_{had}$ is again below both the $F_{MSY}$ and the $F_{PA}$, suggesting haddock is being choked by cod [@ICES2025HaddockAdvice]. The values from this model are likely to be different to those from the shortcut model because they have been set up in different way.  - FINDING SOME EXAMPLES WOULD BE GOOD (For example, the $SSB$ is taken without any observation error in the shortcut model - does this mean the pre-evaluated noise is not included? SENT EMAIL TO MATT).
+From running our simulation based on the fixed fishing mortality example on the MixME wiki we receive similar results, despite using the same dataset. Again, we obtain a list of parameters and are able to determine, because cod is the choke stock, that $F_{cod} = 0.38$ and $F_{had} = 0.28$ are the optimal parameters [@MixMEwiki]. The $F_{cod}$ falls slightly closer to the $F_{MSY}$ value recommended by ICES and is still below $F_{PA}$ [@ICES2025CodAdvice]. The $F_{had}$ is again below both the $F_{MSY}$ and the $F_{PA}$, suggesting haddock is being choked by cod [@ICES2025HaddockAdvice]. The values from this model are likely to be different to those from the shortcut model because they have been set up in different way. For example, one change is that the $SSB$ is taken without including the pre-calculated noise in the shortcut model.
 
 The discrepancy in the $F_{cod}$ given by the models and those suggested by @ICES2025CodAdvice could be due to ICES maximising the long-term single-stock catch for cod whilst my simulations aim to maximise the long-term total catch for both cod and haddock [@MixedFisheriesStatusandManagement2023]. This could lead to the quota for cod being raised, whilst remaining precautionary, so that we can fish more haddock. Allowing this could result in a lower long-term catch for cod, but this reduction in cod catch could be made up for by the increase in haddock catch. Thus, the models may be trying to balance the trade off of reducing the long term catch of cod by fishing above the $F_{MSY}$ for cod with catching more haddock if it does this [@MixME],[@MixedFisheriesStatusandManagement2023]. This would result in a value between $F_{MSY}$ and $F_{PA}$ for cod which is exactly what we see above. There are many other reasons that the model could be different from those conducted by ICES, but we will not focus on this here.
 
-HOW DO THESE RELATE TO MY RESULTS FROM THE GRID SEARCH?
-
-I then conducted a grid search of the whole parameter space. From this, I was able to find that the optimal parameters are
+I then conducted a grid search of the whole parameter space. From this, I was able to find that the optimal parameters correspond to those identified above by the framework. These results are available from @sec-Appendix.
 
 # Summary and Further areas for Development {#sec-conclusionandfurtherdevelopment}
 
@@ -557,9 +551,7 @@ Overall, this framework presents a more computationally efficient way for stakeh
 
 One prominent area for further development would be moving on to using the dataset seen in the Proof of Concept section in @MixME. This is a realistic scenario based in the Celtic Sea and would help demonstrate the applicability of my method in more complex scenarios [@MixME]. It would also be an example of my method in higher dimensions as there would now be three stocks (cod, haddock and whiting) and so I would be looking to find the optimum $F_{target}$ for each. This means I would be optimising three variables as well as the catch and so it will be advisable to check if my method is still as comparatively fast in higher dimensions.
 
-Furthermore, as there are 1000 iterations in this dataset, I will then be able to do the risk calculation as described in @MixME and as is it is typically done across the industry [@MixMESupp],[@ICES2019WKGMSE2].
-
-THIS  - show that I know what this is - equations
+Furthermore, as there are 1000 iterations in this dataset, I will then be able to do the risk calculation as described in @MixME and as is it is typically done across the industry [@MixMESupp],[@ICES2019WKGMSE2]. As we have multiple iterations, we can follow the MixME definition that risk is the proportion of iterations in each year where $SSB < B_{lim}$, i.e. $P(SSB<B_{lim})$ where the probability is taken over the number of iterations [@MixMEwiki].
 
 Another area for improvement would be considering other metrics to optimise. For example, instead of maximising for long-term median catch, I could aim for Maximum Economic Yield which also takes into account the effort expended by the fleet to catch the stock. We could also consider the change in TAC. It is common for fisheries to want a relatively stable TAC so that they can predict their finances for the years ahead. This is occasionally taken into consideration by ICES.
 
@@ -580,3 +572,5 @@ The visualisations of the GPs from the first half of the project can be seen in 
 The test for which acquisition function is bets can be seen as the most recent tests in the "Actions" tab or can be seen in the Documents folder in the Deciding which acquisition function is best based on results from tests pdf.
 
 The original MixME scripts can be found in the /MixME_experimentation/Original scripts folder.
+
+The results of the grid search are available in the Grid_Search_Results folder.
