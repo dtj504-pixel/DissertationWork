@@ -128,68 +128,6 @@ doOne <- function(run_id,input_data) {
   return(to_return)
 }
 
-# Calculate how correlated two pairs of Fcod and Fhad are based on their distance in the grid
-cov_exp <- function(X1, X2, theta, sigma2) {
-  n1 <- nrow(X1)
-  n2 <- nrow(X2)  
-  # pairwise difference weighted by theta
-  D <- array(0, dim = c(n1, n2)) 
-  for (j in seq_along(theta)) {
-    D <- D + theta[j] * abs(outer(X1[, j], X2[, j], "-"))
-  } 
-  sigma2 * exp(-D)
-}
-
-knowledge_gradient_sim <- function(mu, sigma, model, obs_noise_var = 0, nsim = 100, prisk_cod, prisk_had, eps = 1e-4) 
-{ 
-  X_pred <- dat[, c("Fcod","Fhad")]
-  # Get correlation matrix for the whole design space of Fcod and Fhad
-  cov_grid <- cov_exp(X_pred, X_pred, theta = model@covariance@range.val, sigma2 = model@covariance@sd2)
-  m <- length(mu)
-  var <- sigma^2
-  kg <- numeric(m)
-  # Current best mean catch
-  mu_best <- max(mu) 
-  
-  # Loop over candidate points
-  for (i in seq_len(m)) {
-    # set to 0 for any unsafe points - here has become probability that ssb is =< Blim is > 0.05 in the years 2030-2039
-    # i.e. the run is not precautionary in these years
-    if (prisk_cod[i] > 0.05 || prisk_had[i] > 0.05) {
-      kg[i] <- 0
-      next
-    }
-    
-    mu_i <- mu[i]
-    sigma_i <- sqrt(var[i] + obs_noise_var)
-    # nsim simulated observations - using rnorm to sample from a normal distribution is ok as we are running a GP
-    # to model the catch, which is assumed to be normally distributed
-    y_sim <- rnorm(nsim, mu_i, sigma_i)
-    # the covariance between every point in the grid and the point x_i
-    cov_xp_xi <- cov_grid[, i]
-    # denominator term in the KG update formula
-    denom <- var[i] + obs_noise_var
-    # For each simulated y, compute updated max(mu)
-    max_after <- numeric(nsim)
-    for (s in seq_len(nsim)) {
-      # says what would the new maximum mu be if we observed this simulated value at the point x_i 
-      # by implementing the standard formula for this in GP posterior updating
-      # This evaluates the posterior mean for every point in the space, updating other points based on closeness 
-      # to the evaluated point by using the cov matrix
-      mu_new <- mu + cov_xp_xi * (y_sim[s] - mu_i) / denom
-      # takes this new maximum mu for later averaging
-      max_after[s] <- max(mu_new)
-    }
-    # Computes expected increase in the maximum posterior mean, mu
-    # higher values mean we're getting better knowledge as to where and what the maximum catch could be
-    kg[i] <- mean(max_after - mu_best)
-  }
-  # Returns the vector of knowledge gradient values for each point in the design space
-  kg
-}
-
-
-
 
 ## load example data
 data("mixedfishery_MixME_om")
@@ -266,21 +204,23 @@ dat <- data.frame(expand.grid(
   Fhad = seq(0.0, 0.6, by=0.02) 
 ))
 
-# Define Blims (Keeping these for your reference or later filtering)
+# Define Blims - keeping to tell whether SSb drops below
 Blim_cod <- 107000
 Blim_had <- 9227
 
 # To prep for running in parallel, check how many cores you have
+# leave one core free to avoid the computer freezing
 n_cores <- parallel::detectCores() - 1 
 
+# print so i kow we have got up to this part
 print(paste("Running", nrow(dat), "simulations across", n_cores, "cores. This might take a while!"))
 
-# Set up the run queue for EVERY point in the grid
+# Set up the run queue for every point in the grid
 points_to_run <- varlist(
-  # The "Grid" - counts from 1 to the total number of rows in 'dat' (961)
+  # counts from 1 to the total number of rows in 'dat' (961)
   run_id = list(type = "grid", value = 1:nrow(dat)),
   
-  # The "Frozen" Data - the entire grid table available to all workers
+  # the entire grid table available to all workers
   input_data = list(type = "frozen", value = dat)
 )
 
@@ -310,6 +250,7 @@ all_runs <- data.frame(
   TotalCatch = as.numeric(data_frame_result$TotalCatch)
 )
 
+# again, printing for debugging
 print("Grid search complete!")
 head(all_runs)
 
@@ -317,18 +258,18 @@ head(all_runs)
 valid_runs <- subset(all_runs, SSBCod > Blim_cod & SSBHad > Blim_had)
 print(paste("Found", nrow(valid_runs), "runs that stayed above Blim."))
 
-# 1. Filter for all runs where the stocks NEVER dropped below Blim
+# Filter for all runs where both stocks never dropped below their Blim during the last 10 years of the simulation
 safe_runs <- subset(all_runs, SSBCod > Blim_cod & SSBHad > Blim_had)
 
-# 2. Check if we actually found any safe runs
+# Check if we found any safe runs
 if(nrow(safe_runs) > 0) {
   
-  # 3. Find the exact row with the maximum TotalCatch among the safe runs
+  # Find the exact row with the maximum TotalCatch among the safe runs
   best_run <- safe_runs[which.max(safe_runs$TotalCatch), ]
   
   print("Here is the optimal setup with the maximum catch that stays above Blim:")
   print(best_run)
   
 } else {
-  print("Warning: None of the runs in the grid managed to keep both stocks above Blim!")
+  print("Warning: None of the runs in the grid managed to keep the SSB for both stocks above Blim!")
 }

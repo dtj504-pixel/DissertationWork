@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=Optimising_ftarget_in_MixME_mult_points_parallel_grid_search
+#SBATCH --partition=nodes               
+#SBATCH --time=0-01:00:00                # Bumped to 1 hour just in case!
+#SBATCH --ntasks=1                      
+#SBATCH --cpus-per-task=96               # Claims an entire 96-core Viking node
+#SBATCH --mem=100G                        
+#SBATCH --account=math-covid19-2020       
+#SBATCH --mail-type=END,FAIL            
+#SBATCH --mail-user=dtj504@york.ac.uk   
+#SBATCH --output=%x-%j.log               # %j is the standard Job ID (Array tags removed)
+#SBATCH --error=%x-%j.err             
+
+# Abort if any command fails
+set -e
+
+# Purge any previously loaded modules
+module purge
+
+# Load R module - verified this version by running command
+module load R/4.5.2-gfbf-2025b
+
+# Commands to run
+Rscript ./MixME_experimentation/My_scripts/Optimising_ftarget_in_MixME_mult_points_parallel.R
