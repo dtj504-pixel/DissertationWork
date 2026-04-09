@@ -25,7 +25,7 @@ Sustainable fisheries management requires a delicate balance of maximising long-
 
 ## Key Concepts
 
-We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals [@ICES2019CodAdvice]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account. We will try to make clear when this is happening in this paper. - ACTUALLY NEED TO DO
+We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals [@ICES2019CodAdvice]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account [@MixME].
 
 Risk is another key concept. We define risk using the ICES $Prob3$ definition as the maximum probability that $SSB$ is below $B_{lim}$, where the maximum (of the annual probabilities) is taken over a certain number of years [@ICES2019WKGMSE2]. There have also been different definitions of this term, but we will use the definition of risk above throughout this paper as it is the version recommended by ICES [@ICES2019WKGMSE2]. Throughout this paper, $SSB$ refers to spawning stock biomass which is the weight of adult breeding fish [@lart2026guide].
 
@@ -225,8 +225,6 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 ### Context
 
-WHICH TYPE OF CATCH DOES MIKE USE?
-
 We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of $risk \le 0.05$. To do this, the paper takes a Bayesian History Matching (BHM) approach. Firstly, we sample eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
@@ -367,11 +365,11 @@ $$
 
 have been ruled out as implausible and are displayed as dark blue.
 
-![Figure 1: Comparison of convergence under different kernels in the seventh round in case_study8. From left to right: the Exponential kernel, the Gaussian kernel and the Matern 5/2 kernel.](case_study8_kernel_comparison_draft_report.png)
+![Figure 1: Comparison of convergence under different kernels in the seventh round in case_study8. From left to right: the Exponential kernel, the Gaussian kernel and the Matern 5/2 kernel.](images/correct_ver_case_study8_kernel_comparison_report.png)
 
 Similar results occur when we run the method once it has been augmented by an acquisition function. As we then allow the method to continue until it has converged, we find that the different kernels cause convergence in a different number of rounds. For example, the EI method converges after seven rounds with the exponential kernel, but after changing to the Gauss kernel it converges after twenty five rounds. When using the Matern 5/2 kernel, the GP does not converge to the correct point.
 
-![Figure 2: Comparison of convergence under different kernels in case_study8 augmented with the EI acquisition function. From left to right: the Exponential kernel, the Gaussian kernel in the seventh round and the Matern 5/2 kernel in the last round.](case_study8_EI_kernel_comparison_draft_report.png)
+![Figure 2: Comparison of convergence under different kernels in case_study8 augmented with the EI acquisition function. From left to right: the Exponential kernel, the Gaussian kernel in the seventh round and the Matern 5/2 kernel in the last round.](images/case_study8_EI_kernel_comparison_report-2.png)
 
 ### Experimenting with the mean
 
@@ -379,7 +377,7 @@ Setting the mean of the GP to zero is more often done in examples to showcase th
 
 We can see from the heatmaps below that the simulations with means changed to zero either converge at the same round or later on than when we use the original mean specified in [@Originalpaper]. This is likely to be because we are able to encode information that we already know about how fisheries and stocks operate when using the original mean, which helps the GP to narrow down to the optimal point in less rounds [@Originalpaper].
 
-![Figure 3: Comparison of convergence under different priors in the seventh round. In the top left, case_study8 with the mean of the GP set to zero only in the first round. In the top right, case_study8 with the mean of the GP set to zero in all rounds. In the bottom left, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in the first round only. In the bottom right, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in all rounds](mean_comparison_draft_report.png)
+![Figure 3: Comparison of convergence under different priors in the seventh round. In the top left, case_study8 with the mean of the GP set to zero only in the first round. In the top right, case_study8 with the mean of the GP set to zero in all rounds. In the bottom left, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in the first round only. In the bottom right, case_study8 augmented with the KG acquisition function with the mean of the GP set to zero in all rounds](mean_comparison_report.png)
 
 ## Determining the best acquisition function
 
@@ -392,8 +390,6 @@ Despite taking more time on average than the other methods in this case, the KG 
 # Applying the framework to a mixed fisheries context {#sec-mixedfisheries}
 
 ## Context
-
-WHICH TYPE OF CATCH DOES MIXME USE?
 
 We base the second half of the project around @MixME, which presents a software package which can be used to project fisheries into the future and is designed to study mixed fisheries. This allows us to run Management Strategy Evaluations for different HCRs that we will parameterise with the $F_{target}$s of each species we are considering. We optimise based on the catch and ensure that risk is at or below the precautionary threshold. I use the methods from the first half of the project to perform this optimisation.
 

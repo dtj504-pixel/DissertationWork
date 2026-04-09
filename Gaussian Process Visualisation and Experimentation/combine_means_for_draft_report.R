@@ -1667,11 +1667,13 @@ pcat_case_study_KG_mean_zero <- pcat
 
 # Save high-quality EPS file
 setEPS()
-cairo_ps("mean_comparison_draft_report.eps", width = 15, height = 14)
+cairo_ps("mean_comparison_report.eps", width = 15, height = 15)
 
 par(mfrow = c(2,2))
-par(oma = c(2, 2, 1, 1))
-par(mar = c(4, 4, 2, 4))
+par(oma = c(2, 2, 2, 2))
+par(mar = c(5, 5, 4, 2)+0.1)
+par(cex.lab = 1.5)
+par(cex.axis = 1.2)
 
 image2D(matrix(possible_case_study_mean_zero_first_round * (1-pcat_case_study_mean_zero_first_round),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftarget",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible_case_study_mean_zero * (1-pcat_case_study_mean_zero),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftarget",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))

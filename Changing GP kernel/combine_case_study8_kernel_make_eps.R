@@ -1392,7 +1392,7 @@ col_round<-c("white",hcl.colors(7, "viridis", rev = TRUE))
 
 # Save high-quality EPS file
 setEPS()
-cairo_ps("case_study8_kernel_comparison_draft_report.eps", width = 20, height = 10)
+cairo_ps("case_study8_kernel_comparison_draft_report.eps", width = 18, height = 10)
 
 par(mfrow = c(1, 3))
 par(oma = c(4, 4, 2, 2))
