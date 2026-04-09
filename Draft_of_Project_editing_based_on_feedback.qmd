@@ -325,13 +325,13 @@ This full process ensures that only points that meet the precautionary threshold
 
 We then use acquisition functions in conjunction with BHM. This is partially supported by the literature and was in part an experiment to see if these methods working together helped to speed up the process compared to that in @Originalpaper.
 
-In the literature, this method can be understood through the lens of Constrained Bayesian Optimisation. We are using BHM to determine which points are possible based on:
+In the literature, this method can be understood through the lens of Constrained Bayesian Optimisation [@letham2018constrainedbayesianoptimizationnoisy],[@HumanOutOfTheLoopBayesian]. We are using BHM to determine which points are possible based on:
 
 $$
 P(C(\theta)>C(\theta^*)) > 0.0001 \ \textrm{and} \ P(risk\le0.05) > 0.0001
 $$
 
-where $\theta,\theta^*$ are points in the parameter space and $\theta^*$ gives our current maximum long-term median catch as $C(\theta^*)$. The points meeting these conditions will be called the Possible Space, $PS$. Then, within $PS$ our acquisition function searches for the optimal parameters. It is important to reassess these constraints each round because as we gain more information different sets of points may be included in $PS$.
+where $\theta,\theta^*$ are points in the parameter space and $\theta^*$ gives our current maximum long-term median catch as $C(\theta^*)$. The points meeting these conditions will be called the Possible Space, $PS$. Then, within $PS$ our acquisition function searches for the optimal parameters [@letham2018constrainedbayesianoptimizationnoisy]. It is important to reassess these constraints each round because as we gain more information different sets of points may be included in $PS$ [@letham2018constrainedbayesianoptimizationnoisy],[@williams2006gaussian].
 
 This was an interesting experiment to me because I wanted to explore my hypotheses that:
 
@@ -339,7 +339,9 @@ This was an interesting experiment to me because I wanted to explore my hypothes
 
 2.  Using the acquisition function to sample in areas that are likely to be optimal would help the BHM to be able to remove more implausible points early on
 
-We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
+These hypotheses originated from reading the general literature, but specifically @HumanOutOfTheLoopBayesian, @letham2018constrainedbayesianoptimizationnoisy, @Originalpaper and @BayesianOptimisationTutorial.
+
+We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold [@letham2018constrainedbayesianoptimizationnoisy].
 
 For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement (AEI), as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, our equation for AEI becomes the same as for EI. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
