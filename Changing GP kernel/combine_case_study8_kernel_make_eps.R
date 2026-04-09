@@ -1392,11 +1392,13 @@ col_round<-c("white",hcl.colors(7, "viridis", rev = TRUE))
 
 # Save high-quality EPS file
 setEPS()
-cairo_ps("case_study8_kernel_comparison_draft_report.eps", width = 15, height = 7)
+cairo_ps("case_study8_kernel_comparison_draft_report.eps", width = 20, height = 10)
 
 par(mfrow = c(1, 3))
-par(oma = c(2, 2, 1, 1))
-par(mar = c(4, 4, 2, 4))
+par(oma = c(4, 4, 2, 2))
+par(mar = c(5, 5, 4, 2)+0.1)
+par(cex.lab = 1.7)
+par(cex.axis = 1.4)
 
 image2D(matrix(possible7 * (1-pcat7),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftarget",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
 image2D(matrix(possible7_gauss * (1-pcat7_gauss),nrow=11),y=sort(unique(dat$Ftrgt)),x=sort(unique(dat$Btrigger)),xlab="Btrigger",ylab="Ftarget",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
@@ -1404,3 +1406,5 @@ image2D(matrix(possible7_matern * (1-pcat7_matern),nrow=11),y=sort(unique(dat$Ft
 
 
 dev.off()
+
+#fin? figure region dimensions
