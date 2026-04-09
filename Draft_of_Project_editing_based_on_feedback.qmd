@@ -25,7 +25,7 @@ Sustainable fisheries management requires a delicate balance of maximising long-
 
 ## Key Concepts
 
-We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals [@ICES2019CodAdvice]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account [@MixME].
+We firstly introduce some of the key concepts in fisheries management which will be used throughout this paper. One of these is catch. Unfortunately, there are many different definitions of this term [@ICES2021precautionary],[@MixME],[@aquaculture2024state].The most commonly used is the ICES definition where catch includes wanted catch, unwanted catch and unaccounted removals [@ICES2019CodAdvice]. Wanted catch refers to the wanted catch that has commercial value. Unwanted catch refers to the portion of the catch that is thrown back into the sea for being undersized, having no commercial value or the fleet not having enough quota to land it. Unaccounted removals comes from ICES filling in the gaps in their historical data, and so is not particularly relevant for this project [@ICES2019CodAdvice],[@ICES2021precautionary]. However, some papers may use equations to describe catch which do not take all of these factors into account, notably @MixME which we will be studying in the second half of this project.
 
 Risk is another key concept. We define risk using the ICES $Prob3$ definition as the maximum probability that $SSB$ is below $B_{lim}$, where the maximum (of the annual probabilities) is taken over a certain number of years [@ICES2019WKGMSE2]. There have also been different definitions of this term, but we will use the definition of risk above throughout this paper as it is the version recommended by ICES [@ICES2019WKGMSE2]. Throughout this paper, $SSB$ refers to spawning stock biomass which is the weight of adult breeding fish [@lart2026guide].
 
@@ -323,15 +323,27 @@ This full process ensures that only points that meet the precautionary threshold
 
 ### Deciding on the next point to sample
 
+We then use acquisition functions in conjunction with BHM. This is partially supported by the literature and was in part an experiment to see if these methods working together helped to speed up the process compared to that in @Originalpaper.
+
+In the literature, this method can be understood through the lens of Constrained Bayesian Optimisation. We are using BHM to determine which points are possible based on:
+
+$$
+P(C(\theta)>C(\theta^*)) > 0.0001 \ \textrm{and} \ P(risk\le0.05) > 0.0001
+$$
+
+where $\theta,\theta^*$ are points in the parameter space and $\theta^*$ gives our current maximum long-term median catch as $C(\theta^*)$. The points meeting these conditions will be called the Possible Space, $PS$. Then, within $PS$ our acquisition function searches for the optimal parameters. It is important to reassess these constraints each round because as we gain more information different sets of points may be included in $PS$.
+
+This was an interesting experiment to me because I wanted to explore my hypotheses that:
+
+1.  Removing the implausible points using BHM would help the acquisition function focus on testing plausible points
+
+2.  Using the acquisition function to sample in areas that are likely to be optimal would help the BHM to be able to remove more implausible points early on
+
 We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold.
 
 For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement (AEI), as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, our equation for AEI becomes the same as for EI. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
-We have now been able to determine which points are possible based:
-
-$$
-P(C(\theta)>C(\theta^*)) > 0.0001 \ \textrm{and} \ P(risk\le0.05) > 0.0001
-$$The points meeting these conditions will be called the Possible Space, $PS$. We have then assigned a value to each point in the $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
+We have now been able to determine which points are possible and have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
 
 We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in [@sec-kmeansgeneral; @kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
@@ -561,7 +573,7 @@ Another area for improvement would be considering other metrics to optimise. For
 
 Trophic interactions (interactions between species in a mixed fishery) are not considered in the MixME model [@MixME]. However, there is evidence to suggest that these are still important factors even in areas dominated by fishing activity . This means we should be providing data about these relationships to our model as well to provide better projections into the future [@MixedFisheriesStatusandManagement2023].
 
-A last thing to consider would be modeling the uncertainty of the $SSB$ values outputted by the MixME simulation and including this uncertainty in our GPs. MixME gives us the distribution that is modelling the pre-computed uncertainty in the observation error model object [@MixME],[@MixMESupp]. We would then include the standard deviation of the uncertainty for the $SSB$ values in the GP as an appropriate input (provided by the Dicekriging package) [@DiceKrigingDocumentation]. Then, the GP would take this into account when modelling $SSB$ and so we would be able to estimate the $SSB$ value for each point in the grid from the GP as normal [@DiceKrigingDocumentation]. It is important to note that the uncertainty for the $SSB$ values means we do not know that the value we get when we sample the $SSB$ at a point is the true value of the $SSB$ at that point and so we may want to sample the same point again to become more confident in what the true $SSB$ value is at that point . The EI acquisition function does not allow this, as the EI of a point becomes zero once you have sampled it [@BayesianOptimisationtutorial]. Hence, if we make sure we are using an acquisition function that can model sampling noise such as AEI or KG, we can continue the framework as beforehand, whilst accounting for the uncertainty of the $SSB$ values [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial]. The same process can be done for the uncertainty of the catch values outputted by the MixME model [@MixMESupp].
+A last thing to consider would be modeling the uncertainty of the $SSB$ values outputted by the MixME simulation and including this uncertainty in our GPs. MixME gives us the distribution that is modelling the pre-computed uncertainty in the observation error model object [@MixME],[@MixMESupp]. We would then include the standard deviation of the uncertainty for the $SSB$ values in the GP as an appropriate input (provided by the Dicekriging package) [@DiceKrigingDocumentation]. Then, the GP would take this into account when modelling $SSB$ and so we would be able to estimate the $SSB$ value for each point in the grid from the GP as normal [@DiceKrigingDocumentation]. It is important to note that the uncertainty for the $SSB$ values means we do not know that the value we get when we sample the $SSB$ at a point is the true value of the $SSB$ at that point and so we may want to sample the same point again to become more confident in what the true $SSB$ value is at that point . The EI acquisition function does not allow this, as the EI of a point becomes zero once you have sampled it [@BayesianOptimisationTutorial]. Hence, if we make sure we are using an acquisition function that can model sampling noise such as AEI or KG, we can continue the framework as beforehand, whilst accounting for the uncertainty of the $SSB$ values [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial]. The same process can be done for the uncertainty of the catch values outputted by the MixME model [@MixMESupp].
 
 # Appendix {#sec-Appendix}
 
