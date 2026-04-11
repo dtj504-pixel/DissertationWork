@@ -103,7 +103,7 @@ $$
 
 This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution. We can calculate this distribution for every point in the parameter space $X$ by changing the value of $x_{n+1}$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend only on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
 
-However, in our framework we have chosen instead to create a new GP each round based on the current data we have instead of updating our GP from the previous round as above. Despite this, we do use @eq-posteriordistributiongivensamples to find $F(x_{n+1})|f(x_{1:n})$$ for each point $x_{n+1}$ in the parameter space that we have not already sampled. This then allows us to move on to using BHM as we have probabilities for the value of $f(x_{n+1})$ from the distribution.
+However, in our framework we have chosen instead to create a new GP each round based on the current data we have instead of updating our GP from the previous round as above. Despite this, we do use @eq-posteriordistributiongivensamples to find $F(x_{n+1})|f(x_{1:n})$\$ for each point $x_{n+1}$ in the parameter space that we have not already sampled. This then allows us to move on to using BHM as we have probabilities for the value of $f(x_{n+1})$ from the distribution.
 
 ### Bayesian History Matching {#sec-bhm}
 
@@ -431,7 +431,7 @@ $$
 
 and similarly for haddock. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows intuitively from the case in @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
 
-Firstly, to get some initial data, we randomly sample our first set of $2(n-1)$ points, where $n$ is the number of cores the system we are on has. This is a slight quirk that has carried over from when we were running the simulation locally and we will CHANGE IT ONCE WE HAVE RUN ONE VERSION OF 1 RUN LIKE THIS ON THE VIKING COMPUTER. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
+Firstly, to get some initial data, we randomly sample our first set of $2n-1$ points, where $n$ is the number of cores the system we are on has. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
 -   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
@@ -441,7 +441,7 @@ Firstly, to get some initial data, we randomly sample our first set of $2(n-1)$ 
 
 -   We use BHM to remove any points that are implausible (that have a probability less than 0.0001 of being higher than the current best total catch)
 
--   We use the KG acquisition function to select $2(n-1)$ plausible points to sample in the next round
+-   We use the KG acquisition function to select $2n-1$ plausible points to sample in the next round
 
 -   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the risk below or equal to 0.05
 
@@ -452,36 +452,6 @@ Hence, we have the GPs below:
 | $\textrm{min}(SSB_{Cod})$ | The minimum $SSB$ for cod over the years 2030-2039. |
 | $\textrm{min}(SSB_{Haddock})$ | The minimum $SSB$ for haddock over the years 2030-2039. |
 | $LCM(\theta)$ | The natural log of the total catch of cod and haddock given by the MixME model in the years 2030-2039. |
-
-## Calculating the risk {#sec-calculaterisk}
-
-MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki]. In contrast to the first half of the project, we now calculate the risk using the $SSB$. Note that we also need the $B_{lim}$ for this method. We have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
-
-Throughout this section, we have assumed that the $SSB$ for each stock for each year outputted by the simulation is the true value. In reality there may be some uncertainty about this value and so we would need to take this into account [@MixME]. This would still allow $\textrm{min}(SSB)$ to be modelled as a GP and the risk calculation to be the same so that the rest of the process can be carried out as above (as the KG acquisition function can handle noisy situations) [@BayesianOptimisationTutorial]. However, this is beyond the scope of my project and so I have not implemented this and will not discuss it in detail.
-
-The GPs $\textrm{min}(SSB_{Cod})$ and $\textrm{min}(SSB_{Haddock})$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. The $\textrm{min}(SSB)$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation],[@williams2006gaussian],[@BayesianOptimisationTutorial].
-
-Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs $\textrm{min}(SSB_{Cod})$ and $\textrm{min}(SSB_{Haddock})$ Next, we predict the $\textrm{min}(SSB)$ for every point in the parameter space for eaand calculate:
-
-$$
-risk = P(\textrm{min}(SSB) < B_{lim})
-$$
-
-for each stock. This can be done using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
-
-By ensuring that:
-
-$$
-P(\textrm{min}(SSB) < B_{lim}) \le 0.05
-$$
-
-we ensure that:
-
-$$
-P(SSB < B_{lim}) \le 0.05
-$$ {#eq-riskthresholdallyears}
-
-for every year in the long term forecast. This guarantees that the maximum annual risk in this period remains below the 0.05 threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ [@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
 
 ## The basics of the MixME model
 
@@ -495,7 +465,7 @@ We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ bas
 
 We first create the operating model which contains the true data for the stocks and fleets in the dataset. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability.
 
-In both of our files, this is loaded with the dataset. This true data is generated using standard age-structured equations to model the dynamics of the fleets and the stocks For every year, it has the catch (in terms of landings and discards) from each fleet and the survivors from that year . It also contains a stock-recruitment model and recruitment is done at the beginning of each time step. The steps for fully assembling the operating model for input into the MixME model are explained below.
+In both of our files, this is loaded with the dataset. For every year, the dataset has the catch (in terms of landings and discards) from each fleet and the survivors from that year . It also contains a stock-recruitment model and recruitment is done at the beginning of each time step. The steps for fully assembling the operating model for input into the MixME model are explained below.
 
 #### Estimate historic quota-share for the two fleets
 
@@ -531,21 +501,53 @@ The tracking object produced by the simulation contains the catch and the $SSB$ 
 
 We use the same data as in the Exploring simulation outputs example from the wiki. There are some small differences in how we calculate the HCR and do our one-year forecasts in the shortcut model. However, this is not yet up on the wiki and so we will not be describing it in detail.
 
+## Calculating the risk {#sec-calculaterisk}
+
+MixME defines risk as the proportion of iterations in each year where $SSB$ falls below $B_{lim}$ [@MixMEwiki]. However, due to only having one iteration in each of my datasets, I have experimented with using a different method to measure the risk [@MixMEwiki]. In contrast to the first half of the project, we now calculate the risk using the $SSB$. Note that we also need the $B_{lim}$ for this method. We have a $B_{lim}$ for each stock, taken from ICES advice [@ICES2020HaddockBlim],[@ICES2020CodBlim]. The $B_{lim}$ for cod is $107,000$ tonnes and the $B_{lim}$ for haddock is $9,227$ tonnes.
+
+Throughout this section, we have assumed that the $SSB$ for each stock for each year outputted by the simulation is the true value. In reality there may be some uncertainty about this value and so we would need to take this into account [@MixME]. This would still allow $\textrm{min}(SSB)$ to be modelled as a GP and the risk calculation to be the same so that the rest of the process can be carried out as above (as the KG acquisition function can handle noisy situations) [@BayesianOptimisationTutorial]. However, this is beyond the scope of my project and so I have not implemented this and will not discuss it in detail.
+
+The GPs $\textrm{min}(SSB_{Cod})$ and $\textrm{min}(SSB_{Haddock})$ have remained modelled in the same way as risk from the first half of the project to avoid mis-specification [@williams2006gaussian],[@DiceKrigingPaper]. They have also kept the same estimation method, nugget and kernel [@williams2006gaussian]. The $\textrm{min}(SSB)$ for each stock is not necessarily smooth. Due to our discrete time steps, overfishing or low recruitment can cause sudden drops. This means we need a kernel which can appropriately model these sudden drops seen in this real-world process. As justified in @sec-expkerandmean, the exponential kernel is appropriate for this. Maximum Likelihood Estimation is one of the standard methods used in the literature for our situation and our simulation is still deterministic and we still need our matrices to be invertible and so we keep the small nugget term [@DiceKrigingDocumentation],[@williams2006gaussian],[@BayesianOptimisationTutorial].
+
+Firstly, we extract the $\textrm{min}(SSB)$ for each stock from the result each of the simulations we have run [@MixMEwiki],[@MixME]. We then put these results into the GPs $\textrm{min}(SSB_{Cod})$ and $\textrm{min}(SSB_{Haddock})$ Next, we predict the $\textrm{min}(SSB)$ for every point in the parameter space for and calculate:
+
+$$
+risk = P(\textrm{min}(SSB) < B_{lim})
+$$
+
+for each stock. This can be done using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
+
+By ensuring that:
+
+$$
+P(\textrm{min}(SSB) < B_{lim}) \le 0.05
+$$
+
+we ensure that:
+
+$$
+P(SSB < B_{lim}) \le 0.05
+$$
+
+for every year in the long term forecast. This guarantees that the maximum annual risk in this period remains below the 0.05 threshold, which is exactly what is required to meet the ICES precautionary standard due to their definition of $Prob3$ [@ICES2019WKGMSE2]. This means that this risk calculation could be used in policy documents to set official catch limits in countries that have agreed to this standard [@ICES2019WKGMSE2].
+
 ## Parallelisation
 
 This process has been set up so that it is easy to run in parallel. We are able to load the dataset we need once and then run the simulations for each point we have chosen to sample in the round in parallel. As they run, each process only gathers the values we need and removes the rest of the results of the simulation to save memory. Here, the values we need are the $min(SSB)$ for cod, the $min(SSB)$ for haddock and the total catch of cod and haddock over the years 2030-2039. Then, we collect these results and set up the GPs for each of them. After this, we run through the process of removing any implausible points and selecting the points to sample in the next round in a very similar way to the first half of this project [@Originalpaper]. We iterate this process until the optimal point(s) are found.
 
 # Analysis of Results {#sec-analysingresults}
 
-The convergence tests I ran after augmenting the original method in @Originalpaper with different acquisition functions confirmed that my method still led to convergence to the correct point identified in the paper for every acquisition function. The convergence tests can be found in the code in @sec-Appendix.
+The convergence tests I ran after augmenting the original method in @Originalpaper with different acquisition functions confirmed that my method still led to convergence to the correct point identified in the paper for every acquisition function. The convergence and speed tests can be found in the code in @sec-Appendix.
 
 From running our simulation for the shortcut model from the second half of the project on the Viking HPC, we were able to obtain some results [@VikingDocumentation]. The shortcut model initially gave us a long list of parameters, each with $F_{cod} = 0.42$ and $F_{had} \ge 0.34$. As $F_{had} = 0.34$ was given as an optimal parameter in the list, it means that this results in the same long-term catch of haddock as if we were to fish at any $F_{had} > 0.34$, as we were maximising the total long-term catch. Remembering that cod is the choke stock, this list also suggests that when we fish at $F_{cod} = 0.42$ this causes us to fish at $F_{had} = 0.34$ due to the ratio of cod to haddock that we are catching across the fleets [@MixMEwiki]. Thus, $F_{cod} = 0.42$ and $F_{had} = 0.34$ are the optimal parameters suggested by the shortcut simulation.
 
 These appear to be relatively high. ICES documents regularly suggest lower values for $F_{cod}$ in the North Sea region for their $F_{MSY}$ values [@ICES2019CodAdvice],[@ICES2020CodBlim]. Looking at the most recent advice, the model's output of $F_{cod}=0.42$ is significantly above the $F_{MSY} = 0.231$ but below $F_{PA} = 0.464$ [@ICES2025CodAdvice]. This value aligns with my risk calculation by being below $F_{PA}$, as this ensures that @eq-riskthresholdallyears holds in the long-term [@ICES2021precautionary]. However, I would have expected my value to be closer to $F_{MSY}$ as this ensures @eq-riskthresholdallyears and is maximising the long-term catch [@ICES2021precautionary].
 
-On the other hand, for Celtic Sea haddock the optimal parameter given by the shortcut model $F_{had} = 0.34$ is below the $F_{MSY} = 0.353$ and the $F_{PA} = 0.708$ given in the latest advice and sits in a similar area historically [@ICES2025HaddockAdvice],[@ICES2019HaddockAdvice],[@ICES2020HaddockBlim]. This shows that the shortcut model has produced a safe value for $F_{had}$ for Celtic Sea haddock according to the latest ICES guidelines.
+On the other hand, for Celtic Sea haddock the optimal parameter given by the shortcut model $F_{had} = 0.34$ is below the $F_{MSY} = 0.353$ and the $F_{PA} = 0.708$ given in the latest advice and sits in a similar area historically [@ICES2025HaddockAdvice],[@ICES2019HaddockAdvice],[@ICES2020HaddockBlim]. This shows that the shortcut model has produced a safe value for $F_{had}$ for Celtic Sea haddock according to the latest ICES guidelines. The shortcut model took 10 minutes and 34 seconds to run on the Viking HPCs [@VikingDocumentation].
 
-From running our simulation based on the fixed fishing mortality example on the MixME wiki we receive similar results, despite using the same dataset. Again, we obtain a list of parameters and are able to determine, because cod is the choke stock, that $F_{cod} = 0.38$ and $F_{had} = 0.28$ are the optimal parameters [@MixMEwiki]. The $F_{cod}$ falls slightly closer to the $F_{MSY}$ value recommended by ICES and is still below $F_{PA}$ [@ICES2025CodAdvice]. The $F_{had}$ is again below both the $F_{MSY}$ and the $F_{PA}$, suggesting haddock is being choked by cod [@ICES2025HaddockAdvice]. The values from this model are likely to be different to those from the shortcut model because they have been set up in different way. For example, one change is that the $SSB$ is taken without including the pre-calculated noise in the shortcut model.
+From running our simulation based on the fixed fishing mortality example on the MixME wiki we receive similar results, despite using the same dataset. Again, we obtain a list of parameters and are able to determine, because cod is the choke stock, that $F_{cod} = 0.38$ and $F_{had} = 0.28$ are the optimal parameters [@MixMEwiki]. The $F_{cod}$ falls slightly closer to the $F_{MSY}$ value recommended by ICES and is still below $F_{PA}$ [@ICES2025CodAdvice]. The $F_{had}$ is again below both the $F_{MSY}$ and the $F_{PA}$, suggesting haddock is being choked by cod [@ICES2025HaddockAdvice]. The simulation based on the fixed fishing mortality example took 7 minutes and 48 seconds to run on the Viking HPCs, which is less time than the shortcut model. This could be in part due to varying usage levels on Viking [@VikingDocumentation].
+
+The values from this model are likely to be different to those from the shortcut model because they have been set up in different way. For example, one change is that the $SSB$ is taken without including the pre-calculated noise in the shortcut model.
 
 The discrepancy in the $F_{cod}$ given by the models and those suggested by @ICES2025CodAdvice could be due to ICES maximising the long-term single-stock catch for cod whilst my simulations aim to maximise the long-term total catch for both cod and haddock [@MixedFisheriesStatusandManagement2023]. This could lead to the quota for cod being raised, whilst remaining precautionary, so that we can fish more haddock. Allowing this could result in a lower long-term catch for cod, but this reduction in cod catch could be made up for by the increase in haddock catch. Thus, the models may be trying to balance the trade off of reducing the long term catch of cod by fishing above the $F_{MSY}$ for cod with catching more haddock if it does this [@MixME],[@MixedFisheriesStatusandManagement2023]. This would result in a value between $F_{MSY}$ and $F_{PA}$ for cod which is exactly what we see above. There are many other reasons that the model could be different from those conducted by ICES, but we will not focus on this here.
 
@@ -575,8 +577,10 @@ The code is all contained in the DissertationWork repository on Github [@myrepo]
 
 The visualisations of the GPs from the first half of the project can be seen in Gaussian Process Visualisation and Experimentation folder in the `case_study8_3D.qmd` file.
 
-The test for which acquisition function is bets can be seen as the most recent tests in the "Actions" tab or can be seen in the Documents folder in the Deciding which acquisition function is best based on results from tests pdf.
+The test for which acquisition function is best can be seen as the most recent tests in the "Actions" tab or can be seen in the Documents folder in the Deciding which acquisition function is best based on results from tests pdf. These include the speed and convergence tests.
 
 The original MixME scripts can be found in the /MixME_experimentation/Original scripts folder.
 
 The results of the grid search are available in the Grid_Search_Results folder.
+
+The logs for my runs of the shortcut model and the model based on the fixed fishing mortality example can be found as FILLL IN FOLDER NAMES in the repository.
