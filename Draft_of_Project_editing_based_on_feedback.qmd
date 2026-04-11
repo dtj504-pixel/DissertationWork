@@ -63,13 +63,7 @@ $$
 \mu_0(x_{1:n}) = (\mu_0(x_1), . . ., \mu_0(x_n))
 $$
 
-We choose a covariance function such that the inputs that have nearby points that have been evaluated have a more certain output than points that are further away from the points that have been evaluated [@Originalpaper] - UNCLEAR, FIND A BETTER WAY TO EXPRESS.
-
-This is equivalent to saying that if for some $x,x',x''$ in the parameter space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$.
-
-We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ for any $x$ in the parameter space as our estimate of $f(x)$ based on our current beliefs. - UNCLEAR
-
-This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to these points [@Originalpaper].
+We choose a covariance function such that if for some $x,x',x''$ in the parameter space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$. We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ as our belief of the distribution of values for $f(x)$ for any point $x$ in the parameter space. This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to these points [@Originalpaper].
 
 ### Maximum Likelihood Estimation
 
@@ -85,9 +79,7 @@ $$
 
 ### Gaussian Process Regression {#sec-gaussianprocessregression}
 
-Gaussian process regression is a Bayesian statistical method for modelling functions. Again, let $f$ be the objective function and we focus on the parameter space $X := \{x_1,...,x_k\}$. Now, if we have evaluated $n$ points such that we have $f(x_{1:n})$ and want to evaluate $x_{n+1}$ we let $k = n+1$ in @eq-MultivariateNormalDist . - THINK ABOUT WHAT I REALLY WANT TO EVALUATE HERE. IT IS LIKELY DESCRIBED IN THE NEXT SENTENCE.
-
-Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
+Gaussian process regression is a Bayesian statistical method for modelling functions. Again, let $f$ be the objective function and we focus on the parameter space $X := \{x_1,...,x_k\}$. Now, if we have sampled $n$ points such that we have $f(x_{1:n})$ and are considering sampling $x_{n+1}$ next, we let $k = n+1$ in @eq-MultivariateNormalDist. Then, we can compute the conditional distribution of $F(x_{n+1})$ given $f(x_{1:n})$ using Bayes' rule:
 
 $$
 F(x_{n+1})|f(x_{1:n}) \sim N(\mu_n(x_{n+1}), \sigma^2_n(x_{n+1}))
@@ -109,9 +101,9 @@ $$
 \operatorname{cov}_0(x_{n+1}, x_{1:n}) = (\operatorname{cov}_0(x_{n+1}, x_1), ... , \operatorname{cov}_0(x_{n+1}, x_n))
 $$
 
-This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution for $x_{n+1}$. - CHECK IF THIS IS FOR F(x\_{n+1}) INSTEAD
+This conditional distribution $F(x_{n+1})|f(x_{1:n})$ is called the posterior probability distribution. We can calculate this distribution for every point in the parameter space $X$ by changing the value of $x_{n+1}$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
 
-We can calculate this distribution for every point in the parameter space $X$. This results in a new GP $F_n$ with a mean vector and covariance kernel that depend on the location of the unevaluated points, the locations of the evaluated points $x_{1:n}$, and their values $f(x_{1:n})$. So, we can update our GP every round based on the new points we have evaluated.
+However, in our framework we have chosen instead to create a new GP each round based on the current data we have instead of updating our GP from the previous round as above. Despite this, we do use @eq-posteriordistributiongivensamples to find $F(x_{n+1})|f(x_{1:n})$$ for each point $x_{n+1}$ in the parameter space that we have not already sampled. This then allows us to move on to using BHM as we have probabilities for the value of $f(x_{n+1})$ from the distribution.
 
 ### Bayesian History Matching {#sec-bhm}
 
@@ -579,7 +571,7 @@ A last thing to consider would be modeling the uncertainty of the $SSB$ values o
 
 # Appendix {#sec-Appendix}
 
-The code is all contained in the DissertationWork repository on Github [@myrepo].
+The code is all contained in the DissertationWork repository on Github [@myrepo]. Please note that throughout this repository I have been allowed by my supervisor to use any AI tools which may be useful.
 
 The visualisations of the GPs from the first half of the project can be seen in Gaussian Process Visualisation and Experimentation folder in the `case_study8_3D.qmd` file.
 
