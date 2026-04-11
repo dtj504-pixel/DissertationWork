@@ -442,26 +442,6 @@ for (iteration in 1:max_rounds) {
 
     dev.off()
 
-    # Save high-quality EPS file
-    setEPS()
-    cairo_ps("checking_catch.eps", width = 10, height = 10)
-
-    par(mfrow = c(1,1))
-
-    image2D(matrix(med_cat,nrow=11),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod")
-
-    dev.off()
-
-    # Save high-quality EPS file
-    setEPS()
-    cairo_ps("checking_prob_of_catch.eps", width = 10, height = 10)
-
-    par(mfrow = c(1,1))
-    image2D(matrix(1-pcat,nrow=11),y=sort(unique(dat$Fcod)),x=sort(unique(dat$Fhad)),xlab="Fhad",ylab="Fcod",breaks=c(-1e-12,0.0001,0.05,0.5,0.9,1))
-
-    dev.off()
-
-
     # Calculate KG
     mu <- pred_log_cat$mean
     sigma <- pred_log_cat$sd
