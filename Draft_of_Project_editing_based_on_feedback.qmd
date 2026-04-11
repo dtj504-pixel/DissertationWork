@@ -422,11 +422,11 @@ We now can conduct 20 year projections into the future using the MixME package [
 The process for the first half of the project adapted to our new situation is outlined below. Firstly, note that we are now seeking to maximise the objective function below:
 
 $$
-\small g(\theta) = I_{[Cod\ B_{lim},\infty)}(P(\textrm{min}(SSB_{Cod})<B_{lim})) \times I_{[Haddock\ B_{lim},\infty)}(P(\textrm{min}(SSB_{Haddock})<B_{lim})) \times C(\theta) 
-$$where the indicator functions are:
+\small g(\theta) = I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})<Cod\ B_{lim})) \times I_{[0,0.05]}(P(\textrm{min}(SSB_{Haddock})<Haddock\ B_{lim})) \times C(\theta) 
+$$where the indicator function for cod is:
 
 $$
-I_{[0.95,1]}(P(\textrm{min}(SSB_{Cod})<B_{lim})) = \begin{cases} 1 & \text{if } \textrm{min}(SSB_{Cod})\in[Cod\ B_{lim},\infty) \\ 0 & \text{otherwise } \end{cases} 
+I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})<B_{lim})) = \begin{cases} 1 & \text{if } P(\textrm{min}(SSB_{Cod})<B_{lim}) \in [0,0.05] \\ 0 & \text{otherwise } \end{cases} 
 $$
 
 and similarly for haddock. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows intuitively from the case in @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
