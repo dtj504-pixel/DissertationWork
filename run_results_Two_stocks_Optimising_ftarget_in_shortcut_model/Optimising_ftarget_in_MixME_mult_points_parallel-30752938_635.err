@@ -1,0 +1,48 @@
+Loading required package: lattice
+Loading required package: iterators
+FLCore (Version 2.6.21, packaged: 2026-01-26 17:08:09 UTC)
+Loading required package: ggplotFL
+Loading required package: ggplot2
+
+Attaching package: ‘ggplot2’
+
+The following object is masked from ‘package:FLCore’:
+
+    %+%
+
+Loading required package: data.table
+Loading required package: FLasher
+FLasher: Drive us by pitchfork to caves by the sea
+Loading required package: future
+Loading required package: progressr
+
+Attaching package: ‘stockassessment’
+
+The following object is masked from ‘package:mse’:
+
+    hcr
+
+
+Attaching package: ‘DiceKriging’
+
+The following object is masked from ‘package:FLCore’:
+
+    cv
+
+Loading required package: foreach
+Loading required package: parallel
+Warning message:
+no DISPLAY variable so Tk is not available 
+
+ *** caught segfault ***
+address 0x30000000f, cause 'memory not mapped'
+
+Traceback:
+ 1: mcfork(detached)
+ 2: mcparallel(list(FUN(X[[nexti]], ...)), mc.set.seed = mc.set.seed,     silent = mc.silent, mc.affinity = affinity.list[[nexti]])
+ 3: mclapply(seq_len(ngr * n.block), function(i) lapply(seq_len(block.size),     function(k) subjob.((i - 1) * block.size + k, pGrid = pGrid,         nonGrids = ng$nonGrids, repFirst = repFirst, n.sim = n.sim,         seed = seed, doOne = doOne, monitor = monitor, ...)),     mc.cores = cores, mc.preschedule = !load.balancing, mc.set.seed = FALSE)
+ 4: unlist(x, recursive = FALSE)
+ 5: ul(mclapply(seq_len(ngr * n.block), function(i) lapply(seq_len(block.size),     function(k) subjob.((i - 1) * block.size + k, pGrid = pGrid,         nonGrids = ng$nonGrids, repFirst = repFirst, n.sim = n.sim,         seed = seed, doOne = doOne, monitor = monitor, ...)),     mc.cores = cores, mc.preschedule = !load.balancing, mc.set.seed = FALSE))
+ 6: doMclapply(points_to_run, doOne = doOne, cores = n_cores)
+An irrecoverable exception occurred. R is aborting now ...
+/var/spool/slurmd.spool/job30878266/slurm_script: line 26: 506356 Segmentation fault      (core dumped) Rscript ./MixME_experimentation/My_scripts/Two_stocks_Optimising_ftarget_in_shortcut_model.R

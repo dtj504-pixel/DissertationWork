@@ -1,0 +1,37 @@
+Loading required package: lattice
+Loading required package: iterators
+FLCore (Version 2.6.21, packaged: 2026-01-26 17:08:09 UTC)
+Loading required package: ggplotFL
+Loading required package: ggplot2
+
+Attaching package: ‘ggplot2’
+
+The following object is masked from ‘package:FLCore’:
+
+    %+%
+
+Loading required package: data.table
+Loading required package: FLasher
+FLasher: In my Purple Love Balloon
+Loading required package: future
+Loading required package: progressr
+
+Attaching package: ‘stockassessment’
+
+The following object is masked from ‘package:mse’:
+
+    hcr
+
+
+Attaching package: ‘DiceKriging’
+
+The following object is masked from ‘package:FLCore’:
+
+    cv
+
+Loading required package: foreach
+Loading required package: parallel
+Warning message:
+no DISPLAY variable so Tk is not available 
+/var/spool/slurmd.spool/job30952515/slurm_script: line 26:  8290 Killed                  Rscript ./MixME_experimentation/My_scripts/Two_stocks_Optimising_ftarget_in_shortcut_model.R
+[2026-02-13T16:15:34.590] error: Detected 79 oom_kill events in StepId=30952515.batch. Some of the step tasks have been OOM Killed.
