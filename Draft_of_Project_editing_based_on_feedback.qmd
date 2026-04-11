@@ -37,17 +37,19 @@ Lastly, we will discuss briefly the ideas of optimisation and Management Strateg
 
 ## Previous Work and Structure of this Paper
 
-There has been much previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management, being used by ICES to implement single-stock Total Annual Catches (TACs) and thus are widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
+There has been much previous work on this problem. MSEs to test HCRs for single-stock fisheries are a well-established method of fisheries management. They are used by ICES to implement single-stock Total Annual Catches (TACs) and are thus widely adopted [@ICES2019WKGMSE2], [@Harvest_Control_Rules_2]. One of the most recent papers on MSEs for single-stock fisheries uses Gaussian Processes to estimate the results of a simulation, due to the simulation being expensive to evaluate [@Originalpaper]. It then uses Bayesian History Matching to narrow in to the optimal point [@Originalpaper]. This was helped by previous developments in diverse fields [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial].
 
-However, for many years researchers have realised that a single-stock approach is not sufficient [@ULRICH201238],[@MixedFisheriesStatusandManagement2023]. This has led to a growth in literature relating to how to manage mixed fisheries, which we are building on in @sec-mixedfisheries of our report [@ULRICH201238],[@MixedFisheriesStatusandManagement2023],[@MixME]. The MSEs for mixed fisheries tend to be more complicated than for single-stock fisheries as they take more factors into account [@ULRICH201238],[@MixME]. Thus, finding ways to improve MSE grid searches in a single stock context and then applying this method to mixed fisheries contexts could be beneficial for the fishing industry [@Originalpaper],[@MixME],[@ParallelandOtherSimulationsInRMadeEasy]. This is our intention throughout this paper. We describe the framework outlined in the abstract in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
+For many years researchers have realised that a single-stock approach is not sufficient [@ULRICH201238],[@MixedFisheriesStatusandManagement2023]. This has led to a growth in literature relating to how to manage mixed fisheries, which we are building on in @sec-mixedfisheries of our report [@ULRICH201238],[@MixedFisheriesStatusandManagement2023],[@MixME]. The MSEs for mixed fisheries tend to be more complicated than for single-stock fisheries as they take more factors into account [@ULRICH201238],[@MixME]. Thus, finding ways to improve MSE grid searches in a single stock context and then applying this method to mixed fisheries contexts could be beneficial for the fishing industry [@Originalpaper],[@MixME],[@ParallelandOtherSimulationsInRMadeEasy]. This is our intention throughout this paper. We describe the framework outlined in the abstract in detail with applications to a couple of scenarios, the results of which are discussed in @sec-analysingresults. We also suggest areas for further development of the method in @sec-conclusionandfurtherdevelopment.
 
 In the @sec-singlestock part of the project, we build on @Originalpaper. We focus on enhancing the methods in the paper by adding acquisition functions and k-means clustering to improve how we choose to sample points between rounds as this was not deeply considered in the original paper [@Originalpaper],[@BayesianOptimisationTutorial],[@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. The aim of the second half of the project in @sec-mixedfisheries is to apply the methods from @sec-singlestock to a more realistic mixed fisheries scenario and to demonstrate how effective our method may be if used in the industry [@BayesianOptimisationTutorial],[@MixME],[@MixedFisheriesStatusandManagement2023].
 
 # Creating the framework in a single stock fisheries context {#sec-singlestock}
 
-## General theory
+## General theory {#sec-generaltheory}
 
-We will look at the mathematics behind the methods in @Originalpaper above and also at the acquisition functions which I have added to the original code. For a comprehensive introduction to the general theory on Gaussian processes, Maximum Likelihood Estimation and Gaussian Process Regression see @BayesianOptimisationTutorial.
+We will look at the mathematics behind the methods in @Originalpaper above and also at the acquisition functions which I have added to the original code. For a comprehensive introduction to the general theory on Gaussian Processes, Maximum Likelihood Estimation and Gaussian Process Regression see @BayesianOptimisationTutorial.
+
+Throughout this section, we often call $f$ an objective function as this is the standard across the literature. It should be regarded as separate from our objective function in @eq-objectivefunctionsinglestock, which clearly needs to be split into separate parts to be emulated by a Gaussian Process (GP). Until the end of the @sec-generaltheory section, $f$ should be regarded as an objective function we wish to maximise which is emulated by a GP.
 
 ### Gaussian Processes
 
@@ -67,14 +69,12 @@ We choose a covariance function such that if for some $x,x',x''$ in the paramete
 
 ### Maximum Likelihood Estimation
 
-When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$.
-
-We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters that give us $\mu_0$ and $\operatorname{cov}_0$. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. - UNDER THE PRIOR IS UNCLEAR
+When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$. We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters of the GP. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior distribution given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. - UNDER THE PRIOR IS UNCLEAR
 
 Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
 
 $$
- \hat{\eta} = argmax_\eta p(f(x_{1:n})|\eta)
+ \hat{\eta} = \textrm{argmax}_\eta p(f(x_{1:n})|\eta)
 $$
 
 ### Gaussian Process Regression {#sec-gaussianprocessregression}
@@ -107,28 +107,28 @@ However, in our framework we have chosen instead to create a new GP each round b
 
 ### Bayesian History Matching {#sec-bhm}
 
-For the theory here, please see @Originalpaper. Let $x$ be a point in the parameter space. We begin with some uncertainty about a function we are emulating with a GP, say $\alpha(x)$, and want to find it's maximum. We can make probabilistic statements such as:
+For the theory here, please see @Originalpaper. Let $x$ be a point in the parameter space. We begin with some uncertainty about our objective function $f(x)$, and want to find it's maximum. We can make probabilistic statements such as:
 
 $$
-P(\alpha(x)>a)= \int_{a}^{\infty}P(\alpha(x))d\alpha(x)
+P(f(x)>a)= \int_{a}^{\infty}P(f(x))df(x)
 $$
 
 Once we evaluate another point $x_1$ where $x_1 \neq x$, we are able to use Bayes' Theorem improve our integral to:
 
 $$
-P(\alpha(x)>a|\alpha(x_1))= \int_{a}^{\infty}P(\alpha(x)|\alpha(x_1))d\alpha(x)
+P(f(x)>a|f(x_1))= \int_{a}^{\infty}P(f(x)|f(x_1))df(x)
 $$
 
 We now let $a=max\{f(x_1),...,f(x_n)\}$ where $n$ is the number of points we have evaluated so far. As the rounds increase we make sure to include all previous points of the objective function that have been evaluated. We remove the point $x$ from the list of plausible points if:
 
 $$
-P(\alpha(x)>a|\alpha(x_{1:n})) = \int_{a}^{\infty}P(\alpha(x)|\alpha(x_{1:n}))d\alpha(x) <\varepsilon
+P(f(x)>a|f(x_{1:n})) = \int_{a}^{\infty}P(f(x)|f(x_{1:n}))df(x) <\varepsilon
 $$ {#eq-removeimplausiblepoint}
 
 for a small $\varepsilon > 0$ until no plausible points remain. Then, the optimum will be $x^*$ such that:
 
 $$
-\alpha(x^*) = max\{\alpha(x_{1:n})\}
+f(x^*) = max\{f(x_{1:n})\}
 $$
 
 as our index $n$ counts the number of points we have evaluated throughout the whole simulation.
@@ -238,7 +238,7 @@ We are sampling eight points per round to reduce computation time [@HumanOutOfTh
 This process was described briefly in @Originalpaper and I repeat it here in more detail to help the reader. We are focusing on maximising the objective function from the paper which is given below:
 
 $$
-f(\theta) = I_{[0.95,1]}(P(B(\theta)>B_{lim})) \times C(\theta)
+g(\theta) = I_{[0.95,1]}(P(B(\theta)>B_{lim})) \times C(\theta)
 $$ {#eq-objectivefunctionsinglestock}
 
 where for a parameter:
@@ -422,7 +422,7 @@ We now can conduct 20 year projections into the future using the MixME package [
 The process for the first half of the project adapted to our new situation is outlined below. Firstly, note that we are now seeking to maximise the objective function below:
 
 $$
-\small g(\theta) = I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})<Cod\ B_{lim})) \times I_{[0,0.05]}(P(\textrm{min}(SSB_{Haddock})<Haddock\ B_{lim})) \times C(\theta) 
+\small h(\theta) = I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})<Cod\ B_{lim})) \times I_{[0,0.05]}(P(\textrm{min}(SSB_{Haddock})<Haddock\ B_{lim})) \times C(\theta) 
 $$where the indicator function for cod is:
 
 $$
@@ -433,7 +433,7 @@ and similarly for haddock. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim
 
 Firstly, to get some initial data, we randomly sample our first set of $2n-1$ points, where $n$ is the number of cores the system we are on has. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
--   We set up or update the Gaussian Processes (GPs) to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
+-   We set up or update the GPs to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
 
 -   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(\textrm{min}(SSB)<B_{lim})\le0.05$ for all of the years 2030-2039
 
@@ -459,7 +459,7 @@ The vast majority of this description is drawn from @MixMEwiki, but I repeat it 
 
 ### Starting $F_{cod}$ and $F_{had}$
 
-We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki. These were drawn from North Sea Cod and Celtic Sea Haddock advice [@ICES2021Cod028],[@ICES2020HaddockBlim]. We still sampled $n-2$ other points in the first round as well.
+We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ based upon the values given in the Fixed fishing mortality management strategy example from the MixME wiki. These were drawn from North Sea Cod and Celtic Sea Haddock advice [@ICES2021Cod028],[@ICES2020HaddockBlim]. We still sampled $2n-2$ other points in the first round as well.
 
 ### Creating the Operating model
 
@@ -567,7 +567,7 @@ Furthermore, as there are 1000 iterations in this dataset, I will then be able t
 
 Another area for improvement would be considering other metrics to optimise. For example, instead of maximising for long-term median catch, I could aim for Maximum Economic Yield which also takes into account the effort expended by the fleet to catch the stock [@MixedFisheriesStatusandManagement2023]. We could also consider the change in TAC [@ICES2021precautionary]. It is common for fisheries to want a relatively stable TAC as this makes the industry more predictable [@Harvest_Control_Rules_2]. This is occasionally taken into consideration by ICES [@ICES2021precautionary].
 
-Trophic interactions (interactions between species in a mixed fishery) are not considered in the MixME model [@MixME]. However, there is evidence to suggest that these are still important factors even in areas dominated by fishing activity . This means we should be providing data about these relationships to our model as well to provide better projections into the future [@MixedFisheriesStatusandManagement2023].
+Trophic interactions (interactions between species in a mixed fishery) are not considered in the MixME model [@MixME]. However, there is evidence to suggest that these are still important factors even in areas dominated by fishing activity. This means we should be providing data about these relationships to our model as well to provide better projections into the future [@MixedFisheriesStatusandManagement2023].
 
 A last thing to consider would be modeling the uncertainty of the $SSB$ values outputted by the MixME simulation and including this uncertainty in our GPs. MixME gives us the distribution that is modelling the pre-computed uncertainty in the observation error model object [@MixME],[@MixMESupp]. We would then include the standard deviation of the uncertainty for the $SSB$ values in the GP as an appropriate input (provided by the Dicekriging package) [@DiceKrigingDocumentation]. Then, the GP would take this into account when modelling $SSB$ and so we would be able to estimate the $SSB$ value for each point in the grid from the GP as normal [@DiceKrigingDocumentation]. It is important to note that the uncertainty for the $SSB$ values means we do not know that the value we get when we sample the $SSB$ at a point is the true value of the $SSB$ at that point and so we may want to sample the same point again to become more confident in what the true $SSB$ value is at that point . The EI acquisition function does not allow this, as the EI of a point becomes zero once you have sampled it [@BayesianOptimisationTutorial]. Hence, if we make sure we are using an acquisition function that can model sampling noise such as AEI or KG, we can continue the framework as beforehand, whilst accounting for the uncertainty of the $SSB$ values [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels],[@BayesianOptimisationTutorial]. The same process can be done for the uncertainty of the catch values outputted by the MixME model [@MixMESupp].
 
