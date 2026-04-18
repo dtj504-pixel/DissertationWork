@@ -290,7 +290,7 @@ $$ {#eq-ornsteinuhlenbeck}
 
 where ${\delta_{i,1}}$ and ${\delta_{i,2}}$ are the length scales for each of the terms respectively [@williams2006gaussian].
 
-We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. However, after our first round we reset the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
+We need to sample our first round of eight points before setting up the GPs so that we have enough data to estimate all of the coefficients in our GPs [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions]. Note that until we have sampled sixteen points, we set the prior of the catch GP to be the same as the risk GP, $m_2(\phi)$, except with different coefficients [@Originalpaper]. This is because we need to estimate the coefficients for the mean function for the catch GP and the length scales for the covariance function $c$ from the same data [@EfficientGlobalOptimizationofExpensiveBlackBoxFunctions],[@Roustant2012DiceKrigingpaper]. However, after our first round we set the mean function for the catch GP to $m_1(\phi)$ [@Originalpaper].
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. These GPS are as below:
 
@@ -307,15 +307,13 @@ Recall from @sec-setupGPs that we have the GP $LC(\theta)$ which is modeling the
 
 Firstly, we enforce the threshold in the indicator function by calculating $P(LR(\theta)\le\ln(0.05))$, which is equivalent to the precautionary threshold $P(risk\le0.05)$. We calculate this by making predictions for $\ln(risk)$ at each point using $LR(\theta)$and finding the probability that these predictions are below $\ln(0.05)$. This probability can be found using @eq-posteriordistributiongivensamples. Then, we exclude any points with $P(LR(\theta)\le \ln(0.05))\le\ \varepsilon = 0.0001$ by setting their value for the acquisition function equal to $0$. This means they will not be chosen as a point to sample in the next round.
 
-To maximise $LC(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible. We do this by setting $LC(\theta) = \alpha(x)$ and letting $a$ be the natural log of our current maximum long-term median catch, both in @eq-removeimplausiblepoint. We then carry out the process described in @sec-bhm.
-
-This full process ensures that only points that meet the precautionary threshold and and are plausible according to @eq-removeimplausiblepoint can be selected.
+To maximise $LC(\theta)$, we use Bayesian history matching to speed up the process by removing any points that are implausible. We do this by setting $LC(\theta)=f(x)$ and letting $a$ be the natural log of our current maximum long-term median catch, both in @eq-removeimplausiblepoint. We then carry out the process described in @sec-bhm. This full process ensures that only points that meet the precautionary threshold and are plausible according to @eq-removeimplausiblepoint can be selected.
 
 ### Deciding on the next point to sample
 
 We then use acquisition functions in conjunction with BHM. This is partially supported by the literature and was in part an experiment to see if these methods working together helped to speed up the process compared to that in @Originalpaper.
 
-In the literature, this method can be understood through the lens of Constrained Bayesian Optimisation [@letham2018constrainedbayesianoptimizationnoisy],[@HumanOutOfTheLoopBayesian]. We are using BHM to determine which points are possible based on:
+In the literature, this method can be understood through the lens of Constrained Bayesian Optimisation [@letham2018constrainedbayesianoptimizationnoisy],[@HumanOutOfTheLoopBayesian]. We are using BHM to determine which points are possible based on the constraints:
 
 $$
 P(C(\theta)>C(\theta^*)) > 0.0001 \ \textrm{and} \ P(risk\le0.05) > 0.0001
@@ -331,19 +329,15 @@ This was an interesting experiment to me because I wanted to explore my hypothes
 
 These hypotheses originated from reading the general literature, but specifically @HumanOutOfTheLoopBayesian, @letham2018constrainedbayesianoptimizationnoisy, @Originalpaper and @BayesianOptimisationTutorial.
 
-We have three different acquisition functions we have investigated using here. We set the value for each acquisition function to zero if the point doesn't meet the precautionary threshold [@letham2018constrainedbayesianoptimizationnoisy].
+We have three different acquisition functions we have investigated using here. For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement (AEI), as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, our equation for AEI becomes the same as for EI. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
 
-For Expected Improvement, we use the @eq-EIincode expression and calculate the EI for every point in the parameter space. For Augmented Expected Improvement (AEI), as our situation has no noise, in our code we are still using $f^*_n$ [@Originalpaper],[@BayesianOptimisationTutorial],[@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. Thus, our equation for AEI becomes the same as for EI. For Knowledge Gradient, we estimate the KG from 100 simulations and update the KG each round using @eq-updatemuKG .
-
-We have now been able to determine which points are possible and have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next.
-
-We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in [@sec-kmeansgeneral; @kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
+We have now been able to determine which points are possible and have then assigned a value to each point in $PS$ using one of the acquisition functions above. Now, we want to decide which 8 points are best to evaluate next. We use the `kmeans` function which is part of the stats package in R to do this. This function uses the algorithm from @AKMeansClusteringAlgorithm by default and thus implements our k-means algorithm described in [@sec-kmeansgeneral; @kmeansdocumentation]. We set $k=8$ to create eight clusters so that we select eight points to sample next round. This method allows us to search for viable points by looking in the $PS$ but also to keep the points we are going to sample spread out so that we can balance exploitation and exploration more effectively [@batchspreadingoutjustification].
 
 ### Updating our GPS
 
-In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round. Hence, we can do the calculations from @sec-gaussianprocessregression to update the GP with a new mean vector and covariance kernel for our next round.
+In our second round, we need to update our GPs with new data [@Originalpaper]. We do this by adding in the data for the points that have been newly evaluated this round and cretaing new GPs from scratch using this, as described in @sec-gaussianprocessregression.
 
-Now, we repeat the full process described in the Application of theory section until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
+Now, we repeat the full process described in @sec-application until there are no points with an acquisition function value greater than zero. Then, the optimal point is the $x^*$ that has the highest median catch. In our case, $x^*$ is the $F_{target}$ and $B_{trigger}$ that will give the highest median long-term catch whilst following the precautionary principle [@Originalpaper].
 
 ## Experimenting with the kernel and mean {#sec-expkerandmean}
 
@@ -359,12 +353,12 @@ The mean was also identified as a possible issue. By assuming a very specific me
 
 ### Experimenting with the kernel
 
-The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion. This results in many points that had been deemed implausible returning to the Possible Space and this is likely to continue unless different sampling points are chosen. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel.
+The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion. This results in many points that had been deemed implausible returning to $PS$ and this is likely to continue unless different sampling points are chosen. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel.
 
-My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher median catch, but still precautionary. Any areas with:
+My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher $C(\theta)$, but still precautionary. Any areas with:
 
 $$
-P(catch<current\ best\ catch)<0.0001\ \textrm{or}\ P(risk \le 0.05)>0.0001
+P(C(\theta)>C(\theta^*))<0.0001\ \textrm{or}\ P(risk \le 0.05)<0.0001
 $$
 
 have been ruled out as implausible and are displayed as dark blue.
@@ -424,16 +418,16 @@ $$
 $$where the indicator function for cod is:
 
 $$
-I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})<B_{lim})) = \begin{cases} 1 & \text{if } P(\textrm{min}(SSB_{Cod})<B_{lim}) \in [0,0.05] \\ 0 & \text{otherwise } \end{cases} 
+I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})< Cod\ B_{lim})) = \begin{cases} 1 & \text{if } P(\textrm{min}(SSB_{Cod})< Cod\ B_{lim}) \in [0,0.05] \\ 0 & \text{otherwise } \end{cases} 
 $$
 
-and similarly for haddock. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. This follows intuitively from the case in @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
+and similarly for haddock. $Cod\ B_{lim}$ and $Haddock\ B_{lim}$ are the $B_{lim}$ for cod and haddock respectively and $SSB_{Cod}$ and $SSB_{Haddock}$ are the $SSB$ for cod and haddock respectively. $h(\theta)$ follows intuitively from the case in @eq-objectivefunctionsinglestock once we consider that we are now modelling for multiple stocks and want to maximise the catch whilst keeping both stocks safe.
 
 Firstly, to get some initial data, we randomly sample our first set of $2n-1$ points, where $n$ is the number of cores the system we are on has. This is again done to reduce computation time [@Originalpaper],[@HumanOutOfTheLoopBayesian]. Then, for each round we do the following:
 
--   We set up or update the GPs to model the $\textrm{min}(SSB)$ from 2030-2039 for each stock and the GP to model the total catch from 2030-2039
+-   We set up or update the GPs to model the $\textrm{min}(SSB)$ for each stock and the GP to model the total catch from 2030-2039
 
--   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(\textrm{min}(SSB)<B_{lim})\le0.05$ for all of the years 2030-2039
+-   We can then use the $B_{lim}$ for each stock as a threshold so that we only consider the values of $F_{cod}$ and $F_{had}$ that have $P(\textrm{min}(SSB)<B_{lim})\le0.05$
 
 -   We use the GP which is modelling the total catch to predict the value for the total catch at every point in the parameter space, which will have some uncertainty
 
@@ -441,7 +435,7 @@ Firstly, to get some initial data, we randomly sample our first set of $2n-1$ po
 
 -   We use the KG acquisition function to select $2n-1$ plausible points to sample in the next round
 
--   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping the risk below or equal to 0.05
+-   We repeat this process until there is only one plausible point left and then we will accept this as being the $F_{cod}$ and $F_{had}$ that maximise the catch whilst keeping $risk \le 0.05$
 
 Hence, we have the GPs below:
 
@@ -463,7 +457,7 @@ We chose our first point to sample as $F_{cod} = 0.28$ and $F_{had} = 0.353$ bas
 
 We first create the operating model which contains the true data for the stocks and fleets in the dataset. We have data for North Sea Cod from 1963-2019 and for Celtic Sea Haddock from 1993-2019. For the stocks, this includes the numbers, natural mortality, stock mean individual weight and proportion mature split by age and for fleets this includes landing numbers, landing mean individual weight, discard numbers, discard mean individual weight, selectivity and catchability.
 
-In both of our files, this is loaded with the dataset. For every year, the dataset has the catch (in terms of landings and discards) from each fleet and the survivors from that year . It also contains a stock-recruitment model and recruitment is done at the beginning of each time step. The steps for fully assembling the operating model for input into the MixME model are explained below.
+In both of our files, this is loaded with the dataset. For every year, the dataset has the catch (in terms of landings and discards) from each fleet and the survivors from that year. It also contains a stock-recruitment model and recruitment is done at the beginning of each time step. The steps for fully assembling the operating model for input into the MixME model are explained below.
 
 #### Estimate historic quota-share for the two fleets
 
