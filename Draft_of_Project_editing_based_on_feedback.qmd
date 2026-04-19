@@ -341,8 +341,6 @@ Now, we repeat the full process described in @sec-application until there are no
 
 For an in depth discussion of the different properties and uses of different kernels and means, see @williams2006gaussian. This source is the basis for the majority of this section.
 
-MAY NEED OT CHANGE REASONING IN SOME OF THE BELOW NOW TOO TO BE ABOUT SMOOTHNESS OF THE FUCNTION
-
 Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This is because the smoothness of the function emulated by the GP can have an impact on what kernel we may want to use in the GP. In @sec-application, we used the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, as in @Originalpaper. We have experimented below with using the Gaussian kernel (general form shown in @eq-GaussianKernel) or the Matern kernel with $\nu = \frac{5}{2}$.
 
 $$
