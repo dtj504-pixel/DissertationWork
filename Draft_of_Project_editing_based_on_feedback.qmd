@@ -341,7 +341,9 @@ Now, we repeat the full process described in @sec-application until there are no
 
 For an in depth discussion of the different properties and uses of different kernels and means, see @williams2006gaussian. This source is the basis for the majority of this section.
 
-Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This was due to the fact that the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, being used in the Case Study (@eq-ornsteinuhlenbeck) is not as smooth as the Gaussian kernel (general form shown in @eq-GaussianKernel). This was questioned by my supervisor as the Gaussian kernel is more widely used.
+MAY NEED OT CHANGE REASONING IN SOME OF THE BELOW NOW TOO TO BE ABOUT SMOOTHNESS OF THE FUCNTION
+
+Along with my project supervisor, I decided to run some experiments determining whether changing the kernel and mean used in the Case Study in @Originalpaper would have an effect on the value determined as the optimal point. This is because the smoothness of the function emulated by the GP can have an impact on what kernel we may want to use in the GP. In @sec-application, we used the exponential kernel, also called the Ornstein–Uhlenbeck correlation function, as in @Originalpaper. We have experimented below with using the Gaussian kernel (general form shown in @eq-GaussianKernel) or the Matern kernel with $\nu = \frac{5}{2}$.
 
 $$
 r(\phi) = \textrm{exp}\left(-\frac{r^2}{2l^2}\right)
@@ -351,9 +353,9 @@ The mean was also identified as a possible issue. By assuming a very specific me
 
 ### Experimenting with the kernel
 
-The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it is very smooth. The GP will create a very smooth surface due to the very smooth assumption in the Gaussian kernel. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion. This results in many points that had been deemed implausible returning to $PS$ and this is likely to continue unless different sampling points are chosen. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel.
+The assumption made by the Gaussian kernel of infinite differentiability can be too strong for real-world processes as it assumes the function it is emulating is very smooth. Hence, the GP will create a very smooth surface due to this assumption in the Gaussian kernel. If a new point we sample does not fit this assumption, then the GP is unsure how to proceed and so sets the variance very high as if it knew nothing, sometimes called a variance explosion. This results in many points that had been deemed implausible returning to $PS$ and this is likely to continue unless different sampling points are chosen. It is instead recommended that we use a kernel from the Matern class of kernels, which includes the exponential kernel.
 
-My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point will be a solution with a higher $C(\theta)$, but still precautionary. Any areas with:
+My experiments appear to back up this theory. Using the exponential kernel, the GP converges to a solution after seven rounds. After changing the kernel to be the Gaussian kernel or the Matern kernel with $\nu = \frac{5}{2}$ it can be seen that neither of these alternatives converge after seven rounds. In each heatmap below, we are plotting how likely the model thinks it is that this point \$will be a solution with $C(\theta)>C(\theta^*)$, but still precautionary. Any areas with:
 
 $$
 P(C(\theta)>C(\theta^*))<0.0001\ \textrm{or}\ P(risk \le 0.05)<0.0001
