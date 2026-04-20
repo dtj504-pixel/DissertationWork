@@ -65,6 +65,8 @@ $$
 \mu_0(x_{1:n}) = (\mu_0(x_1), . . ., \mu_0(x_n))
 $$
 
+and where @eq-MultivariateNormalDist can be referred to as the prior distribution of the GP, or simply the prior.
+
 We choose a covariance function such that if for some $x,x',x''$ in the parameter space we have $\|x - x'\| < \|x -x''\|$ for some norm $\| \cdot \|$, then $\operatorname{cov}_0(x, x') > \operatorname{cov}_0(x, x'')$. We use a GP to emulate the objective function because it is much cheaper to evaluate than our objective function. We can use the GP $F(x)$ as our belief of the distribution of values for $f(x)$ for every point $x$ in the parameter space. This is true even for the evaluated points $x_1,...,x_m$ as the GP is fitted to these points [@Originalpaper].
 
 ### Maximum Likelihood Estimation
