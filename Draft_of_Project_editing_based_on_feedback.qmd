@@ -507,7 +507,11 @@ $$
 risk = P(\textrm{min}(SSB) < B_{lim})
 $$
 
-This can be done using @eq-posteriordistributiongivensamples. Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
+This can be done using @eq-posteriordistributiongivensamples. A diagram is provided below to improve visualisation:
+
+![](images/Calculating risk demonstration.png)
+
+Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
 By ensuring for both stocks that:
 
