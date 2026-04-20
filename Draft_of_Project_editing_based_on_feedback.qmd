@@ -69,9 +69,7 @@ We choose a covariance function such that if for some $x,x',x''$ in the paramete
 
 ### Maximum Likelihood Estimation
 
-When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$. We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters of the GP. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior distribution of the GP given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. - UNDER THE PRIOR IS UNCLEAR - SENT GUSTAV AN EMAIL TO ASK HOW, BUT IF NO RESPONSE MAY NEED TO FRESHEN UP FULL EXPLANATION
-
-Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
+When using GPs to emulate our objective function, we need to be able to estimate the hyperparameters of the GP using the data we gain from evaluating our points $x_1,...,x_n$. We can do this as follows. Firstly, we let the vector $\eta$ represent the hyperparameters of the GP. Then, given the observations $f(x_{1:n}) = (f(x_1),...,f(x_n))$, we calculate the likelihood of these observations under the prior distribution of the GP given $\eta$ which is denoted as $p(f(x_{1:n})|\eta)$ and modelled by @eq-MultivariateNormalDist. Lastly, we set $\hat{\eta}$ to the value that maximizes this likelihood:
 
 $$
  \hat{\eta} = \textrm{argmax}_\eta p(f(x_{1:n})|\eta)
@@ -215,13 +213,13 @@ However, before the algorithm can start, we must specify how many clusters we wa
 
 We have the objective function @eq-objectivefunctionsinglestock in @Originalpaper which combines the risk and the catch and so this is the function we want to maximise to get our maximum median long-term catch with the constraint of $risk \le 0.05$. To do this, @Originalpaper takes a Bayesian History Matching (BHM) approach. We slightly modify this approach. Firstly, we sample eight points which are spaced evenly throughout the parameter space to get some initial data. Then, for each round we do the following:
 
--   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ catch)$
+-   We set up or update the Gaussian Process (GP) to model $\ln(risk)$ and the GP to model $\ln(median\ long\textrm{-}term\  catch)$
 
 -   We use the GP modelling $\ln(risk)$ to get the value for the risk at each point in the parameter space
 
 -   We then use the risk as a threshold so that we only consider the values of $F_{target}$ and $B_{trigger}$ that have a high probability of having risk below 0.05
 
--   We use the GP which is modelling $\ln(median\ catch)$ to get the value for the median catch at every point in the parameter space, which will have some uncertainty
+-   We use the GP which is modelling $\ln(median\ long\textrm{-}term\ catch)$ to get the value for the median catch at every point in the parameter space, which will have some uncertainty
 
 -   We use BHM to remove any points that are implausible (that have a low probability of being higher than the current best median long-term catch)
 
