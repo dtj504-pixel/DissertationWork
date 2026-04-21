@@ -507,9 +507,9 @@ $$
 risk = P(\textrm{min}(SSB) < B_{lim})
 $$
 
-This can be done using @eq-posteriordistributiongivensamples. A diagram is provided below to improve visualisation:
+This can be done using @eq-posteriordistributiongivensamples. A diagram is provided below to improve visualisation, where cross-section means we are taking the GP for a specific value of $F_{had}$:
 
-![](images/Calculating risk demonstration.png)
+![](images/Calculating risk demonstration_21_04_1.drawio.png)
 
 Then, we set the KG of any unsafe points to be zero so that they will not be chosen as points to be sampled in the future.
 
