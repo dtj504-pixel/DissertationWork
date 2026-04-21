@@ -2587,7 +2587,7 @@ g(\theta) = I_{[0.95,1]}(P(B(\theta)&gt;B_{lim})) \times C(\theta)
 <p><span class="math display">\[
 \theta = (F_{target},B_{trigger})
 \]</span></p>
-<p>in the parameter space we have that <span class="math inline">\(C(\theta)\)</span> is the median long term catch, <span class="math inline">\(B(\theta)\)</span> is the long-term <span class="math inline">\(SSB\)</span> and:</p>
+<p>in the parameter space we have that <span class="math inline">\(C(\theta)\)</span> is the median long-term catch, <span class="math inline">\(B(\theta)\)</span> is the long-term <span class="math inline">\(SSB\)</span> and:</p>
 <p><span class="math display">\[
 I_{[0.95,1]}(x) =
 \begin{cases}
@@ -2623,8 +2623,8 @@ r_i(\phi,\phi&#39;,\delta_i) = \operatorname{exp} \left(-\frac{|\phi_1 - \phi&#3
 <p>We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of <span class="math inline">\(m_1(\phi),m_2(\phi)\)</span> and <span class="math inline">\(c\)</span> for our GPs <span class="citation" data-cites="DiceKrigingDocumentation">(<a href="#ref-DiceKrigingDocumentation" role="doc-biblioref">Roustant 2025</a>)</span>,<span class="citation" data-cites="Roustant2012DiceKrigingpaper">(<a href="#ref-Roustant2012DiceKrigingpaper" role="doc-biblioref">Roustant, Ginsbourger, and Deville 2012a</a>)</span>. These GPS are as below:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
+<col style="width: 33%">
+<col style="width: 66%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2735,8 +2735,8 @@ P(C(\theta)&gt;C(\theta^*))&lt;0.0001\ \textrm{or}\ P(risk \le 0.05)&lt;0.0001
 <p>In summary, we have the variables below which are important:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
+<col style="width: 30%">
+<col style="width: 69%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2782,8 +2782,8 @@ I_{[0,0.05]}(P(\textrm{min}(SSB_{Cod})&lt; Cod\ B_{lim})) = \begin{cases} 1 &amp
 <p>Hence, we have the GPs below:</p>
 <table class="caption-top table">
 <colgroup>
-<col style="width: 50%">
-<col style="width: 50%">
+<col style="width: 25%">
+<col style="width: 75%">
 </colgroup>
 <thead>
 <tr class="header">
