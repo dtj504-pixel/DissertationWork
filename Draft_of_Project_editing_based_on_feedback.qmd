@@ -292,13 +292,10 @@ We need to sample our first round of eight points before setting up the GPs so t
 
 We can set up Gaussian Processes (GPs) as described above in R using the DiceKriging package and use maximum likelihood estimation to get the hyperparameters of $m_1(\phi),m_2(\phi)$ and $c$ for our GPs [@DiceKrigingDocumentation],[@Roustant2012DiceKrigingpaper]. These GPS are as below:
 
-+----------------------------------+----------------------------------------------------------------------+
-| Gaussian Process                 | What it models                                                       |
-+==================================+======================================================================+
-| $LC(\theta)$                     | The natural log of the long-term median catch, i.e. $ln(C(\theta))$. |
-+----------------------------------+----------------------------------------------------------------------+
-| $LR(\theta)$                     | The natural log of $risk$, where $risk$ is as in @eq-risk.           |
-+----------------------------------+----------------------------------------------------------------------+
+| Gaussian Process | What it models |
+|------------------------|------------------------------------------------|
+| $LC(\theta)$ | The natural log of the long-term median catch, i.e. $ln(C(\theta))$. |
+| $LR(\theta)$ | The natural log of $risk$, where $risk$ is as in @eq-risk. |
 
 Then, we use $LC(\theta)$ and $LR(\theta)$ respectively to predict $\ln(C(\theta))$ and $\ln(risk)$ at every point in the parameter space. We can then exponentiate these results where needed. We are building our GPs with $\ln$ of the values we want because this helps us generate better predictions [@GlobalOptimizationofStochasticBlackBoxSystemsviaSequentialKrigingMetaModels]. We have also been able to visualise these GPs in some of the code linked in @sec-Appendix.
 
@@ -402,15 +399,11 @@ For this half of the project, we have switched to modelling SSB directly instead
 
 In summary, we have the variables below which are important:
 
-+------------------------------------+-----------------------------------------------------------------------------------+
-| Variable                           | Explanation                                                                       |
-+====================================+===================================================================================+
-| $F_{cod}$                          | The fishing mortality for cod. Ranges from $0$ to $0.6$ in $0.02$ increments.     |
-+------------------------------------+-----------------------------------------------------------------------------------+
-| $F_{had}$                          | The fishing mortality for haddock. Ranges from $0$ to $0.6$ in $0.02$ increments. |
-+------------------------------------+-----------------------------------------------------------------------------------+
-| $\textrm{min}(SSB)$ for each stock | The minimum value for the $SSB$ of that stock over the years 2030-2039.           |
-+------------------------------------+-----------------------------------------------------------------------------------+
+| Variable | Explanation |
+|-----------------------|-------------------------------------------------|
+| $F_{cod}$ | The fishing mortality for cod. Ranges from $0$ to $0.6$ in $0.02$ increments. |
+| $F_{had}$ | The fishing mortality for haddock. Ranges from $0$ to $0.6$ in $0.02$ increments. |
+| $\textrm{min}(SSB)$ for each stock | The minimum value for the $SSB$ of that stock over the years 2030-2039. |
 
 We now can conduct 20 year projections into the future using the MixME package [@MixME]. The 20 year projection from 2020-2039 follows guidelines from ICES to create long-term projections based on the biology of the stocks [@ICES2019WKGMSE2]. We also follow ICES guidelines to only calculate catch and risk for the last ten years for long-term projection, to allow time for a recovery period [@ICES2019WKGMSE2].
 
@@ -444,15 +437,11 @@ Firstly, to get some initial data, we randomly sample our first set of $2n-1$ po
 
 Hence, we have the GPs below:
 
-+----------------------------------+--------------------------------------------------------------------------------------------------------+
-| Gaussian Process                 | What it models                                                                                         |
-+==================================+========================================================================================================+
-| $\textrm{min}(SSB_{Cod})$        | The minimum $SSB$ for cod over the years 2030-2039.                                                    |
-+----------------------------------+--------------------------------------------------------------------------------------------------------+
-| $\textrm{min}(SSB_{Haddock})$    | The minimum $SSB$ for haddock over the years 2030-2039.                                                |
-+----------------------------------+--------------------------------------------------------------------------------------------------------+
-| $LCM(\theta)$                    | The natural log of the total catch of cod and haddock given by the MixME model in the years 2030-2039. |
-+----------------------------------+--------------------------------------------------------------------------------------------------------+
+| Gaussian Process | What it models |
+|-------------------|-----------------------------------------------------|
+| $\textrm{min}(SSB_{Cod})$ | The minimum $SSB$ for cod over the years 2030-2039. |
+| $\textrm{min}(SSB_{Haddock})$ | The minimum $SSB$ for haddock over the years 2030-2039. |
+| $LCM(\theta)$ | The natural log of the total catch of cod and haddock given by the MixME model in the years 2030-2039. |
 
 ## The basics of the MixME model
 
